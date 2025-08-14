@@ -12,9 +12,9 @@ canvas.setAttribute("width", width);
 canvas.setAttribute("height", height);
 
 
-const gl = canvas.getContext("webgl");
+const gl = canvas.getContext("webgl2");
 if (!gl) {
-    console.error("failed to get webgl context");
+    console.error("failed to get webgl2 context");
 }
 
 // 
@@ -105,20 +105,35 @@ let view = new Float32Array(16);
 let proj = new Float32Array(16);
 
 glm.mat4.identity(model);
-glm.mat4.lookAt(view, [1, 1, -2], [0, 0, 0], [0, 1, 0]);
+glm.mat4.lookAt(view, [0, 0.5, -2], [0, 0, 0], [0, 1, 0]);
+/* glm.mat4.identity(view); */
 glm.mat4.perspective(proj, glm.glMatrix.toRadian(45), width / height, 0.1, 1000);
 
-gl.uniformMatrix4fv(model_loc, gl.FALSE, model);
 gl.uniformMatrix4fv(view_loc, gl.FALSE, view);
+gl.uniformMatrix4fv(model_loc, gl.FALSE, model);
 gl.uniformMatrix4fv(proj_loc, gl.FALSE, proj);
 
 
+document.addEventListener("keydown", (e) => {
+    if (e.key === "a") {
+        glm.mat4.translate(view, view, [-0.01, 0, 0]);
+    } else if (e.key === "d") {
+        glm.mat4.translate(view, view, [0.01, 0, 0]);
+    } else if (e.key === "w") {
+        glm.mat4.translate(view, view, [0, 0, -0.01]);
+    } else if (e.key === "s") {
+        glm.mat4.translate(view, view, [0, 0, 0.01]);
+    }
+});
+
 //
 // Main render loop
-//
+// 
 function loop() {
     gl.clearColor(0.75, 0.85, 0.8, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    gl.uniformMatrix4fv(view_loc, gl.FALSE, view);
 
     gl.drawElements(gl.TRIANGLES, cube2.faces.length, gl.UNSIGNED_SHORT, 0);
 
@@ -126,6 +141,7 @@ function loop() {
 }
 
 requestAnimationFrame(loop);
+
 
 
 function createSquare(center_x, center_y, width, height, color={r:0, g:0, b:0}) {
