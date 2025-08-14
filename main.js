@@ -105,33 +105,89 @@ let view = new Float32Array(16);
 let proj = new Float32Array(16);
 
 glm.mat4.identity(model);
-glm.mat4.lookAt(view, [0, 0.5, -2], [0, 0, 0], [0, 1, 0]);
-/* glm.mat4.identity(view); */
 glm.mat4.perspective(proj, glm.glMatrix.toRadian(45), width / height, 0.1, 1000);
 
-gl.uniformMatrix4fv(view_loc, gl.FALSE, view);
 gl.uniformMatrix4fv(model_loc, gl.FALSE, model);
 gl.uniformMatrix4fv(proj_loc, gl.FALSE, proj);
 
+//
+// Define camera vectors
+//
+let camera_pos = [0, 0, 5]/* glm.vec3.fromValues(0, 0, 3); */
+let camera_front = [0, 0, -1]/* glm.vec3.fromValues(0, 0, -1); */
+let camera_up = [0, 1, 0]/* glm.vec3.fromValues(0, 1, 0); */
 
+// 
+// Time
+//
+let delta_time = 0;
+let prev_time = 0;
+
+//
+// Camera events
+//
+let first_mouse = true;
+let yaw = -90;
+let pitch = 0;
+let last_x = width / 2;
+let last_y = height / 2;
 document.addEventListener("keydown", (e) => {
+    const camera_speed = 0.005 * delta_time;
+
     if (e.key === "a") {
-        glm.mat4.translate(view, view, [-0.01, 0, 0]);
+        // pos = pos - norm(cross(front X up)) * scale
+        glm.vec3.subtract(camera_pos, camera_pos, glm.vec3.scale([], glm.vec3.normalize([], glm.vec3.cross([], camera_front, camera_up)), camera_speed));
     } else if (e.key === "d") {
-        glm.mat4.translate(view, view, [0.01, 0, 0]);
+        glm.vec3.add(camera_pos, camera_pos, glm.vec3.scale([], glm.vec3.normalize([], glm.vec3.cross([], camera_front, camera_up)), camera_speed));
     } else if (e.key === "w") {
-        glm.mat4.translate(view, view, [0, 0, -0.01]);
+        glm.vec3.scaleAndAdd(camera_pos, camera_pos, camera_front, camera_speed);
     } else if (e.key === "s") {
-        glm.mat4.translate(view, view, [0, 0, 0.01]);
+        glm.vec3.scaleAndSubtract(camera_pos, camera_pos, camera_front, camera_speed);
     }
+});
+
+canvas.addEventListener("mousemove", (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    /* if (first_mouse) {
+        last_x = x;
+        last_y = y;
+        first_mouse = false;
+    } */
+    
+    let x_offset = x - last_x;
+    let y_offset = last_y - y;
+    last_y = y;
+    last_x = x;
+
+    let sens = 0.05;
+    x_offset *= sens;
+    y_offset *= sens;
+    /* console.log("y_offset", y_offset); */
+
+    yaw += x_offset;
+    pitch += y_offset;
+
+    camera_front[0] = Math.cos(glm.glMatrix.toRadian(yaw)) * Math.cos(glm.glMatrix.toRadian(pitch));
+    camera_front[1] = Math.sin(glm.glMatrix.toRadian(pitch));
+    camera_front[2] = Math.sin(glm.glMatrix.toRadian(yaw)) * Math.cos(glm.glMatrix.toRadian(pitch));
+    glm.vec3.normalize(camera_front, camera_front);
 });
 
 //
 // Main render loop
 // 
 function loop() {
+    let cur_time = performance.now();
+    delta_time = cur_time - prev_time;
+    prev_time = cur_time;
+
     gl.clearColor(0.75, 0.85, 0.8, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    glm.mat4.lookAt(view, camera_pos, glm.vec3.add([], camera_pos, camera_front), camera_up);
 
     gl.uniformMatrix4fv(view_loc, gl.FALSE, view);
 

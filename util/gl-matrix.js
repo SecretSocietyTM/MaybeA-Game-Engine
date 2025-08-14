@@ -4160,6 +4160,22 @@ THE SOFTWARE.
   }
 
   /**
+   * Subtracts two vec3's after scaling the second operand by a scalar value
+   *
+   * @param {vec3} out the receiving vector
+   * @param {ReadonlyVec3} a the first operand
+   * @param {ReadonlyVec3} b the second operand
+   * @param {Number} scale the amount to scale b by before subtracting
+   * @returns {vec3} out
+   */
+  function scaleAndSubtract(out, a, b, scale) {
+    out[0] = a[0] - b[0] * scale;
+    out[1] = a[1] - b[1] * scale;
+    out[2] = a[2] - b[2] * scale;
+    return out;
+  }
+
+  /**
    * Calculates the euclidian distance between two vec3's
    *
    * @param {ReadonlyVec3} a the first operand
@@ -4718,6 +4734,7 @@ THE SOFTWARE.
     round: round$2,
     scale: scale$4,
     scaleAndAdd: scaleAndAdd$2,
+    scaleAndSubtract: scaleAndSubtract,
     distance: distance$2,
     squaredDistance: squaredDistance$2,
     squaredLength: squaredLength$4,
