@@ -113,81 +113,99 @@ gl.uniformMatrix4fv(proj_loc, gl.FALSE, proj);
 //
 // Define camera vectors
 //
-let camera_pos = [0, 0, 5]/* glm.vec3.fromValues(0, 0, 3); */
-let camera_front = [0, 0, -1]/* glm.vec3.fromValues(0, 0, -1); */
-let camera_up = [0, 1, 0]/* glm.vec3.fromValues(0, 1, 0); */
+let z_distance = 2;
+let camera_pos = [0, 0, z_distance];/* glm.vec3.fromValues(0, 0, 3); */
+const target = [0, 0, 0];
+let camera_up = [0, 1, 0];/* glm.vec3.fromValues(0, 1, 0); */
 
 // 
 // Time
 //
-let delta_time = 0;
 let prev_time = 0;
 
 //
 // Camera events
 //
-let first_mouse = true;
+let is_clicking = false;
 let yaw = -90;
 let pitch = 0;
-let last_x = width / 2;
-let last_y = height / 2;
-document.addEventListener("keydown", (e) => {
-    const camera_speed = 0.005 * delta_time;
+let x_start;
+let y_start;
+let prev_delta_x = 0;
+let prev_delta_y = 0;
+let x_direction = null;
+let y_direction = null;
 
-    if (e.key === "a") {
-        // pos = pos - norm(cross(front X up)) * scale
-        glm.vec3.subtract(camera_pos, camera_pos, glm.vec3.scale([], glm.vec3.normalize([], glm.vec3.cross([], camera_front, camera_up)), camera_speed));
-    } else if (e.key === "d") {
-        glm.vec3.add(camera_pos, camera_pos, glm.vec3.scale([], glm.vec3.normalize([], glm.vec3.cross([], camera_front, camera_up)), camera_speed));
-    } else if (e.key === "w") {
-        glm.vec3.scaleAndAdd(camera_pos, camera_pos, camera_front, camera_speed);
-    } else if (e.key === "s") {
-        glm.vec3.scaleAndSubtract(camera_pos, camera_pos, camera_front, camera_speed);
-    }
+canvas.addEventListener("mousedown", (e) => {
+    is_clicking = true;
+
+    const rect = canvas.getBoundingClientRect();
+    x_start = e.clientX - rect.left;
+    y_start = e.clientY - rect.top;
+}) ;
+
+canvas.addEventListener("mouseup", (e) => {
+    is_clicking = false;
+});
+
+document.addEventListener("mouseup", (e) => {
+    if (is_clicking) is_clicking = false;
 });
 
 canvas.addEventListener("mousemove", (e) => {
+    if (!is_clicking) return;
+
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    /* if (first_mouse) {
-        last_x = x;
-        last_y = y;
-        first_mouse = false;
-    } */
+    let sign = 1
+
+    let delta_x = x - x_start;
+    let delta_y = y_start - y;
+    x_direction = (delta_x > 0) ? 1 : -1;
+    y_direction = (delta_y > 0 ) ? 1 : -1;
     
-    let x_offset = x - last_x;
-    let y_offset = last_y - y;
-    last_y = y;
-    last_x = x;
 
-    let sens = 0.05;
-    x_offset *= sens;
-    y_offset *= sens;
-    /* console.log("y_offset", y_offset); */
+    if ((x_direction === 1 && delta_x < prev_delta_x) ||
+        (x_direction === -1 && delta_x > prev_delta_x)) {
+        sign = -1;
+    }
+    if ((y_direction === 1 && delta_y < prev_delta_y) ||
+        (y_direction === -1 && delta_y > prev_delta_y)) {
+        sign = -1;
+    }
 
-    yaw += x_offset;
-    pitch += y_offset;
+    prev_delta_x = delta_x;
+    prev_delta_y = delta_y;
 
-    camera_front[0] = Math.cos(glm.glMatrix.toRadian(yaw)) * Math.cos(glm.glMatrix.toRadian(pitch));
-    camera_front[1] = Math.sin(glm.glMatrix.toRadian(pitch));
-    camera_front[2] = Math.sin(glm.glMatrix.toRadian(yaw)) * Math.cos(glm.glMatrix.toRadian(pitch));
-    glm.vec3.normalize(camera_front, camera_front);
+
+    let sens = 0.005;
+    delta_x *= sign * sens;
+    delta_y *= sign * sens;
+
+    yaw += delta_x;
+    pitch += delta_y;
+
+    camera_pos[0] = -Math.cos(glm.glMatrix.toRadian(yaw)) * Math.cos(glm.glMatrix.toRadian(pitch));
+    camera_pos[1] = -Math.sin(glm.glMatrix.toRadian(pitch));
+    camera_pos[2] = -Math.sin(glm.glMatrix.toRadian(yaw)) * Math.cos(glm.glMatrix.toRadian(pitch));
+
+    glm.vec3.scale(camera_pos, camera_pos, z_distance);
+
+    let camera_dir = glm.vec3.subtract([], camera_pos, target);
+    let camera_right = glm.vec3.normalize([], glm.vec3.cross([], [0, 1, 0], camera_dir));
+    camera_up = glm.vec3.normalize(camera_up, glm.vec3.cross([], camera_dir, camera_right));
 });
 
 //
 // Main render loop
 // 
 function loop() {
-    let cur_time = performance.now();
-    delta_time = cur_time - prev_time;
-    prev_time = cur_time;
-
     gl.clearColor(0.75, 0.85, 0.8, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    glm.mat4.lookAt(view, camera_pos, glm.vec3.add([], camera_pos, camera_front), camera_up);
+    glm.mat4.lookAt(view, camera_pos, target, camera_up);
 
     gl.uniformMatrix4fv(view_loc, gl.FALSE, view);
 
