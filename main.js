@@ -105,98 +105,12 @@ let view = new Float32Array(16);
 let proj = new Float32Array(16);
 
 glm.mat4.identity(model);
+glm.mat4.lookAt(view, [2, 1, -2], [0, 0, 0], [0, 1, 0]);
 glm.mat4.perspective(proj, glm.glMatrix.toRadian(45), width / height, 0.1, 1000);
 
 gl.uniformMatrix4fv(model_loc, gl.FALSE, model);
+gl.uniformMatrix4fv(view_loc, gl.FALSE, view);
 gl.uniformMatrix4fv(proj_loc, gl.FALSE, proj);
-
-//
-// Define camera vectors
-//
-let z_distance = 2;
-let camera_pos = [0, 0, z_distance];/* glm.vec3.fromValues(0, 0, 3); */
-const target = [0, 0, 0];
-let camera_up = [0, 1, 0];/* glm.vec3.fromValues(0, 1, 0); */
-
-// 
-// Time
-//
-let prev_time = 0;
-
-//
-// Camera events
-//
-let is_clicking = false;
-let yaw = -90;
-let pitch = 0;
-let x_start;
-let y_start;
-let prev_delta_x = 0;
-let prev_delta_y = 0;
-let x_direction = null;
-let y_direction = null;
-
-canvas.addEventListener("mousedown", (e) => {
-    is_clicking = true;
-
-    const rect = canvas.getBoundingClientRect();
-    x_start = e.clientX - rect.left;
-    y_start = e.clientY - rect.top;
-}) ;
-
-canvas.addEventListener("mouseup", (e) => {
-    is_clicking = false;
-});
-
-document.addEventListener("mouseup", (e) => {
-    if (is_clicking) is_clicking = false;
-});
-
-canvas.addEventListener("mousemove", (e) => {
-    if (!is_clicking) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    let sign = 1
-
-    let delta_x = x - x_start;
-    let delta_y = y_start - y;
-    x_direction = (delta_x > 0) ? 1 : -1;
-    y_direction = (delta_y > 0 ) ? 1 : -1;
-    
-
-    if ((x_direction === 1 && delta_x < prev_delta_x) ||
-        (x_direction === -1 && delta_x > prev_delta_x)) {
-        sign = -1;
-    }
-    if ((y_direction === 1 && delta_y < prev_delta_y) ||
-        (y_direction === -1 && delta_y > prev_delta_y)) {
-        sign = -1;
-    }
-
-    prev_delta_x = delta_x;
-    prev_delta_y = delta_y;
-
-
-    let sens = 0.005;
-    delta_x *= sign * sens;
-    delta_y *= sign * sens;
-
-    yaw += delta_x;
-    pitch += delta_y;
-
-    camera_pos[0] = -Math.cos(glm.glMatrix.toRadian(yaw)) * Math.cos(glm.glMatrix.toRadian(pitch));
-    camera_pos[1] = -Math.sin(glm.glMatrix.toRadian(pitch));
-    camera_pos[2] = -Math.sin(glm.glMatrix.toRadian(yaw)) * Math.cos(glm.glMatrix.toRadian(pitch));
-
-    glm.vec3.scale(camera_pos, camera_pos, z_distance);
-
-    let camera_dir = glm.vec3.subtract([], camera_pos, target);
-    let camera_right = glm.vec3.normalize([], glm.vec3.cross([], [0, 1, 0], camera_dir));
-    camera_up = glm.vec3.normalize(camera_up, glm.vec3.cross([], camera_dir, camera_right));
-});
 
 //
 // Main render loop
@@ -204,10 +118,6 @@ canvas.addEventListener("mousemove", (e) => {
 function loop() {
     gl.clearColor(0.75, 0.85, 0.8, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-    glm.mat4.lookAt(view, camera_pos, target, camera_up);
-
-    gl.uniformMatrix4fv(view_loc, gl.FALSE, view);
 
     gl.drawElements(gl.TRIANGLES, cube2.faces.length, gl.UNSIGNED_SHORT, 0);
 
