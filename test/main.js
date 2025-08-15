@@ -89,7 +89,7 @@ function main() {
     const view = mat4.create();
     const proj = mat4.create();
 
-    mat4.lookAt(view, [2, 2, -2], [0, 0, 0], [0, 1, 0]);
+    mat4.lookAt(view, [4, 4, -4], [0, 0, 0], [0, 1, 0]);
     mat4.perspective(proj, glm.glMatrix.toRadian(45), WIDTH / HEIGHT, 0.1, 1000);
 
     setupRender(gl, canvas, WIDTH, HEIGHT, [0.75, 0.85, 0.8, 1.0]);
@@ -100,14 +100,33 @@ function main() {
 
     //
     // Create entities
-    const entity = new Entity([0, 0, 0], 1, UP_VECTOR, 0, cube_vao, cube.indices.length);
+    const entities = [
+        // init cube
+        new Entity([0, 0, 0], 1, UP_VECTOR, 0, cube_vao, cube.indices.length),
+
+        // cubes along z axis
+        new Entity([0, 0, -2], 1, UP_VECTOR, 0, cube_vao, cube.indices.length),
+        new Entity([0, 0, 2], 1, UP_VECTOR, 0, cube_vao, cube.indices.length),
+        new Entity([0, 0, 4], 1, UP_VECTOR, 0, cube_vao, cube.indices.length),
+
+        // cubes along x axis
+        new Entity([-4, 0, 0], 1, UP_VECTOR, 0, cube_vao, cube.indices.length),
+        new Entity([-2, 0, 0], 1, UP_VECTOR, 0, cube_vao, cube.indices.length),
+        new Entity([2, 0, 0], 1, UP_VECTOR, 0, cube_vao, cube.indices.length),
+
+        // cubes along y axis
+        new Entity([0, -2, 0], 1, UP_VECTOR, 0, cube_vao, cube.indices.length),
+        new Entity([0, -4, 0], 1, UP_VECTOR, 0, cube_vao, cube.indices.length),
+        new Entity([0, 2, 0], 1, UP_VECTOR, 0, cube_vao, cube.indices.length),
+    ]
 
     const frame = function (should_loop) {
 
         // Render
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        entity.draw(gl, model_uniform)
+        entities.forEach(entity => entity.draw(gl, model_uniform));
+        /* entity.draw(gl, model_uniform) */
         /* gl.bindVertexArray(cube_vao);
         gl.drawElements(gl.TRIANGLES, cube.indices.length, gl.UNSIGNED_SHORT, 0); */
 
