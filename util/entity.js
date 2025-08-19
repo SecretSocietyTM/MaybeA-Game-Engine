@@ -59,14 +59,13 @@ export class Entity {
         const min_x = Math.min(...world_x);
         const max_y = Math.max(...world_y);
         const min_y = Math.min(...world_y);
-        const max_z = Math.min(...world_z);
+        const max_z = Math.max(...world_z);
         const min_z = Math.min(...world_z);
 
         this.world_aabb = {
             max: [max_x, max_y, max_z],
             min: [min_x, min_y, min_z]
         };
-        console.log(this.world_aabb);
     }
 
     isIntersecting(ray) {
@@ -94,7 +93,7 @@ export class Entity {
         if (tymax < tmax) tmax = tymax;
 
         let tzmin = (this.world_aabb.min[2] - ray.origin[2]) / ray.dir[2];
-        let tzmax = (this.world_aabb.min[2] - ray.origin[2]) / ray.dir[2];
+        let tzmax = (this.world_aabb.max[2] - ray.origin[2]) / ray.dir[2];
 
         if (tzmin > tzmax) {
             let temp = tzmax;
@@ -102,7 +101,7 @@ export class Entity {
             tzmin = temp;
         }
 
-        if ((tmin > tzmax) || (tzmax > tmax)) return false;
+        if ((tmin > tzmax) || (tzmin > tmax)) return false;
 
         return true;
     }

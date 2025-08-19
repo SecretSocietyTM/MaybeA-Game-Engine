@@ -1,0 +1,72 @@
+export let graph = 
+[
+// z axis
+        0, 0,  0,  0.3, 0.8, 0.3, 
+        0, 0, 20,  0.3, 0.8, 0.3,
+
+        // z axis marks
+           0, 0, 1,  0.3, 0.8, 0.3, 
+        0.25, 0, 1,  0.3, 0.8, 0.3,
+           0, 0, 2,  0.3, 0.8, 0.3,
+        0.25, 0, 2,  0.3, 0.8, 0.3,
+           0, 0, 3,  0.3, 0.8, 0.3, 
+        0.25, 0, 3,  0.3, 0.8, 0.3,
+           0, 0, 4,  0.3, 0.8, 0.3,
+        0.25, 0, 4,  0.3, 0.8, 0.3,
+
+// y axis
+        0,  0, 0,  1, 0, 0, 
+        0, 20, 0,  1, 0, 0,
+
+        // y axis marks
+           0, 1, 0,  1, 0, 0, 
+        0.25, 1, 0,  1, 0, 0,
+           0, 2, 0,  1, 0, 0,
+        0.25, 2, 0,  1, 0, 0,
+           0, 3, 0,  1, 0, 0, 
+        0.25, 3, 0,  1, 0, 0,
+           0, 4, 0,  1, 0, 0,
+        0.25, 4, 0,  1, 0, 0,
+
+// x axis
+         0, 0, 0,  0, 0, 1, 
+        20, 0, 0,  0, 0, 1,
+
+        // y axis marks
+        1, 0,    0,  0, 0, 1, 
+        1, 0, 0.25,  0, 0, 1,
+        2, 0,    0,  0, 0, 1,
+        2, 0, 0.25,  0, 0, 1,
+        3, 0,    0,  0, 0, 1, 
+        3, 0, 0.25,  0, 0, 1,
+        4, 0,    0,  0, 0, 1,
+        4, 0, 0.25,  0, 0, 1,
+];
+
+export function createPosPosClrGraphVao(gl, vertex_buffer, pos_attrib, clr_attrib) {
+    const vao = gl.createVertexArray();
+    if (!vao) {
+        showError("Failed to create VAO");
+        return null;
+    }
+
+    gl.bindVertexArray(vao);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
+
+    gl.enableVertexAttribArray(pos_attrib);
+    gl.vertexAttribPointer(
+        pos_attrib, 3, gl.FLOAT, gl.FALSE,
+        6 * Float32Array.BYTES_PER_ELEMENT, 0);
+
+    gl.enableVertexAttribArray(clr_attrib);
+    gl.vertexAttribPointer(
+        clr_attrib, 3, gl.FLOAT, gl.FALSE,
+        6 * Float32Array.BYTES_PER_ELEMENT,
+        3 * Float32Array.BYTES_PER_ELEMENT);
+
+    gl.bindVertexArray(null);
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
+    return vao;
+}

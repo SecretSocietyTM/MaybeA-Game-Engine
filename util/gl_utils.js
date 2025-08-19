@@ -93,4 +93,3 @@ export function getContext(canvas) {
 
     return gl;
 }
-
