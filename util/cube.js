@@ -24,11 +24,16 @@ export const cube_indices = [
 ];
 
 export class Cube {
-    constructor(pos, scale, rotation_axis, rotation_angle, vao,) {
+    constructor(pos, scale, rotation_axis, rotation_angle, vao) {
+        this.pos = pos;
+        this.scale = [scale, scale, scale];
+        this.rotation_axis = rotation_axis;
+        this.rotation_angle = rotation_angle;
+
         this.vao = vao;
         this.num_indices = cube_indices.length;
 
-        setModelMatrix(this, pos, [scale, scale, scale], rotation_axis, rotation_angle);
+        setModelMatrix(this);
         setWorldAABB(this);
     }
 
@@ -76,19 +81,32 @@ export class Cube {
 
         return true;
     }
+
+    updatePos(pos) {
+        this.pos = pos;
+        setModelMatrix(this);
+        setWorldAABB(this);
+    }
 }
 
-const local_aabb = {
-    max: [ 0.5,  0.5,  0.5],
-    min: [-0.5, -0.5, -0.5]
-}
+const local_aabb_corners = [
+     0.5,  0.5,  0.5,
+     0.5, -0.5,  0.5,
+    -0.5,  0.5,  0.5,
+    -0.5, -0.5,  0.5,
 
-function setModelMatrix(entity, pos, scale, rotation_axis, rotation_angle) {
+     0.5,  0.5, -0.5,
+     0.5, -0.5, -0.5,
+    -0.5,  0.5, -0.5,
+    -0.5, -0.5, -0.5
+];
+
+function setModelMatrix(entity) {
     entity.model = mat4.create();
-    mat4.translate(entity.model, entity.model, pos);
+    mat4.translate(entity.model, entity.model, entity.pos);
     mat4.rotate(entity.model, entity.model, 
-        glm.glMatrix.toRadian(rotation_angle), rotation_axis);
-    mat4.scale(entity.model, entity.model, scale);
+        glm.glMatrix.toRadian(entity.rotation_angle), entity.rotation_axis);
+    mat4.scale(entity.model, entity.model, entity.scale);
 }
 
 function setWorldAABB(entity) {
@@ -96,23 +114,10 @@ function setWorldAABB(entity) {
     let world_y = [];
     let world_z = [];
 
-    // first interpolate all 8 corners of local AABB
-    let  local_corners = [
-        local_aabb.max[0], local_aabb.max[1], local_aabb.max[2], // front-top-right
-        local_aabb.max[0], local_aabb.min[1], local_aabb.max[2], // front-bot-right
-        local_aabb.min[0], local_aabb.max[1], local_aabb.max[2], // front-top-left
-        local_aabb.min[0], local_aabb.min[1], local_aabb.max[2], // front-bot-left
-
-        local_aabb.max[0], local_aabb.max[1], local_aabb.min[2], // back-top-right
-        local_aabb.max[0], local_aabb.min[1], local_aabb.min[2], // back-bot-right
-        local_aabb.min[0], local_aabb.max[1], local_aabb.min[2], // back-top-left
-        local_aabb.min[0], local_aabb.min[1], local_aabb.min[2], // back-bot-left
-    ];
-
     // transform 8 corners to world space
-    for (let i = 0; i < local_corners.length; i+=3) {
+    for (let i = 0; i < local_aabb_corners.length; i+=3) {
         let world_point = vec3.transformMat4([], 
-            [local_corners[i], local_corners[i+1], local_corners[i+2]], entity.model);
+            [local_aabb_corners[i], local_aabb_corners[i+1], local_aabb_corners[i+2]], entity.model);
         world_x.push(world_point[0]);
         world_y.push(world_point[1]);
         world_z.push(world_point[2]);

@@ -16,9 +16,28 @@ let view_matrix = null;
 let proj_matrix = null;
 let current_ray = {};
 
+let global_cam_pos = null;
+let global_p = null;
+
+let cur_selected_entity = null;
+
 function main() {
     const canvas = document.getElementById("canvas");
-    canvas.addEventListener("click", generateRayDir);
+    canvas.addEventListener("click", (e) => {
+        if (cur_selected_entity) {
+            cur_selected_entity = null;
+        }
+        generateRayDir(e);
+    });
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") cur_selected_entity = null;
+    });
+    canvas.addEventListener("mousemove", (e) => {
+        if (!cur_selected_entity) return;
+        generateRayDir(e);
+        calculatePlaneIntersectionPoint();
+        cur_selected_entity.updatePos([global_p[0], 0, global_p[2]]);
+    });
 
     const gl = glUtil.getContext(canvas);
     const program = glUtil.createProgram(gl, vsSrc, fsSrc);
@@ -56,6 +75,7 @@ function main() {
     // Create matrices
     const UP_VECTOR = [0, 1, 0];
     const CAM_POS = [4, 4, 4];
+    global_cam_pos = CAM_POS;
     current_ray.origin = CAM_POS;
     let model = mat4.create();
     let view = mat4.create();
@@ -81,6 +101,11 @@ function main() {
 
     ];
 
+/*     document.addEventListener("keydown", (e) => {
+        if (!global_p) return;
+        cur_selected_entity.updatePos([global_p[0], 0, global_p[2]]);
+    }); */
+
     const frame = function (should_loop) {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -99,7 +124,10 @@ function main() {
         // draw the cubes
         cubes.forEach(cube => {
             if (current_ray.dir) {
-                if (cube.isIntersecting(current_ray)) console.log(cube);
+                if (cube.isIntersecting(current_ray) && !cur_selected_entity) {
+                    console.log(cube);
+                    cur_selected_entity = cube;
+                }
                 current_ray.dir = null;
             }
             cube.draw(gl, model_uniform);
@@ -108,7 +136,7 @@ function main() {
         if (should_loop) requestAnimationFrame(frame);
     }
 
-    frame(false);
+    frame(true);
 }
 
 main();
@@ -133,4 +161,59 @@ function generateRayDir(e) {
     vec3.normalize(ray_world, ray_world);
 
     current_ray.dir = ray_world;
+}
+
+function calculatePlaneIntersectionPoint() {
+    if (!cur_selected_entity) return; // TODO: getting a little too cross functional
+
+    // Hard coded values - since we know our plane
+    let n = [0, 1, 0];
+    let p0 = [0, -0.5, 0]; // aribitrary point ON the plane
+    let d = -vec3.dot(n, p0);
+
+    let dir = current_ray.dir;
+
+    let numerator = vec3.dot(global_cam_pos, n) + d;
+    let denominator = vec3.dot(dir, n);
+    if (denominator === 0) { // ray missed plane
+        console.log("ray missed plane");
+        return;
+    }
+    let t = -(numerator / denominator);
+    /* console.log(t); */
+    
+    // point on plane given our vector
+    let p = vec3.scaleAndAdd([], global_cam_pos, dir, t);
+    /* console.log(p); */
+    global_p = p; // TODO: remove, this is a temporary thing to see results.
+}
+
+
+
+function examplePlaneIntersection(e) {
+    if (e.key !== "p") return;
+
+    // asumme our plane is the xz plane at y=-0.5
+    // we have dir = D, global_cam_pos = O
+    const dir = vec3.normalize([], vec3.subtract([], [0,0,0], global_cam_pos));
+    console.log(dir);
+
+    // need to calculate d = -(p0*n), since we know our plane, this can be hard coded
+    // so the normal vector is <0, 1, 0>, again a point on the plane p0 = 0, -0.5, 0
+    let n = [0, 1, 0];
+    let p0 = [0, -0.5, 0];
+    let d = -vec3.dot(n, p0);
+
+    let numerator = vec3.dot(global_cam_pos, n) + d;
+    let denominator = vec3.dot(dir, n);
+    if (denominator === 0) { // ray missed plane
+        console.log("ray missed plane");
+        return;
+    }
+    let t = -(numerator / denominator);
+    /* console.log(t); */
+    
+    // point on plane given our vector
+    let p = vec3.scaleAndAdd([], global_cam_pos, dir, t);
+    /* console.log(p); */
 }
