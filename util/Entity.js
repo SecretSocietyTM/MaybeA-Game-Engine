@@ -1,3 +1,5 @@
+import glUtil from "./gl_utils.js";
+
 export default class Entity {
     constructor() {
         this.entities = [];
@@ -19,6 +21,22 @@ export default class Entity {
         this.entities.forEach(entity => {
             entity.draw(gl, model_uniform);
         });
+    }
+
+    drawEntitiesAABB(gl, model_uniform) {
+        this.entities.forEach(entity => {
+            entity.drawAABB(gl, model_uniform);
+        });
+    }
+
+    createEntitiesAABBVao(gl, pos_attrib, clr_attrib) {
+        this.entities.forEach(entity => {
+            const aabb_vbo = glUtil.createStaticVertexBuffer(gl, entity.world_aabb_vertices_real);
+            const aabb_ebo = glUtil.createStaticIndexBuffer(gl, entity.aabb_indices);
+            const aabb_vao = glUtil.createVertexElementVAO(
+                gl, aabb_vbo, aabb_ebo, pos_attrib, clr_attrib);
+            entity.aabb_vao = aabb_vao;
+        })
     }
 }
 

@@ -4,7 +4,7 @@ const vec4 = glm.vec4;
 const mat4 = glm.mat4;
 import glUtil from "./util/gl_utils.js";
 import Entity from "./util/Entity.js";
-import { Cube, cube_vertices, cube_indices } from "./util/cube.js";
+import { Cube, cube_vertices, cube_indices, local_aabb_vertices_w_color, local_aabb_indices } from "./util/cube.js";
 import graph from "./util/graph.js";
 import floor from "./util/floor.js";
 import vsSrc from "../shaders/vertexshader.js";
@@ -93,6 +93,11 @@ function main() {
     const cube_vao = glUtil.createVertexElementVAO(
         gl, cube_vbo, cube_ebo, pos_attrib, clr_attrib);
 
+    const cube_aabb_vbo = glUtil.createStaticVertexBuffer(gl, local_aabb_vertices_w_color);
+    const cube_aabb_ebo = glUtil.createStaticIndexBuffer(gl, local_aabb_indices);
+    const cube_aabb_vao = glUtil.createVertexElementVAO(
+        gl, cube_aabb_vbo, cube_aabb_ebo, pos_attrib, clr_attrib);
+
     const graph_vbo = glUtil.createStaticVertexBuffer(gl, graph.vertices);
     const graph_vao = glUtil.createVertexVao(
         gl, graph_vbo, pos_attrib, clr_attrib);
@@ -129,9 +134,12 @@ function main() {
 
     //
     // Create entities
-    entities.addEntity(new Cube([0, 0, 0], 1, UP_VECTOR, 45, cube_vao));
-    entities.addEntity(new Cube([2, 0, 0], 1.5, UP_VECTOR, 45, cube_vao));
-    entities.addEntity(new Cube([2, 0, 3], 1, UP_VECTOR, 45, cube_vao));
+    entities.addEntity(new Cube([0, 0, 0], 1, UP_VECTOR, 45, cube_vao, cube_aabb_vao));
+    entities.addEntity(new Cube([2, 0, 0], 1.5, UP_VECTOR, 45, cube_vao, cube_aabb_vao));
+    entities.addEntity(new Cube([2, 0, 3], 1, UP_VECTOR, 45, cube_vao, cube_aabb_vao));
+    entities.createEntitiesAABBVao(gl, pos_attrib, clr_attrib);
+
+    
 
     const frame = function (should_loop) {
 
@@ -140,9 +148,9 @@ function main() {
 
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        // draw the graph
         gl.uniformMatrix4fv(model_uniform, false, model);
 
+        // draw floor
         gl.bindVertexArray(floor_vao);
         gl.drawElements(gl.TRIANGLES, floor.indices.length, gl.UNSIGNED_SHORT, 0);
         gl.bindVertexArray(null);
@@ -157,6 +165,7 @@ function main() {
 
         // draw entities
         entities.drawEntities(gl, model_uniform);
+        entities.drawEntitiesAABB(gl, model_uniform);
 
         if (should_loop) requestAnimationFrame(frame);
     }
