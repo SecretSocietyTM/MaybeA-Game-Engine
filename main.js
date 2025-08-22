@@ -24,8 +24,37 @@ let cur_selected_entity = null;
 
 const entities = new Entity();
 
+// TODOs
+/* 
+- AABB wire frame for debugging (and future feature)
+- Improve WASD movement
+- Write code for importing actual models (reuse code from ShidE Graphics Engine)
+Customizable AABB so that I don't have to write fixed one...
+Would require interactable GIZMOS...
+Design and import a ROUTER model
+To show "transmission" between two "routers" simply calculate vector = 
+router2's center pos - router1's center pos. And generate lil boxes that 
+go between them, just for fun visualization!
+
+
+Learn how to map textures??
+Maybe add lighting??
+Add direct ray thing (instead of ray stemming from cam)
+ */
+
 function main() {
     const canvas = document.getElementById("canvas");
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "w") {
+            vec3.add(CAM_POS, CAM_POS, [0, 0, -0.25]);
+        } else if (e.key === "s") {
+            vec3.add(CAM_POS, CAM_POS, [0, 0, 0.25]);
+        } else if (e.key === "a") {
+            vec3.add(CAM_POS, CAM_POS, [-0.25, 0, 0]);
+        } else if (e.key === "d") {
+            vec3.add(CAM_POS, CAM_POS, [0.25, 0, 0]);
+        }
+    })
     canvas.addEventListener("click", (e) => {
         if (cur_selected_entity) {
             cur_selected_entity = null;
@@ -76,14 +105,17 @@ function main() {
     //
     // Create matrices
     const UP_VECTOR = [0, 1, 0];
-    const CAM_POS = [8, 8, 8];
+    const CAM_POS = [0, 9, 10];
+    // initialize the direction vector
+    const CAM_DIR = vec3.subtract([], CAM_POS, [0,0,0]);
     global_cam_pos = CAM_POS;
     current_ray.origin = CAM_POS;
     let model = mat4.create();
     let view = mat4.create();
     let proj = mat4.create();
 
-    mat4.lookAt(view, CAM_POS, [0, 0, 0], [0, 1, 0]);
+    // get direction of camera = campos - target
+    // normalize
     mat4.perspective(proj, glm.glMatrix.toRadian(45), WIDTH / HEIGHT, 0.1, 1000);
 
     view_matrix = view;
@@ -93,16 +125,19 @@ function main() {
 
     gl.useProgram(program);
 
-    gl.uniformMatrix4fv(view_uniform, gl.FALSE, view);
     gl.uniformMatrix4fv(proj_uniform, gl.FALSE, proj);
 
     //
     // Create entities
     entities.addEntity(new Cube([0, 0, 0], 1, UP_VECTOR, 45, cube_vao));
-    entities.addEntity(new Cube([2, 0, 0], 1.5, UP_VECTOR, 0, cube_vao));
+    entities.addEntity(new Cube([2, 0, 0], 1.5, UP_VECTOR, 45, cube_vao));
     entities.addEntity(new Cube([2, 0, 3], 1, UP_VECTOR, 45, cube_vao));
 
     const frame = function (should_loop) {
+
+        mat4.lookAt(view, CAM_POS, vec3.subtract([], CAM_POS, CAM_DIR), UP_VECTOR);
+        gl.uniformMatrix4fv(view_uniform, gl.FALSE, view);
+
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         // draw the graph
@@ -141,16 +176,13 @@ function generateRayDir(e) {
     const y_ndc = 1 - (2 * mouse_y) / HEIGHT;
 
     const ray_clip = [x_ndc, y_ndc, -1.0, 1.0];
-    console.log(ray_clip);
 
     const ray_eye = vec4.transformMat4([], ray_clip, mat4.invert([], proj_matrix));
     ray_eye[2] = -1,
     ray_eye[3] = 0;
-    console.log(ray_eye);
 
     let ray_world = vec4.transformMat4([], ray_eye, mat4.invert([], view_matrix));
     ray_world = [ray_world[0], ray_world[1], ray_world[2]];
-    console.log(ray_world);
     vec3.normalize(ray_world, ray_world);
 
     return ray_world;
