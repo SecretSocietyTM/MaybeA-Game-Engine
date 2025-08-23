@@ -38,6 +38,10 @@ export default class Entity {
             entity.aabb_vao = aabb_vao;
         })
     }
+
+    getEntity(idx) {
+        return this.entities[idx];
+    }
 }
 
 function isIntersecting(entity, ray) {

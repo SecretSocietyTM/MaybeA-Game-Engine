@@ -20,19 +20,24 @@ let current_ray = {};
 let global_cam_pos = null;
 let cur_selected_entity = null;
 
+let first_entity = null;
+let second_entity = null;
+
+let dir_between_two = null;
+
 const entities = new Entity();
 
 // TODOs
 /* 
+- To show "transmission" between two "routers" simply calculate vector = 
+router2's center pos - router1's center pos. And generate lil boxes that 
+go between them, just for fun visualization!
 - AABB wire frame for debugging (and future feature)
 - Improve WASD movement
 - Write code for importing actual models (reuse code from ShidE Graphics Engine)
-Customizable AABB so that I don't have to write fixed one...
+-Customizable AABB so that I don't have to write fixed one...
 Would require interactable GIZMOS...
-Design and import a ROUTER model
-To show "transmission" between two "routers" simply calculate vector = 
-router2's center pos - router1's center pos. And generate lil boxes that 
-go between them, just for fun visualization!
+-Design and import a ROUTER model
 
 
 Learn how to map textures??
@@ -69,6 +74,27 @@ function main() {
         current_ray.dir = generateRayDir(e);
         const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
         cur_selected_entity.updatePos([new_pos[0], 0, new_pos[2]]);
+    });
+    canvas.addEventListener("dblclick", (e) => {
+        if (first_entity && second_entity) return;
+        current_ray.dir = generateRayDir(e);
+        console.log("double clicking");
+        if (!first_entity) {
+            first_entity = entities.checkRayIntersection(current_ray);
+            console.log("first select", first_entity);
+            console.log("first pos", first_entity.getPos());
+        } else {
+            // a first entity is selected
+            second_entity = entities.checkRayIntersection(current_ray);
+            if (!second_entity) return // didnt select a second entity
+            console.log("second select", second_entity);
+            console.log("second pos", second_entity.getPos());
+
+            // do some stuff...
+            dir_between_two = vec3.normalize([], vec3.subtract([], second_entity.getPos(), first_entity.getPos()));
+
+            entities.addEntity(new Cube(first_entity.getPos(), 0.2, UP_VECTOR, 45, cube_vao));
+        }
     });
 
     //
@@ -136,14 +162,33 @@ function main() {
     // Create Entities
     entities.addEntity(new Cube([0, 0, 0], 1, UP_VECTOR, 45, cube_vao));
     entities.addEntity(new Cube([2, 0, 0], 1.5, UP_VECTOR, 45, cube_vao));
-    entities.addEntity(new Cube([2, 0, 3], 1, UP_VECTOR, 45, cube_vao));
+    entities.addEntity(new Cube([3, 0, 3], 1, UP_VECTOR, 45, cube_vao));
     entities.createEntitiesAABBVao(gl, pos_attrib, clr_attrib);
 
 
     //
     // Setup Uniforms
-    gl.uniformMatrix4fv(proj_uniform, gl.FALSE, proj);  
+    gl.uniformMatrix4fv(proj_uniform, gl.FALSE, proj);
+
+    let TEMP_current_pos = 0;
+    let TEMP_cube_to_move
     const frame = function (should_loop) {
+
+        // update entities, only exists if the second entity was selected
+        if (second_entity) {
+            TEMP_cube_to_move = entities.getEntity(3);
+
+            TEMP_current_pos += 0.025;
+            TEMP_cube_to_move.updatePos(vec3.add([], 
+                first_entity.getPos(), vec3.scale([], dir_between_two, TEMP_current_pos)));
+            if (vec3.length(vec3.sub([], second_entity.getPos(), first_entity.getPos())) < 
+                vec3.length(vec3.sub([], TEMP_cube_to_move.getPos(), first_entity.getPos()))) {
+                TEMP_cube_to_move.updatePos(first_entity.getPos());
+                /* console.log("SAME POS"); */
+                TEMP_current_pos = 0;
+            }
+            /* console.log(TEMP_cube_to_move.getPos()); */
+        }
 
         mat4.lookAt(view, CAM_POS, vec3.subtract([], CAM_POS, CAM_DIR), UP_VECTOR);
         gl.uniformMatrix4fv(view_uniform, gl.FALSE, view);

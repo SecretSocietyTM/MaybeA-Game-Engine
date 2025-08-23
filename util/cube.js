@@ -73,7 +73,7 @@ export class Cube {
 
     drawAABB(gl, u_model_loc) {
         if (!this.aabb_vao) {
-            console.log("No AABB VAO assigned");
+            /* console.log("No AABB VAO assigned"); */
             return;
         }
 
@@ -129,6 +129,10 @@ export class Cube {
         this.world_aabb_vertices = getlocalToWorldAABBVertices(this);
         this.world_aabb_vertices_real = getWorldAABBCorners(this);
         this.world_aabb = getWorldAABB(this);
+    }
+
+    getPos() {
+        return this.pos;
     }
 }
 
