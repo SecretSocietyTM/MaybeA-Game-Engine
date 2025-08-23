@@ -26,25 +26,13 @@ export const cube_indices = [
     1, 5, 7,  1, 3, 7  // bottom
 ];
 
-export const local_aabb_vertices_w_color = [
-     0.5,  0.5,  0.5,  0.4, 1.0, 0.2,
-     0.5, -0.5,  0.5,  0.4, 1.0, 0.2,
-    -0.5,  0.5,  0.5,  0.4, 1.0, 0.2,
-    -0.5, -0.5,  0.5,  0.4, 1.0, 0.2,
-
-     0.5,  0.5, -0.5,  0.4, 1.0, 0.2,
-     0.5, -0.5, -0.5,  0.4, 1.0, 0.2,
-    -0.5,  0.5, -0.5,  0.4, 1.0, 0.2,
-    -0.5, -0.5, -0.5,  0.4, 1.0, 0.2
-];
-
 export const local_aabb_indices = [
     0,1,  0,2,  3,2,  3,1, // front
-    2,6,  3,7, // left
-    0,4,  1,5, // right
-    4,5,  4,6,  7,6,  7,5 // bacl
+    2,6,  3,7,  0,4,  1,5, // left | right
+    4,5,  4,6,  7,6,  7,5  // back
 ]
 
+// TODO: local_aabb_vertices === cube vertices w/o color
 const local_aabb_vertices = [
      0.5,  0.5,  0.5,
      0.5, -0.5,  0.5,
@@ -76,10 +64,6 @@ export class Cube {
         this.aabb_indices = local_aabb_indices;
     }
 
-    /* setAABBVAO(aabb_vao) {
-        this.aabb_vao = aabb_vao;
-    } */
-
     draw(gl, u_model_loc) {
         gl.uniformMatrix4fv(u_model_loc, gl.FALSE, this.model);
         gl.bindVertexArray(this.vao);
@@ -94,11 +78,8 @@ export class Cube {
         }
 
         // UNCOMMENT THIS FOR AABB TO MOVE BUT BE OFFSET
-        /* let translate = mat4.translate([], mat4.create(), this.pos);
-        gl.uniformMatrix4fv(u_model_loc, gl.FALSE, translate); */
-
-        // UNCOMMENT THIS FOR AABB TO BE IN CORRECT SPOT BUT NOT MOVE
-        gl.uniformMatrix4fv(u_model_loc, gl.FALSE, mat4.create());
+        let translate = mat4.translate([], mat4.create(), this.pos);
+        gl.uniformMatrix4fv(u_model_loc, gl.FALSE, translate);
         gl.bindVertexArray(this.aabb_vao);
         gl.drawElements(gl.LINES, local_aabb_indices.length, gl.UNSIGNED_SHORT, 0);
         gl.bindVertexArray(null);
@@ -203,7 +184,11 @@ function getWorldAABB(entity) {
 }
 
 function getWorldAABBCorners(entity) {
+    let translation = mat4.translate([], mat4.create(), entity.pos);
+    let inverse_translation = mat4.invert([], translation);
 
+
+    // TODO: this can all be improved significantly for better performance
     // first interpolate all 8 corners of local AABB
     let  world_aabb_vertices_w_color = [
         entity.world_aabb.max[0], entity.world_aabb.max[1], entity.world_aabb.max[2], 0.4, 1.0, 0.2, // front-top-right
@@ -215,6 +200,17 @@ function getWorldAABBCorners(entity) {
         entity.world_aabb.min[0], entity.world_aabb.max[1], entity.world_aabb.min[2], 0.4, 1.0, 0.2, // back-top-left
         entity.world_aabb.min[0], entity.world_aabb.min[1], entity.world_aabb.min[2], 0.4, 1.0, 0.2  // back-bot-left
     ];
+
+    // center the vertices as if at 0,0,0 to translate them..
+    for (let i = 0; i < world_aabb_vertices_w_color.length; i+=6) {
+        let world_aabb_vertex_at_000 = vec3.transformMat4([], 
+            [world_aabb_vertices_w_color[i], world_aabb_vertices_w_color[i+1], world_aabb_vertices_w_color[i+2]], inverse_translation);
+        /* console.log(world_aabb_vertex_at_000); */
+        world_aabb_vertices_w_color[i] = world_aabb_vertex_at_000[0];
+        world_aabb_vertices_w_color[i+1] = world_aabb_vertex_at_000[1];
+        world_aabb_vertices_w_color[i+2] = world_aabb_vertex_at_000[2];
+    }
+   /* console.log(world_aabb_vertices_w_color); */
     
     return world_aabb_vertices_w_color;
 }

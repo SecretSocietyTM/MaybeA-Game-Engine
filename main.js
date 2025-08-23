@@ -4,7 +4,7 @@ const vec4 = glm.vec4;
 const mat4 = glm.mat4;
 import glUtil from "./util/gl_utils.js";
 import Entity from "./util/Entity.js";
-import { Cube, cube_vertices, cube_indices, local_aabb_vertices_w_color, local_aabb_indices } from "./util/cube.js";
+import { Cube, cube_vertices, cube_indices } from "./util/cube.js";
 import graph from "./util/graph.js";
 import floor from "./util/floor.js";
 import vsSrc from "../shaders/vertexshader.js";
@@ -18,8 +18,6 @@ let proj_matrix = null;
 let current_ray = {};
 
 let global_cam_pos = null;
-let global_p = null;
-
 let cur_selected_entity = null;
 
 const entities = new Entity();
@@ -44,6 +42,9 @@ Add direct ray thing (instead of ray stemming from cam)
 
 function main() {
     const canvas = document.getElementById("canvas");
+
+    //
+    // Event Listeners
     document.addEventListener("keydown", (e) => {
         if (e.key === "w") {
             vec3.add(CAM_POS, CAM_POS, [0, 0, -0.25]);
@@ -70,6 +71,8 @@ function main() {
         cur_selected_entity.updatePos([new_pos[0], 0, new_pos[2]]);
     });
 
+    //
+    // Program Initialization
     const gl = glUtil.getContext(canvas);
     const program = glUtil.createProgram(gl, vsSrc, fsSrc);
 
@@ -88,15 +91,13 @@ function main() {
         return;
     }
 
+
+    //
+    // Buffer Initialization
     const cube_vbo = glUtil.createStaticVertexBuffer(gl, cube_vertices);
     const cube_ebo = glUtil.createStaticIndexBuffer(gl, cube_indices);
     const cube_vao = glUtil.createVertexElementVAO(
         gl, cube_vbo, cube_ebo, pos_attrib, clr_attrib);
-
-    const cube_aabb_vbo = glUtil.createStaticVertexBuffer(gl, local_aabb_vertices_w_color);
-    const cube_aabb_ebo = glUtil.createStaticIndexBuffer(gl, local_aabb_indices);
-    const cube_aabb_vao = glUtil.createVertexElementVAO(
-        gl, cube_aabb_vbo, cube_aabb_ebo, pos_attrib, clr_attrib);
 
     const graph_vbo = glUtil.createStaticVertexBuffer(gl, graph.vertices);
     const graph_vao = glUtil.createVertexVao(
@@ -107,14 +108,14 @@ function main() {
     const floor_vao = glUtil.createVertexElementVAO(
         gl, floor_vbo, floor_ebo, pos_attrib, clr_attrib);
 
+
     //
     // Create matrices
     const UP_VECTOR = [0, 1, 0];
     const CAM_POS = [0, 9, 10];
-    // initialize the direction vector
     const CAM_DIR = vec3.subtract([], CAM_POS, [0,0,0]);
-    global_cam_pos = CAM_POS;
-    current_ray.origin = CAM_POS;
+    global_cam_pos = CAM_POS;     // global variable
+    current_ray.origin = CAM_POS; // global variable
     let model = mat4.create();
     let view = mat4.create();
     let proj = mat4.create();
@@ -123,24 +124,25 @@ function main() {
     // normalize
     mat4.perspective(proj, glm.glMatrix.toRadian(45), WIDTH / HEIGHT, 0.1, 1000);
 
-    view_matrix = view;
-    proj_matrix = proj;
-
-    glUtil.setupRender(gl, canvas, WIDTH, HEIGHT, [0.75, 0.85, 0.8, 1.0]);
-
-    gl.useProgram(program);
-
-    gl.uniformMatrix4fv(proj_uniform, gl.FALSE, proj);
+    view_matrix = view; // global variable
+    proj_matrix = proj; // global variable
 
     //
-    // Create entities
-    entities.addEntity(new Cube([0, 0, 0], 1, UP_VECTOR, 45, cube_vao, cube_aabb_vao));
-    entities.addEntity(new Cube([2, 0, 0], 1.5, UP_VECTOR, 45, cube_vao, cube_aabb_vao));
-    entities.addEntity(new Cube([2, 0, 3], 1, UP_VECTOR, 45, cube_vao, cube_aabb_vao));
+    // Prepare Program
+    glUtil.setupRender(gl, canvas, WIDTH, HEIGHT, [0.75, 0.85, 0.8, 1.0]);
+    gl.useProgram(program);
+
+    //
+    // Create Entities
+    entities.addEntity(new Cube([0, 0, 0], 1, UP_VECTOR, 45, cube_vao));
+    entities.addEntity(new Cube([2, 0, 0], 1.5, UP_VECTOR, 45, cube_vao));
+    entities.addEntity(new Cube([2, 0, 3], 1, UP_VECTOR, 45, cube_vao));
     entities.createEntitiesAABBVao(gl, pos_attrib, clr_attrib);
 
-    
 
+    //
+    // Setup Uniforms
+    gl.uniformMatrix4fv(proj_uniform, gl.FALSE, proj);  
     const frame = function (should_loop) {
 
         mat4.lookAt(view, CAM_POS, vec3.subtract([], CAM_POS, CAM_DIR), UP_VECTOR);
