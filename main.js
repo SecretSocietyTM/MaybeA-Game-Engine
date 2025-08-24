@@ -5,10 +5,15 @@ const mat4 = glm.mat4;
 import glUtil from "./util/gl_utils.js";
 import Entity from "./util/Entity.js";
 import { Cube, cube_vertices, cube_indices } from "./util/cube.js";
-import graph from "./util/graph.js";
-import floor from "./util/floor.js";
+import graph from "./util/buffer_data/graph.js";
+import floor from "./util/buffer_data/floor.js";
 import vsSrc from "../shaders/vertexshader.js";
 import fsSrc from "../shaders/fragmentshader.js";
+
+
+import apple_ply from "./mimp/models/apple_ply.js";
+import cube_ply from "./mimp/models/cube_ply.js";
+import { parsePLY, buildPosClrInterleavedArr } from "./mimp/parse_ply.js";
 
 const WIDTH = 800;
 const HEIGHT = 600;
@@ -29,20 +34,17 @@ const entities = new Entity();
 
 // TODOs
 /* 
-- To show "transmission" between two "routers" simply calculate vector = 
-router2's center pos - router1's center pos. And generate lil boxes that 
-go between them, just for fun visualization!
-- AABB wire frame for debugging (and future feature)
-- Improve WASD movement
+LEARN
+- How to change vertex colors for selecting like OGL.
+- Import models
+
 - Write code for importing actual models (reuse code from ShidE Graphics Engine)
 -Customizable AABB so that I don't have to write fixed one...
-Would require interactable GIZMOS...
+ Would require interactable GIZMOS...
 -Design and import a ROUTER model
-
-
-Learn how to map textures??
-Maybe add lighting??
-Add direct ray thing (instead of ray stemming from cam)
+- Learn how to map textures??
+- Maybe add lighting??
+- Add direct ray thing (instead of ray stemming from cam)
  */
 
 function main() {
@@ -134,6 +136,16 @@ function main() {
     const floor_vao = glUtil.createVertexElementVAO(
         gl, floor_vbo, floor_ebo, pos_attrib, clr_attrib);
 
+    
+    //
+    // Test PLY parser
+    const apple_mesh = parsePLY(apple_ply);
+    const apple_posclr_arr = buildPosClrInterleavedArr(apple_mesh.vertices, apple_mesh.vertex_colors);
+    const apple_vbo = glUtil.createStaticVertexBuffer(gl, apple_posclr_arr);
+    const apple_ebo = glUtil.createStaticIndexBuffer(gl, apple_mesh.indices);
+    const apple_vao = glUtil.createVertexElementVAO(
+        gl, apple_vbo, apple_ebo, pos_attrib, clr_attrib);
+
 
     //
     // Create matrices
@@ -198,9 +210,9 @@ function main() {
         gl.uniformMatrix4fv(model_uniform, false, model);
 
         // draw floor
-        gl.bindVertexArray(floor_vao);
+        /* gl.bindVertexArray(floor_vao);
         gl.drawElements(gl.TRIANGLES, floor.indices.length, gl.UNSIGNED_SHORT, 0);
-        gl.bindVertexArray(null);
+        gl.bindVertexArray(null); */
 
         // draw axis
         gl.disable(gl.DEPTH_TEST);
@@ -213,6 +225,13 @@ function main() {
         // draw entities
         entities.drawEntities(gl, model_uniform);
         entities.drawEntitiesAABB(gl, model_uniform);
+
+        gl.uniformMatrix4fv(model_uniform, false, model);
+
+        // draw test import
+        gl.bindVertexArray(apple_vao);
+        gl.drawElements(gl.TRIANGLES, apple_mesh.indices.length, gl.UNSIGNED_SHORT, 0);
+        gl.bindVertexArray(null);
 
         if (should_loop) requestAnimationFrame(frame);
     }
