@@ -35,11 +35,8 @@ export default class Object2 {
         this.num_indices = mesh.indices.length;
     }
 
-    createVao(gl, pos_attrib, clr_attrib) {
-        this.p_vbo = glUtil.createStaticVertexBuffer(gl, this.mesh.vertices);
-        this.c_vbo = glUtil.createStaticVertexBuffer(gl, this.mesh.vertex_colors);
-        this.ebo = glUtil.createStaticIndexBuffer(gl, this.mesh.indices);
-        this.vao = glUtil.createNonInterleavedVao(gl, this.p_vbo, this.c_vbo, this.ebo, pos_attrib, clr_attrib);        
+    assignVao(vao) {
+        this.vao = vao;
     }
 
     createAABBVao(gl, pos_attrib, clr_attrib) {
@@ -109,7 +106,7 @@ export default class Object2 {
                 this.model_matrix);
             world_vertices.push(...world_vertex);
         }
-        console.log("Local to World vertices", world_vertices);
+        /* console.log("Local to World vertices", world_vertices); */
         this.world_vertices = world_vertices;
     }
 
@@ -136,7 +133,7 @@ export default class Object2 {
             min: [min_x, min_y, min_z]
         };
 
-        console.log("AABB", aabb);
+        /* console.log("AABB", aabb); */
         this.aabb = aabb;
     }
 
@@ -206,7 +203,7 @@ export default class Object2 {
             aabb_vertices[i+2] = aabb_vertex[2];
         }
         
-        console.log("AABB vertices", aabb_vertices);
+        /* console.log("AABB vertices", aabb_vertices); */
         this.aabb_mesh.vertices = aabb_vertices;
     }
 
@@ -217,7 +214,7 @@ export default class Object2 {
             aabb_vertex_colors.push(...color);
         }
 
-        console.log("AABB vertex colors", aabb_vertex_colors);
+        /* console.log("AABB vertex colors", aabb_vertex_colors); */
         this.aabb_mesh.vertex_colors = aabb_vertex_colors;
     }
 

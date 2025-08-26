@@ -2,12 +2,21 @@ const glm = glMatrix; // shorten math library name,
 const vec3 = glm.vec3;
 const vec4 = glm.vec4;
 const mat4 = glm.mat4;
+
+
 import glUtil from "./util/gl_utils.js";
+import Meshes from "./util/meshes.js";
 import Object2 from "./util/object.js";
 import Entity from "./util/Entity.js";
 import { Cube, cube_vertices, cube_indices } from "./util/cube.js";
+
+// meshes
 import graph from "./util/buffer_data/graph.js";
 import floor from "./util/buffer_data/floor.js";
+import cube from "./util/buffer_data/cube.js";
+const floor_mesh = floor;
+const cube_mesh = cube;
+
 import vsSrc from "../shaders/vertexshader.js";
 import fsSrc from "../shaders/fragmentshader.js";
 
@@ -98,12 +107,22 @@ function main() {
         gl, floor_vbo, floor_ebo, pos_attrib, clr_attrib);
 
 
+
     //
     // Test Object class 2
     const apple_mesh = parsePLY(apple_ply);
+
+    const meshes = new Meshes(gl, pos_attrib, clr_attrib);
+    meshes.addMesh("cube", cube_mesh);
+    meshes.addMesh("floor", floor_mesh);
+    meshes.addMesh("apple", apple_mesh);
+    console.log(meshes);
+
+
     const apple_entity = new Object2();
     apple_entity.assignMesh(apple_mesh);
-    apple_entity.createVao(gl, pos_attrib, clr_attrib);
+    apple_entity.assignVao(meshes.getMesh("apple").vao);
+    /* apple_entity.createVao(gl, pos_attrib, clr_attrib); */
     apple_entity.transform(undefined, [5,5,5]);
     apple_entity.getLocaltoWorldAABBVertices();
     apple_entity.getWorldAABB();
