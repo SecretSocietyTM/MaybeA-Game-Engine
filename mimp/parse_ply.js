@@ -84,14 +84,3 @@ export function parsePLY(ply) {
     console.log(mesh);
     return mesh;
 }
-
-// TODO: clean this up, put it somewhere else, or get rid of it, TEMP
-export function buildPosClrInterleavedArr(pos, clr) {
-    const result = [];
-    for (let i = 0; i < pos.length; i+=3) {
-        result.push(pos[i], pos[i+1], pos[i+2], 
-                    clr[i], clr[i+1], clr[i+2]);
-    }
-    console.log(result);
-    return result;
-}

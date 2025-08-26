@@ -102,6 +102,35 @@ export default {
         return vao;
     },
 
+    createNonInterleavedVao(gl, p_vbo, c_vbo, ebo, pos_attrib, clr_attrib) {
+        const vao = gl.createVertexArray();
+        if (!vao) {
+            showError("Failed to create VAO");
+            return null;
+        }
+
+        gl.bindVertexArray(vao);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, p_vbo);
+        gl.enableVertexAttribArray(pos_attrib);
+        gl.vertexAttribPointer(
+            pos_attrib, 3, gl.FLOAT, gl.FALSE,
+            3 * Float32Array.BYTES_PER_ELEMENT, 0);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, c_vbo);
+        gl.enableVertexAttribArray(clr_attrib);
+        gl.vertexAttribPointer(
+            clr_attrib, 3, gl.FLOAT, gl.FALSE,
+            3 * Float32Array.BYTES_PER_ELEMENT, 0);
+
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo);
+
+        gl.bindVertexArray(null);
+        gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
+        return vao;        
+    },
+
     createVertexVao(gl, vertex_buffer, pos_attrib, clr_attrib) {
         const vao = gl.createVertexArray();
         if (!vao) {
