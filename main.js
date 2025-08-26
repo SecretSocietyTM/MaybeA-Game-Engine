@@ -8,6 +8,7 @@ import glUtil from "./util/gl_utils.js";
 import Meshes from "./util/meshes.js";
 import Object2 from "./util/object.js";
 import Entity from "./util/Entity.js";
+import Entities from "./util/entities2.js";
 import { Cube, cube_vertices, cube_indices } from "./util/cube.js";
 
 // meshes
@@ -36,6 +37,7 @@ let global_cam_pos = null;
 let cur_selected_entity = null;
 
 const entities = new Entity();
+const entities2 = new Entities();
 
 function main() {
     const canvas = document.getElementById("canvas");
@@ -59,7 +61,7 @@ function main() {
             return;
         }
         current_ray.dir = generateRayDir(e);
-        cur_selected_entity = entities.checkRayIntersection(current_ray);
+        cur_selected_entity = entities2.checkRayIntersection(current_ray);
         console.log(cur_selected_entity);
     });
     canvas.addEventListener("mousemove", (e) => {
@@ -91,50 +93,48 @@ function main() {
 
 
     //
-    // Buffer Initialization
-    const cube_vbo = glUtil.createStaticVertexBuffer(gl, cube_vertices);
-    const cube_ebo = glUtil.createStaticIndexBuffer(gl, cube_indices);
-    const cube_vao = glUtil.createVertexElementVAO(
-        gl, cube_vbo, cube_ebo, pos_attrib, clr_attrib);
-
+    // Graph Init
     const graph_vbo = glUtil.createStaticVertexBuffer(gl, graph.vertices);
     const graph_vao = glUtil.createVertexVao(
         gl, graph_vbo, pos_attrib, clr_attrib);
-
-    const floor_vbo = glUtil.createStaticVertexBuffer(gl, floor.vertices);
-    const floor_ebo = glUtil.createStaticIndexBuffer(gl, floor.indices);
-    const floor_vao = glUtil.createVertexElementVAO(
-        gl, floor_vbo, floor_ebo, pos_attrib, clr_attrib);
 
 
 
     //
     // Test Object class 2
     const apple_mesh = parsePLY(apple_ply);
+    const cube_mesh2 = parsePLY(cube_ply);
 
     const meshes = new Meshes(gl, pos_attrib, clr_attrib);
     meshes.addMesh("cube", cube_mesh);
     meshes.addMesh("floor", floor_mesh);
     meshes.addMesh("apple", apple_mesh);
-    console.log(meshes);
+    meshes.addMesh("cube2", cube_mesh2);
 
+    const cube_entity = new Object2([0,0,0], [1,1,1], [0,1,0], 45, 
+        cube_mesh, meshes.getMesh("cube").vao);
 
-    const apple_entity = new Object2();
-    apple_entity.assignMesh(apple_mesh);
-    apple_entity.assignVao(meshes.getMesh("apple").vao);
-    /* apple_entity.createVao(gl, pos_attrib, clr_attrib); */
-    apple_entity.transform(undefined, [5,5,5]);
-    apple_entity.getLocaltoWorldAABBVertices();
-    apple_entity.getWorldAABB();
-    apple_entity.getAABBCorners();
-    apple_entity.generateAABBVertexColors([0.4, 1.0, 0.2]);
-    apple_entity.createAABBVao(gl, pos_attrib, clr_attrib);
+    const cube2_entity = new Object2([0,0,0], [1,1,1], [0,1,0], 0,
+        cube_mesh2, meshes.getMesh("cube2").vao);
+
+    const floor_entity = new Object2([0,0,0], [1,1,1], [0,1,0], 0,
+        floor_mesh, meshes.getMesh("floor").vao);
+
+    const apple_entity = new Object2([2,0,0], [5,5,5], [0,1,0], 0,
+        apple_mesh, meshes.getMesh("apple").vao);
+
+    entities2.addEntity(apple_entity);
+    entities2.addEntity(cube_entity);
+    entities2.addEntity(cube2_entity);
+    entities2.addEntity(floor_entity);
+    entities2.setupEntitiesAABB(gl, pos_attrib, clr_attrib, [0.4, 1.0, 0.2]);
+
 
 
     //
     // Create matrices
     const UP_VECTOR = [0, 1, 0];
-    const CAM_POS = [0, 5, 6];
+    const CAM_POS = [0, 3, 10];
     const CAM_DIR = vec3.subtract([], CAM_POS, [0,0,0]);
     global_cam_pos = CAM_POS;     // global variable
     current_ray.origin = CAM_POS; // global variable
@@ -155,20 +155,10 @@ function main() {
     gl.useProgram(program);
 
     //
-    // Create Entities
-    entities.addEntity(new Cube([0, 0, 0], 1, UP_VECTOR, 45, cube_vao));
-    entities.addEntity(new Cube([2, 0, 0], 1.5, UP_VECTOR, 45, cube_vao));
-    entities.addEntity(new Cube([3, 0, 3], 1, UP_VECTOR, 45, cube_vao));
-    entities.createEntitiesAABBVao(gl, pos_attrib, clr_attrib);
-
-    entities.addEntity(apple_entity);
-
-    //
     // Setup Uniforms
     gl.uniformMatrix4fv(proj_uniform, gl.FALSE, proj);
 
-    let TEMP_current_pos = 0;
-    let TEMP_cube_to_move
+
     const frame = function (should_loop) {
         mat4.lookAt(view, CAM_POS, vec3.subtract([], CAM_POS, CAM_DIR), UP_VECTOR);
         gl.uniformMatrix4fv(view_uniform, gl.FALSE, view);
@@ -176,11 +166,6 @@ function main() {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         gl.uniformMatrix4fv(model_uniform, false, model);
-
-        // draw floor
-        gl.bindVertexArray(floor_vao);
-        gl.drawElements(gl.TRIANGLES, floor.indices.length, gl.UNSIGNED_SHORT, 0);
-        gl.bindVertexArray(null);
 
         // draw axis
         gl.disable(gl.DEPTH_TEST);
@@ -190,17 +175,8 @@ function main() {
         gl.drawArrays(gl.LINES,  graph.vertices.length / 6 - 10, 10);
         gl.bindVertexArray(null);
 
-        // draw entities
-        entities.drawEntities(gl, model_uniform);
-        entities.drawEntitiesAABB(gl, model_uniform);
-
-
-        // draw test import  
-       /*  gl.bindVertexArray(apple_vao);
-        gl.drawElements(gl.TRIANGLES, apple_mesh.indices.length, gl.UNSIGNED_SHORT, 0);
-        gl.bindVertexArray(null); */
-        /* apple_entity.draw(gl, model_uniform);
-        apple_entity.drawAABB(gl, model_uniform); */
+        entities2.drawEntities(gl, model_uniform);
+        entities2.drawEntitiesAABB(gl, model_uniform);
 
         if (should_loop) requestAnimationFrame(frame);
     }

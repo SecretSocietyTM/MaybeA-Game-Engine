@@ -14,14 +14,18 @@ const AABB_INDICES = [
 // TODO: replace for entities.
 // This is a stand in class for figuring out how to get AABB on imported models
 export default class Object2 {
-    constructor() {
-        // TODO: REMOVE
-        this.model_matrix = mat4.create();
-
-        // TODO: would probably want to define more things here, or perhaps
-        // introduce a function that enables the mesh
-        // so if aabb_mesh == null, do nothing else show AABB
+    constructor(pos = [0, 0, 0], 
+              scale = [1, 1, 1], 
+              rotation_axis = [0, 1, 0], 
+              rotation_angle = 0,
+              mesh, vao) {
+        this.assignMesh(mesh);
+        console.log(mesh);
+        this.assignVao(vao);
+        
         this.aabb_mesh = {};
+        this.model_matrix = mat4.create();
+        this.transform(pos, scale, rotation_axis, rotation_angle);
     }
 
     // Draw related functions
@@ -64,7 +68,7 @@ export default class Object2 {
 
 
     // Other functions
-    transform(pos = [0,0,0], 
+    transform(pos = [0, 0, 0], 
               scale = [1, 1, 1], 
               rotation_axis = [0, 1, 0], 
               rotation_angle = 0) {
@@ -93,7 +97,7 @@ export default class Object2 {
     getLocaltoWorldAABBVertices() {
         if (mat4.exactEquals(this.model_matrix, mat4.create())) {
             console.log("model matrix is identity, early return");
-            return;
+            this.world_vertices = this.mesh.vertices;
         }
         
         const world_vertices = [];
@@ -106,7 +110,7 @@ export default class Object2 {
                 this.model_matrix);
             world_vertices.push(...world_vertex);
         }
-        /* console.log("Local to World vertices", world_vertices); */
+        console.log("Local to World vertices", world_vertices);
         this.world_vertices = world_vertices;
     }
 
@@ -192,7 +196,7 @@ export default class Object2 {
         ];
 
         // center the vertices as if at 0,0,0 to translate them..
-        for (let i = 0; i < aabb_vertices.length; i+=6) {
+        for (let i = 0; i < aabb_vertices.length; i+=3) {
             let aabb_vertex = vec3.transformMat4([], 
                 [aabb_vertices[i],
                 aabb_vertices[i+1],
