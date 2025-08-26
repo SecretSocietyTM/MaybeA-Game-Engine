@@ -28,21 +28,6 @@ let cur_selected_entity = null;
 
 const entities = new Entity();
 
-// TODOs
-/* 
-LEARN
-- How to change vertex colors for selecting like OGL.
-- Import models
-
-- Write code for importing actual models (reuse code from ShidE Graphics Engine)
--Customizable AABB so that I don't have to write fixed one...
- Would require interactable GIZMOS...
--Design and import a ROUTER model
-- Learn how to map textures??
-- Maybe add lighting??
-- Add direct ray thing (instead of ray stemming from cam)
- */
-
 function main() {
     const canvas = document.getElementById("canvas");
 

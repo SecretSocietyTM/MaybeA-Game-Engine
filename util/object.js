@@ -223,7 +223,7 @@ export default class Object2 {
 
     updatePos(pos) {
         this.pos = pos;
-        this.transform2(pos);
+        this.transform2();
         this.getLocaltoWorldAABBVertices();
         this.getWorldAABB();
         this.getAABBCorners();
