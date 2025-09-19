@@ -134,7 +134,7 @@ function main() {
     //
     // Create matrices
     const UP_VECTOR = [0, 1, 0];
-    const CAM_POS = [0, 3, 10];
+    const CAM_POS = [5, 0.2, 10];
     const CAM_DIR = vec3.subtract([], CAM_POS, [0,0,0]);
     global_cam_pos = CAM_POS;     // global variable
     current_ray.origin = CAM_POS; // global variable
@@ -142,10 +142,7 @@ function main() {
     let view = mat4.create();
     let proj = mat4.create();
 
-    // get direction of camera = campos - target
-    // normalize
     mat4.perspective(proj, glm.glMatrix.toRadian(45), WIDTH / HEIGHT, 0.1, 1000);
-
     view_matrix = view; // global variable
     proj_matrix = proj; // global variable
 

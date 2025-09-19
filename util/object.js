@@ -20,7 +20,7 @@ export default class Object2 {
               rotation_angle = 0,
               mesh, vao) {
         this.assignMesh(mesh);
-        console.log(mesh);
+
         this.assignVao(vao);
         
         this.aabb_mesh = {};
