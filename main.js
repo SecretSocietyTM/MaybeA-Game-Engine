@@ -35,9 +35,8 @@ let cur_selected_entity = null;
 const entities = new Entities();
 
 // init camera variables
-let UP_VECTOR = [0, 1, 0];
-let CAM_POS = [0, 3, 10];
-console.log(CAM_POS);
+let CAM_UP = [0, 1, 0];
+let CAM_POS = [10, 3, 0];
 let CAM_TARGET = [0, 0, 0];
 let CAM_DIR = vec3.subtract([], CAM_POS, CAM_TARGET);
 
@@ -47,14 +46,14 @@ current_ray.origin = CAM_POS; // global variable
 
 // camera pan variables
 let pan_camera = false;
-
-// new camera pan variables
 let cur_x;
 let prev_x;
 
 let cur_y;
 let prev_y;
 
+// camera orbit variables
+let orbit_camera = false;
 
 function main() {
     const canvas = document.getElementById("canvas");
@@ -69,16 +68,22 @@ function main() {
             const rect = canvas.getBoundingClientRect();
             cur_x = e.clientX - rect.left;
             cur_y = e.clientY - rect.top;
+        } else if (e.button === 1) {
+            orbit_camera = true;
+            const rect = canvas.getBoundingClientRect();
+            cur_x = e.clientX - rect.left;
+            cur_y = e.clientY - rect.top;
         }
     });
     canvas.addEventListener("mouseup", (e) => {
         if (e.button === 1 || e.shiftKey) {
             pan_camera = false;
+            orbit_camera = false;
         }
     });
     canvas.addEventListener("mousemove", (e) => {
         if (!pan_camera) return;
-        panCamera2(e);
+        panCamera(e);
     });
 
     canvas.addEventListener("click", (e) => {
@@ -180,7 +185,7 @@ function main() {
 
 
     const frame = function (should_loop) {
-        mat4.lookAt(view, CAM_POS, vec3.subtract([], CAM_POS, CAM_DIR), UP_VECTOR);
+        mat4.lookAt(view, CAM_POS, vec3.subtract([], CAM_POS, CAM_DIR), CAM_UP);
         gl.uniformMatrix4fv(view_uniform, gl.FALSE, view);
 
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -248,7 +253,13 @@ function calculatePlaneIntersectionPoint(dir) {
     return p;
 }
 
-function panCamera2(e) {
+function orbitCamera(e) {
+    const rect = canvas.getBoundingClientRect();
+    prev_x = cur_x;
+    prev_y = cur_y;
+}
+
+function panCamera(e) {
     const rect = canvas.getBoundingClientRect();
     prev_x = cur_x;
     prev_y = cur_y;
@@ -256,18 +267,18 @@ function panCamera2(e) {
     cur_x = e.clientX - rect.left;
     cur_y = e.clientY - rect.top;
 
-    let sens = 0.02;
+    let sens = 0.1;
     let x_sign = 1;
-    let y_sign = -1;
+    let y_sign = 1;
 
     if (prev_x < cur_x) x_sign = 1;
     else if (prev_x > cur_x) x_sign = -1;
     else x_sign = 0;
 
-    if (prev_y < cur_y) y_sign = -1;
-    else if (prev_y > cur_y) y_sign = 1;
+    if (prev_y < cur_y) y_sign = 1;
+    else if (prev_y > cur_y) y_sign = -1;
     else y_sign = 0;
 
-    CAM_POS[0] -= 1 * sens * x_sign;
-    CAM_POS[1] -= 1 * sens * y_sign;
+    vec3.add(CAM_POS, CAM_POS, vec3.scale([], vec3.normalize([], vec3.cross([], CAM_DIR, CAM_UP)), 1 * sens * x_sign));
+    vec3.add(CAM_POS, CAM_POS, vec3.scale([], vec3.normalize([], CAM_UP), 1 * sens * y_sign));
 }
