@@ -81,6 +81,5 @@ export function parsePLY(ply) {
         cur = buf[i];
     }
 
-    console.log(mesh);
     return mesh;
 }

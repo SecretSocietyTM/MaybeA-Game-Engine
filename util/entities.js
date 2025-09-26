@@ -1,6 +1,3 @@
-import glUtil from "./gl_utils.js";
-
-// TODO: rename to Entities?
 export default class Entities {
     constructor() {
         this.entities = [];
@@ -13,7 +10,7 @@ export default class Entities {
     checkRayIntersection(ray) {
         // TODO: because new entities are PUSHED, selecting an entity inside another entity, which should result in selecting the outermost entity, results in selecting the innermost one. To fix this, dont immediately return the first entity hit, instead return its distance t, and compare against other results.
         for (const entity of this.entities) {
-            if (entity.isIntersecting(ray)) return entity;
+            if (entity.isIntersecting(ray) && entity.is_selectable) return entity;
         }
         return null;
     }
@@ -26,9 +23,9 @@ export default class Entities {
 
     setupEntitiesAABB(gl, pos_attrib, clr_attrib, color) {
         this.entities.forEach(entity => {
-            entity.getLocaltoWorldAABBVertices();
+            entity.convertVerticesLocalToWorld();
             entity.getWorldAABB();
-            entity.getAABBCorners();
+            entity.getAABBVertices();
             entity.generateAABBVertexColors(color);
             entity.createAABBVao(gl, pos_attrib, clr_attrib);
         })
@@ -36,7 +33,9 @@ export default class Entities {
 
     drawEntitiesAABB(gl, model_uniform) {
         this.entities.forEach(entity => {
-            entity.drawAABB(gl, model_uniform);
+            if (entity.show_aabb) {
+                entity.drawAABB(gl, model_uniform);
+            }
         });
     }
 }

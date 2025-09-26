@@ -11,16 +11,17 @@ const AABB_INDICES = [
     4,5,  4,6,  7,6,  7,5  // back
 ]
 
-// TODO: replace for entities.
-// This is a stand in class for figuring out how to get AABB on imported models
-export default class Object2 {
+export default class Object {
     constructor(pos = [0, 0, 0], 
               scale = [1, 1, 1], 
               rotation_axis = [0, 1, 0], 
               rotation_angle = 0,
               mesh, vao) {
-        this.assignMesh(mesh);
+        
+        this.is_selectable = true;
+        this.show_aabb = true;
 
+        this.assignMesh(mesh);
         this.assignVao(vao);
         
         this.aabb_mesh = {};
@@ -92,11 +93,8 @@ export default class Object2 {
         this.model_matrix = model_matrix;
     }
 
-    // TODO: rename convertVerticesLocalToWorld as this takes ALL the vertices and 
-    // transforms them.
-    getLocaltoWorldAABBVertices() {
+    convertVerticesLocalToWorld() {
         if (mat4.exactEquals(this.model_matrix, mat4.create())) {
-            console.log("model matrix is identity, early return");
             this.world_vertices = this.mesh.vertices;
         }
         
@@ -110,7 +108,6 @@ export default class Object2 {
                 this.model_matrix);
             world_vertices.push(...world_vertex);
         }
-        console.log("Local to World vertices", world_vertices);
         this.world_vertices = world_vertices;
     }
 
@@ -137,7 +134,6 @@ export default class Object2 {
             min: [min_x, min_y, min_z]
         };
 
-        /* console.log("AABB", aabb); */
         this.aabb = aabb;
     }
 
@@ -179,8 +175,7 @@ export default class Object2 {
         return true;
     }
 
-    // TODO: rename getAABBVertices (this quite literally returns the vertices of the AA BOX!)
-    getAABBCorners() {
+    getAABBVertices() {
         let translation = mat4.translate([], mat4.create(), this.pos);
         let inverse_translation = mat4.invert([], translation);
 
@@ -207,7 +202,6 @@ export default class Object2 {
             aabb_vertices[i+2] = aabb_vertex[2];
         }
         
-        /* console.log("AABB vertices", aabb_vertices); */
         this.aabb_mesh.vertices = aabb_vertices;
     }
 
@@ -218,15 +212,14 @@ export default class Object2 {
             aabb_vertex_colors.push(...color);
         }
 
-        /* console.log("AABB vertex colors", aabb_vertex_colors); */
         this.aabb_mesh.vertex_colors = aabb_vertex_colors;
     }
 
     updatePos(pos) {
         this.pos = pos;
         this.transform2();
-        this.getLocaltoWorldAABBVertices();
+        this.convertVerticesLocalToWorld();
         this.getWorldAABB();
-        this.getAABBCorners();
+        this.getAABBVertices();
     }
 }

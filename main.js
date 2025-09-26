@@ -6,10 +6,8 @@ const mat4 = glm.mat4;
 
 import glUtil from "./util/gl_utils.js";
 import Meshes from "./util/meshes.js";
-import Object2 from "./util/object.js";
-import Entity from "./util/Entity.js";
-import Entities from "./util/entities2.js";
-import { Cube, cube_vertices, cube_indices } from "./util/cube.js";
+import Object from "./util/object.js";
+import Entities from "./util/entities.js";
 
 // meshes
 import graph from "./util/buffer_data/graph.js";
@@ -18,50 +16,78 @@ import cube from "./util/buffer_data/cube.js";
 const floor_mesh = floor;
 const cube_mesh = cube;
 
-import vsSrc from "../shaders/vertexshader.js";
-import fsSrc from "../shaders/fragmentshader.js";
-
-
 import apple_ply from "./mimp/models/apple_ply.js";
 import cube_ply from "./mimp/models/cube_ply.js";
 import { parsePLY } from "./mimp/parse_ply.js";
+
+
+import vsSrc from "../shaders/vertexshader.js";
+import fsSrc from "../shaders/fragmentshader.js";
 
 const WIDTH = 800;
 const HEIGHT = 600;
 
 let view_matrix = null;
 let proj_matrix = null;
-let current_ray = {};
 
-let global_cam_pos = null;
 let cur_selected_entity = null;
 
-const entities = new Entity();
-const entities2 = new Entities();
+const entities = new Entities();
+
+// init camera variables
+let UP_VECTOR = [0, 1, 0];
+let CAM_POS = [0, 3, 10];
+console.log(CAM_POS);
+let CAM_TARGET = [0, 0, 0];
+let CAM_DIR = vec3.subtract([], CAM_POS, CAM_TARGET);
+
+// ray casting varaibles
+let current_ray = {};
+current_ray.origin = CAM_POS; // global variable
+
+// camera pan variables
+let pan_camera = false;
+
+// new camera pan variables
+let cur_x;
+let prev_x;
+
+let cur_y;
+let prev_y;
+
 
 function main() {
     const canvas = document.getElementById("canvas");
 
     //
     // Event Listeners
-    document.addEventListener("keydown", (e) => {
-        if (e.key === "w") {
-            vec3.add(CAM_POS, CAM_POS, [0, 0, -0.25]);
-        } else if (e.key === "s") {
-            vec3.add(CAM_POS, CAM_POS, [0, 0, 0.25]);
-        } else if (e.key === "a") {
-            vec3.add(CAM_POS, CAM_POS, [-0.25, 0, 0]);
-        } else if (e.key === "d") {
-            vec3.add(CAM_POS, CAM_POS, [0.25, 0, 0]);
+
+    // pan camera events
+    canvas.addEventListener("mousedown", (e) => {
+        if (e.button === 1 && e.shiftKey) {
+            pan_camera = true;
+            const rect = canvas.getBoundingClientRect();
+            cur_x = e.clientX - rect.left;
+            cur_y = e.clientY - rect.top;
         }
-    })
+    });
+    canvas.addEventListener("mouseup", (e) => {
+        if (e.button === 1 || e.shiftKey) {
+            pan_camera = false;
+        }
+    });
+    canvas.addEventListener("mousemove", (e) => {
+        if (!pan_camera) return;
+        panCamera2(e);
+    });
+
     canvas.addEventListener("click", (e) => {
         if (cur_selected_entity) {
             cur_selected_entity = null;
             return;
         }
         current_ray.dir = generateRayDir(e);
-        cur_selected_entity = entities2.checkRayIntersection(current_ray);
+        cur_selected_entity = entities.checkRayIntersection(current_ray);
         console.log(cur_selected_entity);
     });
     canvas.addEventListener("mousemove", (e) => {
@@ -98,10 +124,8 @@ function main() {
     const graph_vao = glUtil.createVertexVao(
         gl, graph_vbo, pos_attrib, clr_attrib);
 
-
-
     //
-    // Test Object class 2
+    // Mesh Init
     const apple_mesh = parsePLY(apple_ply);
     const cube_mesh2 = parsePLY(cube_ply);
 
@@ -111,33 +135,32 @@ function main() {
     meshes.addMesh("apple", apple_mesh);
     meshes.addMesh("cube2", cube_mesh2);
 
-    const cube_entity = new Object2([0,0,0], [1,1,1], [0,1,0], 45, 
+    //
+    // Object Init
+    const cube_entity = new Object([0,0,0], [1,1,1], [0,1,0], 45, 
         cube_mesh, meshes.getMesh("cube").vao);
 
-    const cube2_entity = new Object2([0,0,0], [1,1,1], [0,1,0], 0,
+    const cube2_entity = new Object([0,0,0], [1,1,1], [0,1,0], 0,
         cube_mesh2, meshes.getMesh("cube2").vao);
 
-    const floor_entity = new Object2([0,0,0], [1,1,1], [0,1,0], 0,
+    const floor_entity = new Object([0,0,0], [1,1,1], [0,1,0], 0,
         floor_mesh, meshes.getMesh("floor").vao);
+    floor_entity.is_selectable = false;
+    floor_entity.show_aabb = false;
 
-    const apple_entity = new Object2([2,0,0], [5,5,5], [0,1,0], 0,
+    const apple_entity = new Object([2,0,0], [5,5,5], [0,1,0], 0,
         apple_mesh, meshes.getMesh("apple").vao);
 
-    entities2.addEntity(apple_entity);
-    entities2.addEntity(cube_entity);
-    entities2.addEntity(cube2_entity);
-    entities2.addEntity(floor_entity);
-    entities2.setupEntitiesAABB(gl, pos_attrib, clr_attrib, [0.4, 1.0, 0.2]);
+    entities.addEntity(apple_entity);
+    entities.addEntity(cube_entity);
+    entities.addEntity(cube2_entity);
+    entities.addEntity(floor_entity);
+    entities.setupEntitiesAABB(gl, pos_attrib, clr_attrib, [0.4, 1.0, 0.2]);
 
 
 
     //
     // Create matrices
-    const UP_VECTOR = [0, 1, 0];
-    const CAM_POS = [5, 0.2, 10];
-    const CAM_DIR = vec3.subtract([], CAM_POS, [0,0,0]);
-    global_cam_pos = CAM_POS;     // global variable
-    current_ray.origin = CAM_POS; // global variable
     let model = mat4.create();
     let view = mat4.create();
     let proj = mat4.create();
@@ -172,8 +195,8 @@ function main() {
         gl.drawArrays(gl.LINES,  graph.vertices.length / 6 - 10, 10);
         gl.bindVertexArray(null);
 
-        entities2.drawEntities(gl, model_uniform);
-        entities2.drawEntitiesAABB(gl, model_uniform);
+        entities.drawEntities(gl, model_uniform);
+        entities.drawEntitiesAABB(gl, model_uniform);
 
         if (should_loop) requestAnimationFrame(frame);
     }
@@ -211,7 +234,7 @@ function calculatePlaneIntersectionPoint(dir) {
     let p0 = [0, -0.5, 0]; // aribitrary point ON the plane
     let d = -vec3.dot(n, p0);
 
-    let numerator = vec3.dot(global_cam_pos, n) + d;
+    let numerator = vec3.dot(CAM_POS, n) + d;
     let denominator = vec3.dot(dir, n);
     if (denominator === 0) { // ray missed plane
         console.log("ray missed plane");
@@ -220,7 +243,31 @@ function calculatePlaneIntersectionPoint(dir) {
     let t = -(numerator / denominator);
     
     // point on plane given our vector
-    let p = vec3.scaleAndAdd([], global_cam_pos, dir, t);
+    let p = vec3.scaleAndAdd([], CAM_POS, dir, t);
 
     return p;
+}
+
+function panCamera2(e) {
+    const rect = canvas.getBoundingClientRect();
+    prev_x = cur_x;
+    prev_y = cur_y;
+
+    cur_x = e.clientX - rect.left;
+    cur_y = e.clientY - rect.top;
+
+    let sens = 0.02;
+    let x_sign = 1;
+    let y_sign = -1;
+
+    if (prev_x < cur_x) x_sign = 1;
+    else if (prev_x > cur_x) x_sign = -1;
+    else x_sign = 0;
+
+    if (prev_y < cur_y) y_sign = -1;
+    else if (prev_y > cur_y) y_sign = 1;
+    else y_sign = 0;
+
+    CAM_POS[0] -= 1 * sens * x_sign;
+    CAM_POS[1] -= 1 * sens * y_sign;
 }
