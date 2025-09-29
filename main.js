@@ -34,11 +34,19 @@ let cur_selected_entity = null;
 
 const entities = new Entities();
 
+//
+// Create matrices
+let model = mat4.create();
+let view = mat4.create();
+let proj = mat4.create();
+
 // init camera variables
-let CAM_UP = [0, 1, 0];
-let CAM_POS = [10, 3, 0];
+// TODO: set init cam POS to be at 0, 3, 10 using the correct pitch and yaw values
+let CAM_POS = [0, 0, 10];
 let CAM_TARGET = [0, 0, 0];
-let CAM_DIR = vec3.subtract([], CAM_POS, CAM_TARGET);
+let CAM_UP = [0, 1, 0];
+let CAM_DIR = vec3.normalize([], vec3.subtract([], CAM_POS, CAM_TARGET));
+let CAM_RIGHT = vec3.normalize([], vec3.cross([], CAM_UP, CAM_DIR));
 
 // ray casting varaibles
 let current_ray = {};
@@ -54,6 +62,12 @@ let prev_y;
 
 // camera orbit variables
 let orbit_camera = false;
+let yaw = 90;
+let pitch = 0;
+let CAM_UP_FLIPPED = false;
+
+// cam zoom variables
+let zoom = 10;
 
 function main() {
     const canvas = document.getElementById("canvas");
@@ -82,8 +96,8 @@ function main() {
         }
     });
     canvas.addEventListener("mousemove", (e) => {
-        if (!pan_camera) return;
-        panCamera(e);
+        if (pan_camera) panCamera(e);
+        if (orbit_camera) orbitCamera(e);
     });
 
     canvas.addEventListener("click", (e) => {
@@ -161,14 +175,6 @@ function main() {
     entities.addEntity(cube2_entity);
     entities.addEntity(floor_entity);
     entities.setupEntitiesAABB(gl, pos_attrib, clr_attrib, [0.4, 1.0, 0.2]);
-
-
-
-    //
-    // Create matrices
-    let model = mat4.create();
-    let view = mat4.create();
-    let proj = mat4.create();
 
     mat4.perspective(proj, glm.glMatrix.toRadian(45), WIDTH / HEIGHT, 0.1, 1000);
     view_matrix = view; // global variable
@@ -253,10 +259,40 @@ function calculatePlaneIntersectionPoint(dir) {
     return p;
 }
 
+// TODO: fix. Very buggy, sometimes it will flip correctly, other times it doesnt.
+// Also when hitting 90 degrees there is a single frame in which the objects are flipped
 function orbitCamera(e) {
     const rect = canvas.getBoundingClientRect();
     prev_x = cur_x;
     prev_y = cur_y;
+
+    cur_x = e.clientX - rect.left;
+    cur_y = e.clientY - rect.top;
+
+    let sens = 1;
+    let x_sign = 1;
+    let y_sign = 1;
+
+    if (prev_x < cur_x) x_sign = 1;
+    else if (prev_x > cur_x) x_sign = -1;
+    else x_sign = 0;
+
+    if (prev_y < cur_y) y_sign = 1;
+    else if (prev_y > cur_y) y_sign = -1;
+    else y_sign = 0;
+
+    yaw += 1 * sens * x_sign;
+    pitch += 1 * sens * y_sign;
+
+    CAM_POS[0] = CAM_TARGET[0] + Math.cos(glm.glMatrix.toRadian(yaw)) * Math.cos(glm.glMatrix.toRadian(pitch)) * zoom;
+    CAM_POS[1] = CAM_TARGET[1] + Math.sin(glm.glMatrix.toRadian(pitch)) * zoom;
+    CAM_POS[2] = CAM_TARGET[2] + Math.sin(glm.glMatrix.toRadian(yaw)) * Math.cos(glm.glMatrix.toRadian(pitch)) * zoom;
+
+    CAM_DIR = vec3.normalize([], vec3.subtract([], CAM_POS, CAM_TARGET));
+    CAM_RIGHT = vec3.normalize([], vec3.cross([], CAM_UP, CAM_DIR));
+    if (Math.abs(pitch) % 180 === 90) {
+        vec3.negate(CAM_UP, CAM_UP);
+    }
 }
 
 function panCamera(e) {
@@ -279,6 +315,24 @@ function panCamera(e) {
     else if (prev_y > cur_y) y_sign = -1;
     else y_sign = 0;
 
-    vec3.add(CAM_POS, CAM_POS, vec3.scale([], vec3.normalize([], vec3.cross([], CAM_DIR, CAM_UP)), 1 * sens * x_sign));
-    vec3.add(CAM_POS, CAM_POS, vec3.scale([], vec3.normalize([], CAM_UP), 1 * sens * y_sign));
+    CAM_POS = vec3.add([], CAM_POS, vec3.scale([], vec3.normalize([], CAM_RIGHT), 1 * sens * x_sign));
+    CAM_POS = vec3.add([], CAM_POS, vec3.scale([], vec3.normalize([], CAM_UP), 1 * sens * y_sign));
+    
+    CAM_TARGET = vec3.add([], CAM_POS, vec3.scale([], CAM_DIR, -zoom));
 }
+
+
+
+
+
+// RANDOM HELPER FUNCTIONS
+function printMatrix(m) {
+    console.log(
+        `|${m[0]} ${m[1]} ${m[2]} ${m[3]}|\n` + 
+        `|${m[4]} ${m[5]} ${m[6]} ${m[7]}|\n` + 
+        `|${m[8]} ${m[9]} ${m[10]} ${m[11]}|\n` + 
+        `|${m[12]} ${m[13]} ${m[14]} ${m[15]}|`
+    );
+}
+
+console.log(vec3.cross([], [0,1,0], [0,1,0]));
