@@ -64,7 +64,6 @@ let prev_y;
 let orbit_camera = false;
 let yaw = 90;
 let pitch = 0;
-let CAM_UP_FLIPPED = false;
 
 // cam zoom variables
 let zoom = 10;
@@ -98,6 +97,10 @@ function main() {
     canvas.addEventListener("mousemove", (e) => {
         if (pan_camera) panCamera(e);
         if (orbit_camera) orbitCamera(e);
+        if (!cur_selected_entity) return;
+        current_ray.dir = generateRayDir(e);
+        const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
+        cur_selected_entity.updatePos([new_pos[0], 0, new_pos[2]]);
     });
 
     canvas.addEventListener("click", (e) => {
@@ -108,12 +111,6 @@ function main() {
         current_ray.dir = generateRayDir(e);
         cur_selected_entity = entities.checkRayIntersection(current_ray);
         console.log(cur_selected_entity);
-    });
-    canvas.addEventListener("mousemove", (e) => {
-        if (!cur_selected_entity) return;
-        current_ray.dir = generateRayDir(e);
-        const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
-        cur_selected_entity.updatePos([new_pos[0], 0, new_pos[2]]);
     });
 
     //
@@ -287,6 +284,7 @@ function orbitCamera(e) {
     CAM_POS[0] = CAM_TARGET[0] + Math.cos(glm.glMatrix.toRadian(yaw)) * Math.cos(glm.glMatrix.toRadian(pitch)) * zoom;
     CAM_POS[1] = CAM_TARGET[1] + Math.sin(glm.glMatrix.toRadian(pitch)) * zoom;
     CAM_POS[2] = CAM_TARGET[2] + Math.sin(glm.glMatrix.toRadian(yaw)) * Math.cos(glm.glMatrix.toRadian(pitch)) * zoom;
+    current_ray.origin = CAM_POS;
 
     CAM_DIR = vec3.normalize([], vec3.subtract([], CAM_POS, CAM_TARGET));
     CAM_RIGHT = vec3.normalize([], vec3.cross([], CAM_UP, CAM_DIR));
@@ -315,8 +313,9 @@ function panCamera(e) {
     else if (prev_y > cur_y) y_sign = -1;
     else y_sign = 0;
 
-    CAM_POS = vec3.add([], CAM_POS, vec3.scale([], vec3.normalize([], CAM_RIGHT), 1 * sens * x_sign));
-    CAM_POS = vec3.add([], CAM_POS, vec3.scale([], vec3.normalize([], CAM_UP), 1 * sens * y_sign));
+    CAM_POS = vec3.subtract([], CAM_POS, vec3.scale([], vec3.normalize([], CAM_RIGHT), 1 * sens * x_sign));
+    CAM_POS = vec3.subtract([], CAM_POS, vec3.scale([], vec3.normalize([], CAM_UP), -1 * sens * y_sign));
+    current_ray.origin = CAM_POS;
     
     CAM_TARGET = vec3.add([], CAM_POS, vec3.scale([], CAM_DIR, -zoom));
 }
