@@ -102,7 +102,9 @@ function main() {
         const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
         cur_selected_entity.updatePos([new_pos[0], 0, new_pos[2]]);
     });
-
+    canvas.addEventListener("wheel", (e) => {
+        zoomCamera(e);
+    });
     canvas.addEventListener("click", (e) => {
         if (cur_selected_entity) {
             cur_selected_entity = null;
@@ -318,6 +320,16 @@ function panCamera(e) {
     current_ray.origin = CAM_POS;
     
     CAM_TARGET = vec3.add([], CAM_POS, vec3.scale([], CAM_DIR, -zoom));
+}
+
+function zoomCamera(e) {
+    if (e.deltaY > 0) {
+        zoom++;
+        CAM_POS = vec3.add([], CAM_POS, vec3.normalize([], CAM_DIR));
+    } else {
+        CAM_POS = vec3.subtract([], CAM_POS, vec3.normalize([], CAM_DIR));
+        zoom--;
+    }
 }
 
 
