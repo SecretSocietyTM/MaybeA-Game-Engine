@@ -295,6 +295,9 @@ function orbitCamera(e) {
     }
 }
 
+// TODO: because the CAM_UP vector is not modified in orbitCamera, panning "up" 
+// will just move the camera up or down depending on the current CAM_UP vector
+// instead of based on what is up or down relative to the screen.
 function panCamera(e) {
     const rect = canvas.getBoundingClientRect();
     prev_x = cur_x;
@@ -331,19 +334,3 @@ function zoomCamera(e) {
         zoom--;
     }
 }
-
-
-
-
-
-// RANDOM HELPER FUNCTIONS
-function printMatrix(m) {
-    console.log(
-        `|${m[0]} ${m[1]} ${m[2]} ${m[3]}|\n` + 
-        `|${m[4]} ${m[5]} ${m[6]} ${m[7]}|\n` + 
-        `|${m[8]} ${m[9]} ${m[10]} ${m[11]}|\n` + 
-        `|${m[12]} ${m[13]} ${m[14]} ${m[15]}|`
-    );
-}
-
-console.log(vec3.cross([], [0,1,0], [0,1,0]));

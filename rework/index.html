@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Engine Test</title>
+    <script src="../util/gl-matrix.js"></script>
+    <script type="module" src="./main.js" defer></script>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+</body>
+</html>
+<style>
+    *, *::before, *::after {
+        box-sizing: border-box;
+    }
+
+    /* remove deafault margin */
+    * {
+        margin: 0;
+        padding: 0;
+    }
+
+    html, body {
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+    }
+
+    body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    canvas {
+        border: solid black 2px;
+    }
+</style>

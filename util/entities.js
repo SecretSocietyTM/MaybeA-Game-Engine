@@ -10,7 +10,9 @@ export default class Entities {
     checkRayIntersection(ray) {
         // TODO: because new entities are PUSHED, selecting an entity inside another entity, which should result in selecting the outermost entity, results in selecting the innermost one. To fix this, dont immediately return the first entity hit, instead return its distance t, and compare against other results.
         for (const entity of this.entities) {
-            if (entity.isIntersecting(ray) && entity.is_selectable) return entity;
+            if (entity.isIntersecting(ray) && entity.is_selectable) {
+                return entity;
+            }
         }
         return null;
     }
