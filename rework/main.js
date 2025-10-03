@@ -12,10 +12,16 @@ import vs_src from "../shaders/vertexshader.js";
 import fs_src from "../shaders/fragmentshader.js";
 
 // mesh
+import { parsePLY } from "../mimp/parse_ply.js";
+import apple_ply from "../mimp/models/apple_ply.js";
+import cube_ply from "../mimp/models/cube_ply.js";
 import cube from "../util/buffer_data/cube.js";
+
+
+// meshes
+const apple_mesh = parsePLY(apple_ply);
+const cube_mesh2 = parsePLY(cube_ply);
 const cube_mesh = cube;
-
-
 
 
 //
@@ -47,7 +53,7 @@ function main() {
     const renderer = new Renderer(canvas);
     renderer.createProgram(vs_src, fs_src);
     renderer.getShaderVariables();
-    renderer.setupRender(WIDTH, HEIGHT, [0.45, 0.55, 0.5, 1.0]);
+    renderer.setupRender(WIDTH, HEIGHT, [0.3, 0.3, 0.3, 1.0]/* [0.45, 0.55, 0.5, 1.0] */);
 
 
     let objects = [];
@@ -56,6 +62,17 @@ function main() {
     cube1.assignMesh(cube_mesh);
     cube1.assignVao(renderer.addObjectVAO(cube_mesh));
     objects.push(cube1);
+
+    const apple1 = new Object([2,0,0], [5,5,5], [0,1,0], 0);
+    apple1.assignMesh(apple_mesh);
+    apple1.assignVao(renderer.addObjectVAO(apple_mesh));
+    objects.push(apple1);
+
+    const cube2 = new Object([0,0,0], [1,1,1], [0,1,0], 0);
+    cube2.assignMesh(cube_mesh2);
+    cube2.assignVao(renderer.addObjectVAO(cube_mesh2));
+    objects.push(cube2);
+
 
     function frame() {
         mat4.lookAt(view, camera.pos, vec3.subtract([], camera.pos, camera.dir), camera.up);
