@@ -19,7 +19,7 @@ export default class Camera {
     // TODO: because the CAM_UP vector is not modified in orbitCamera, panning "up" 
     // will just move the camera up or down depending on the current CAM_UP vector
     // instead of based on what is up or down relative to the screen.
-    pan(dx, dy, sens = 0.025) {
+    pan(dx, dy, sens = 0.05) {
         this.pos = vec3.subtract([], this.pos, vec3.scale([], vec3.normalize([], this.right), dx * sens));
         this.pos = vec3.subtract([], this.pos, vec3.scale([], vec3.normalize([], this.up), dy * sens));
         this.target = vec3.add([], this.pos, vec3.scale([], this.dir, -this.zoom_val));
