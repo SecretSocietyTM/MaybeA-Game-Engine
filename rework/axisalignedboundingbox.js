@@ -1,0 +1,127 @@
+const glm = glMatrix; // shorten math library name,
+const vec3 = glm.vec3;
+const vec4 = glm.vec4;
+const mat4 = glm.mat4;
+
+const AABB_INDICES = [
+    0,1,  0,2,  3,2,  3,1, // front
+    2,6,  3,7,  0,4,  1,5, // left | right
+    4,5,  4,6,  7,6,  7,5  // back
+]
+
+export default class AxisAlignedBoundingBox {
+    constructor(mesh_vertices, model_matrix, object_pos) {
+        this.mesh = {};
+        this.mesh.indices = AABB_INDICES;
+        this.local_vertices = mesh_vertices;
+        this.model_matrix = model_matrix;
+        this.object_pos = object_pos;
+
+        this.aabb_model_matrix = mat4.translate([], mat4.create(), this.object_pos);
+
+        this.convertVerticesLocalToWorld();
+        this.getWorldAABB();
+        this.getAABBVertices();
+    }
+
+    assignVao(vao) {
+        this.vao = vao;
+    }
+
+    /**
+     * if there aren't then the mesh's local vertices are also
+     * the world vertices
+     * otherwise, each vertex needs to be transformed to world space
+     * checks if there are any transformations
+     */
+    convertVerticesLocalToWorld() {
+        if (mat4.exactEquals(this.model_matrix, mat4.create())) {
+            this.world_vertices = this.local_vertices;
+        }
+        
+        const world_vertices = [];
+        for (let i = 0; i < this.local_vertices.length; i+=3) {
+            let world_vertex = vec3.transformMat4(
+                [], 
+                [this.local_vertices[i], 
+                 this.local_vertices[i+1], 
+                 this.local_vertices[i+2]], 
+                 this.model_matrix);
+            world_vertices.push(...world_vertex);
+        }
+        this.world_vertices = world_vertices;
+    }
+
+    // computes the axis aligned bounding box values (min and max values
+    getWorldAABB() {
+        // find the min and max of the new corners
+        let x = [];
+        let y = [];
+        let z = [];
+        for (let i = 0;  i < this.local_vertices.length; i+=3) {
+            x.push(this.world_vertices[i]);
+            y.push(this.world_vertices[i+1]);
+            z.push(this.world_vertices[i+2]);
+        }
+
+        const max_x = Math.max(...x);
+        const min_x = Math.min(...x);
+        const max_y = Math.max(...y);
+        const min_y = Math.min(...y);
+        const max_z = Math.max(...z);
+        const min_z = Math.min(...z);
+
+        let extrema = {
+            max: [max_x, max_y, max_z],
+            min: [min_x, min_y, min_z]
+        };
+
+        this.extrema = extrema;
+    }
+
+    /**
+     * Uses the provided min and max vertices to interpolate 
+     * the vertices needed to complete the cube.
+     * Then the vertices have the inverse of the translation applied.
+     * I forgot exactly why I had to do that. Likely some bug occured where
+     * moving the object wouldn't properly move the AABB
+     */
+    getAABBVertices() {
+        let translation = mat4.translate([], mat4.create(), this.object_pos);
+        let inverse_translation = mat4.invert([], translation);
+
+        let  aabb_vertices = [
+            this.extrema.max[0], this.extrema.max[1], this.extrema.max[2],  // front-top-right
+            this.extrema.max[0], this.extrema.min[1], this.extrema.max[2],  // front-bot-right
+            this.extrema.min[0], this.extrema.max[1], this.extrema.max[2],  // front-top-left
+            this.extrema.min[0], this.extrema.min[1], this.extrema.max[2],  // front-bot-left
+            this.extrema.max[0], this.extrema.max[1], this.extrema.min[2],  // back-top-right
+            this.extrema.max[0], this.extrema.min[1], this.extrema.min[2],  // back-bot-right
+            this.extrema.min[0], this.extrema.max[1], this.extrema.min[2],  // back-top-left
+            this.extrema.min[0], this.extrema.min[1], this.extrema.min[2],  // back-bot-left
+        ];
+
+        // center the vertices as if at 0,0,0 to translate them..
+        for (let i = 0; i < aabb_vertices.length; i+=3) {
+            let aabb_vertex = vec3.transformMat4([], 
+                [aabb_vertices[i],
+                 aabb_vertices[i+1],
+                 aabb_vertices[i+2]], 
+                 inverse_translation);
+            aabb_vertices[i] = aabb_vertex[0];
+            aabb_vertices[i+1] = aabb_vertex[1];
+            aabb_vertices[i+2] = aabb_vertex[2];
+        }
+        
+        this.mesh.vertices = aabb_vertices;
+    }
+
+    // Interleaves an rgb value into the list of vertices for the AABB.
+    setAABBColor(color) {
+        let vertex_colors = new Float32Array(this.mesh.vertices.length * 3);
+        for (let i = 0; i < this.mesh.vertices.length; i++) {
+            vertex_colors.set(color, i * 3);
+        }
+        this.mesh.vertex_colors = vertex_colors;
+    }
+}

@@ -89,6 +89,15 @@ export default class Renderer {
             this.gl.bindVertexArray(object.vao);
             this.gl.drawElements(this.gl.TRIANGLES, object.mesh.indices.length, this.gl.UNSIGNED_SHORT, 0);
             this.gl.bindVertexArray(null);
+
+            if ("aabb" in object) {
+                const aabb = object.aabb;
+                this.gl.uniformMatrix4fv(this.model_uniform, 
+                    this.gl.FALSE, aabb.aabb_model_matrix);
+                this.gl.bindVertexArray(aabb.vao);
+                this.gl.drawElements(this.gl.LINES, aabb.mesh.indices.length, this.gl.UNSIGNED_SHORT, 0);
+                this.gl.bindVertexArray(null);
+            }
         });
     }
 }

@@ -58,20 +58,30 @@ function main() {
 
     let objects = [];
 
-    const cube1 = new Object([0,0,0], [1,1,1], [0,1,0], 0);
+    const cube1 = new Object([0,0,0], [1,1,1], [0,1,0], 45);
     cube1.assignMesh(cube_mesh);
     cube1.assignVao(renderer.addObjectVAO(cube_mesh));
     objects.push(cube1);
+    cube1.generateAABB();
+    cube1.aabb.setAABBColor([0.4, 1.0, 0.2]);
+    cube1.aabb.assignVao(renderer.addObjectVAO(cube1.aabb.mesh));
+
 
     const apple1 = new Object([2,0,0], [5,5,5], [0,1,0], 0);
     apple1.assignMesh(apple_mesh);
     apple1.assignVao(renderer.addObjectVAO(apple_mesh));
     objects.push(apple1);
+    apple1.generateAABB();
+    apple1.aabb.setAABBColor([0.4, 1.0, 0.2]);
+    apple1.aabb.assignVao(renderer.addObjectVAO(apple1.aabb.mesh));
 
     const cube2 = new Object([0,0,0], [1,1,1], [0,1,0], 0);
     cube2.assignMesh(cube_mesh2);
     cube2.assignVao(renderer.addObjectVAO(cube_mesh2));
     objects.push(cube2);
+    cube2.generateAABB();
+    cube2.aabb.setAABBColor([0.4, 1.0, 0.2]);
+    cube2.aabb.assignVao(renderer.addObjectVAO(cube2.aabb.mesh));
 
 
     function frame() {

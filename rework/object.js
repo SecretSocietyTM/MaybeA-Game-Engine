@@ -3,6 +3,8 @@ const vec3 = glm.vec3;
 const vec4 = glm.vec4;
 const mat4 = glm.mat4;
 
+import AxisAlignedBoundingBox from "./axisalignedboundingbox.js";
+
 export default class Object {
     constructor(pos = [0, 0, 0],
               scale = [1, 1, 1],
@@ -34,5 +36,13 @@ export default class Object {
         mat4.rotate(this.model_matrix, this.model_matrix, 
             glm.glMatrix.toRadian(rotation_angle), rotation_axis);
         mat4.scale(this.model_matrix, this.model_matrix, scale);
+    }
+
+
+
+    // AABB functions
+    generateAABB() {
+        this.aabb = new AxisAlignedBoundingBox(
+            this.mesh.vertices, this.model_matrix, this.pos);
     }
 }
