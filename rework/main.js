@@ -43,22 +43,27 @@ let pan_camera = false;
 let orbit_camera = false;
 const camera = new Camera([0,0,10], [0,0,0], [0,1,0]);
 
+let cur_selection = null;
+let current_ray = {
+    origin: camera.pos,
+    dir: null
+}
+
+let objects = [];
+
+let view = mat4.create();
+let proj = mat4.create();
+mat4.perspective(proj, glm.glMatrix.toRadian(45), WIDTH / HEIGHT, 0.1, 1000);
+
 
 function main() {
-    let view = mat4.create();
-    let proj = mat4.create();
-    mat4.perspective(proj, glm.glMatrix.toRadian(45), WIDTH / HEIGHT, 0.1, 1000);
-
-
     const renderer = new Renderer(canvas);
     renderer.createProgram(vs_src, fs_src);
     renderer.getShaderVariables();
     renderer.setupRender(WIDTH, HEIGHT, [0.3, 0.3, 0.3, 1.0]/* [0.45, 0.55, 0.5, 1.0] */);
 
 
-    let objects = [];
-
-    const cube1 = new Object([0,0,0], [1,1,1], [0,1,0], 45);
+    const cube1 = new Object("cube", [0,0,0], [1,1,1], [0,1,0], 45);
     cube1.assignMesh(cube_mesh);
     cube1.assignVao(renderer.addObjectVAO(cube_mesh));
     objects.push(cube1);
@@ -67,7 +72,7 @@ function main() {
     cube1.aabb.assignVao(renderer.addObjectVAO(cube1.aabb.mesh));
 
 
-    const apple1 = new Object([2,0,0], [5,5,5], [0,1,0], 0);
+    const apple1 = new Object("apple", [2,0,0], [5,5,5], [0,1,0], 0);
     apple1.assignMesh(apple_mesh);
     apple1.assignVao(renderer.addObjectVAO(apple_mesh));
     objects.push(apple1);
@@ -75,12 +80,12 @@ function main() {
     apple1.aabb.setAABBColor([0.4, 1.0, 0.2]);
     apple1.aabb.assignVao(renderer.addObjectVAO(apple1.aabb.mesh));
 
-    const cube2 = new Object([0,0,0], [1,1,1], [0,1,0], 0);
+    const cube2 = new Object("weird cube", [0,0,0], [1,1,1], [0,1,0], 0);
     cube2.assignMesh(cube_mesh2);
     cube2.assignVao(renderer.addObjectVAO(cube_mesh2));
     objects.push(cube2);
     cube2.generateAABB();
-    cube2.aabb.setAABBColor([0.4, 1.0, 0.2]);
+    cube2.aabb.setAABBColor([0.4, 1.0, 0.2]); // Nice orange color: [1.0, 0.65, 0.0]
     cube2.aabb.assignVao(renderer.addObjectVAO(cube2.aabb.mesh));
 
 
@@ -94,6 +99,22 @@ function main() {
 }
 
 main();
+
+canvas.addEventListener("click", (e) => {
+    if (cur_selection) {
+        cur_selection = null;
+        return;
+    }
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    current_ray.dir = generateRayDir(x, y);
+    for (let i = 0; i < objects.length; i++) {
+        if (objects[i].aabb.isIntersecting(current_ray)) {
+            cur_selection = objects[i];
+            return;
+        }
+    }
+});
 
 canvas.addEventListener("mousedown", (e) => {
     if (e.button === 1 && e.shiftKey) {
@@ -142,3 +163,19 @@ canvas.addEventListener("wheel", (e) => {
 });
 
 
+function generateRayDir(x, y) {
+    const x_ndc = (2 * x) / WIDTH - 1;
+    const y_ndc = 1 - (2 * y) / HEIGHT;
+
+    const ray_clip = [x_ndc, y_ndc, -1.0, 1.0];
+
+    const ray_eye = vec4.transformMat4([], ray_clip, mat4.invert([], proj));
+    ray_eye[2] = -1,
+    ray_eye[3] = 0;
+
+    let ray_world = vec4.transformMat4([], ray_eye, mat4.invert([], view));
+    ray_world = [ray_world[0], ray_world[1], ray_world[2]];
+    vec3.normalize(ray_world, ray_world);
+
+    return ray_world;
+}

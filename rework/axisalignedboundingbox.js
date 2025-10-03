@@ -124,4 +124,42 @@ export default class AxisAlignedBoundingBox {
         }
         this.mesh.vertex_colors = vertex_colors;
     }
+
+    isIntersecting(ray) {
+        let tmin = (this.extrema.min[0] - ray.origin[0]) / ray.dir[0];
+        let tmax = (this.extrema.max[0] - ray.origin[0]) / ray.dir[0];
+
+        if (tmin > tmax) {
+            let temp = tmax;
+            tmax = tmin;
+            tmin = temp;
+        }
+
+        let tymin = (this.extrema.min[1] - ray.origin[1]) / ray.dir[1];
+        let tymax = (this.extrema.max[1] - ray.origin[1]) / ray.dir[1];
+
+        if (tymin > tymax) {
+            let temp = tymax;
+            tymax = tymin;
+            tymin = temp;
+        }
+
+        if ((tmin > tymax) || (tymin > tmax)) return false;
+
+        if (tymin > tmin) tmin = tymin; 
+        if (tymax < tmax) tmax = tymax;
+
+        let tzmin = (this.extrema.min[2] - ray.origin[2]) / ray.dir[2];
+        let tzmax = (this.extrema.max[2] - ray.origin[2]) / ray.dir[2];
+
+        if (tzmin > tzmax) {
+            let temp = tzmax;
+            tzmax = tzmin;
+            tzmin = temp;
+        }
+
+        if ((tmin > tzmax) || (tzmin > tmax)) return false;
+
+        return true;
+    }
 }

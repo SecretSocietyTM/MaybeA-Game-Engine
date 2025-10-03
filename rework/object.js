@@ -6,11 +6,13 @@ const mat4 = glm.mat4;
 import AxisAlignedBoundingBox from "./axisalignedboundingbox.js";
 
 export default class Object {
-    constructor(pos = [0, 0, 0],
+    constructor(name = "object",
+              pos = [0, 0, 0],
               scale = [1, 1, 1],
               rotation_axis = [0, 1, 0],
               rotation_angle = 0) {
 
+        this.name = name;
         this.model_matrix = mat4.create();
         this.transform(pos, scale, rotation_axis, rotation_angle);
     }
