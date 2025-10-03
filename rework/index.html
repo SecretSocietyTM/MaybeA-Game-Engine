@@ -4,37 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Game Engine Test</title>
+    <link rel="stylesheet" href="./style.css">
     <script src="../util/gl-matrix.js"></script>
     <script type="module" src="./main.js" defer></script>
 </head>
 <body>
+    <div id="object_info">
+        <p id="name">Item Name</p>
+        <p>Transform Section</p>
+        <p>Position</p>
+        <p>x = <span id="pos_x">0</span></p>
+        <p>y = <span id="pos_y">0</span></p>
+        <p>z = <span id="pos_z">0</span></p>
+        <p>Rotation</p>
+        <p>x = <span id="rot_x">0</span></p>
+        <p>y = <span id="rot_y">0</span></p>
+        <p>z = <span id="rot_z">0</span></p>
+        <p>Scale</p>
+        <p>x = <span id="scl_x">0</span></p>
+        <p>y = <span id="scl_y">0</span></p>
+        <p>z = <span id="scl_z">0</span></p>
+    </div>
     <canvas id="canvas"></canvas>
 </body>
 </html>
-<style>
-    *, *::before, *::after {
-        box-sizing: border-box;
-    }
-
-    /* remove deafault margin */
-    * {
-        margin: 0;
-        padding: 0;
-    }
-
-    html, body {
-        height: 100%;
-        width: 100%;
-        overflow: hidden;
-    }
-
-    body {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    canvas {
-        border: solid black 2px;
-    }
-</style>

@@ -23,6 +23,16 @@ const apple_mesh = parsePLY(apple_ply);
 const cube_mesh2 = parsePLY(cube_ply);
 const cube_mesh = cube;
 
+//
+// ui elements
+// TODO: Object.freeze({}) normally goes here but Object conflicts with Object
+// need to change my class Name.
+const OBJECT_INFO_UI = {
+    name:  document.getElementById("name"),
+    pos: [document.getElementById("pos_x"), document.getElementById("pos_y"), document.getElementById("pos_z")],
+    rot: [document.getElementById("rot_x"), document.getElementById("rot_y"), document.getElementById("rot_z")],
+    scl: [document.getElementById("scl_x"), document.getElementById("scl_y"), document.getElementById("scl_z")]
+};
 
 //
 // canvas variables
@@ -111,6 +121,18 @@ canvas.addEventListener("click", (e) => {
     for (let i = 0; i < objects.length; i++) {
         if (objects[i].aabb.isIntersecting(current_ray)) {
             cur_selection = objects[i];
+            OBJECT_INFO_UI.name.textContent = cur_selection.name;
+            OBJECT_INFO_UI.pos[0].textContent = Math.round(cur_selection.pos[0] * 100) / 100;
+            OBJECT_INFO_UI.pos[1].textContent = Math.round(cur_selection.pos[1] * 100) / 100;
+            OBJECT_INFO_UI.pos[2].textContent = Math.round(cur_selection.pos[2] * 100) / 100;
+
+            OBJECT_INFO_UI.rot[0].textContent = cur_selection.rotation_axis[0] * cur_selection.rotation_angle;
+            OBJECT_INFO_UI.rot[1].textContent = cur_selection.rotation_axis[1] * cur_selection.rotation_angle;
+            OBJECT_INFO_UI.rot[2].textContent = cur_selection.rotation_axis[2] * cur_selection.rotation_angle;
+
+            OBJECT_INFO_UI.scl[0].textContent = cur_selection.scale[0];
+            OBJECT_INFO_UI.scl[1].textContent = cur_selection.scale[1];
+            OBJECT_INFO_UI.scl[2].textContent = cur_selection.scale[2];
             return;
         }
     }
@@ -163,6 +185,9 @@ canvas.addEventListener("mousemove", (e) => {
         current_ray.dir = generateRayDir(mouse_x, mouse_y);
         const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
         cur_selection.updatePos(new_pos);
+        OBJECT_INFO_UI.pos[0].textContent = Math.round(cur_selection.pos[0] * 100) / 100;
+        OBJECT_INFO_UI.pos[1].textContent = Math.round(cur_selection.pos[1] * 100) / 100;
+        OBJECT_INFO_UI.pos[2].textContent = Math.round(cur_selection.pos[2] * 100) / 100;
         // pass new pos to selected object;
     }
 });
