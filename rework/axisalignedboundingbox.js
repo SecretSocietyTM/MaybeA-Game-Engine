@@ -28,6 +28,14 @@ export default class AxisAlignedBoundingBox {
         this.vao = vao;
     }
 
+    updateAABBPos(object_pos) {
+        this.aabb_model_matrix = mat4.translate([], mat4.create(), object_pos);
+    }
+
+    updateModelMatrix(model_matrix) {
+        this.model_matrix = model_matrix;
+    }
+
     /**
      * if there aren't then the mesh's local vertices are also
      * the world vertices

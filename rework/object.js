@@ -43,11 +43,16 @@ export default class Object {
     updatePos(pos) {
         this.transform(pos, this.scale, 
             this.rotation_axis, this.rotation_angle);
+
+        if ("aabb" in this) {
+            this.aabb.updateAABBPos(this.pos);
+            this.aabb.updateModelMatrix(this.model_matrix);
+            this.aabb.convertVerticesLocalToWorld();
+            this.aabb.getWorldAABB();
+            this.aabb.getAABBVertices();
+        }
     }
 
-
-
-    // AABB functions
     generateAABB() {
         this.aabb = new AxisAlignedBoundingBox(
             this.mesh.vertices, this.model_matrix, this.pos);
