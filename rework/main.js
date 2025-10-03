@@ -105,9 +105,9 @@ canvas.addEventListener("click", (e) => {
         cur_selection = null;
         return;
     }
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    current_ray.dir = generateRayDir(x, y);
+    const mouse_x = e.clientX - rect.left;
+    const mouse_y = e.clientY - rect.top;
+    current_ray.dir = generateRayDir(mouse_x, mouse_y);
     for (let i = 0; i < objects.length; i++) {
         if (objects[i].aabb.isIntersecting(current_ray)) {
             cur_selection = objects[i];
@@ -136,26 +136,35 @@ canvas.addEventListener("mouseup", (e) => {
 });
 
 canvas.addEventListener("mousemove", (e) => {
-    if (!pan_camera && !orbit_camera) return;
-    prev_x = cur_x;
-    prev_y = cur_y;
+    // do x if item is currently selected
+    const mouse_x = e.clientX - rect.left;
+    const mouse_y = e.clientY - rect.top;
+    if (pan_camera || orbit_camera) {
+        prev_x = cur_x;
+        prev_y = cur_y;
 
-    cur_x = e.clientX - rect.left;
-    cur_y = e.clientY - rect.top;
+        cur_x = mouse_x;
+        cur_y = mouse_y;
 
-    let x_sign = 1;
-    let y_sign = 1;
+        let x_sign = 1;
+        let y_sign = 1;
 
-    if (prev_x < cur_x) x_sign = 1;
-    else if (prev_x > cur_x) x_sign = -1;
-    else x_sign = 0;
+        if (prev_x < cur_x) x_sign = 1;
+        else if (prev_x > cur_x) x_sign = -1;
+        else x_sign = 0;
 
-    if (prev_y < cur_y) y_sign = 1;
-    else if (prev_y > cur_y) y_sign = -1;
-    else y_sign = 0;
-    
-    if (pan_camera) camera.pan(1 * x_sign, -1 * y_sign);
-    if (orbit_camera) camera.orbit(1 * x_sign, 1 * y_sign);
+        if (prev_y < cur_y) y_sign = 1;
+        else if (prev_y > cur_y) y_sign = -1;
+        else y_sign = 0;
+        
+        if (pan_camera) camera.pan(1 * x_sign, -1 * y_sign);
+        if (orbit_camera) camera.orbit(1 * x_sign, 1 * y_sign);
+    } else if (cur_selection) {
+        current_ray.dir = generateRayDir(mouse_x, mouse_y);
+        const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
+        cur_selection.updatePos(new_pos);
+        // pass new pos to selected object;
+    }
 });
 
 canvas.addEventListener("wheel", (e) => {
@@ -178,4 +187,23 @@ function generateRayDir(x, y) {
     vec3.normalize(ray_world, ray_world);
 
     return ray_world;
+}
+
+function calculatePlaneIntersectionPoint(dir) {
+    let n = camera.dir;
+    let p0 = cur_selection.pos;
+    let d = -vec3.dot(n, p0);
+
+    let numerator = vec3.dot(camera.pos, n) + d;
+    let denominator = vec3.dot(dir, n);
+    if (denominator === 0) { // ray missed plane
+        console.log("ray missed plane");
+        return;
+    }
+    let t = -(numerator / denominator);
+    
+    // point on plane given our vector
+    let p = vec3.scaleAndAdd([], camera.pos, dir, t);
+
+    return p;
 }

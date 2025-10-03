@@ -13,7 +13,6 @@ export default class Object {
               rotation_angle = 0) {
 
         this.name = name;
-        this.model_matrix = mat4.create();
         this.transform(pos, scale, rotation_axis, rotation_angle);
     }
 
@@ -34,10 +33,16 @@ export default class Object {
         this.rotation_axis = rotation_axis;
         this.rotation_angle = rotation_angle;
 
+        this.model_matrix = mat4.create();
         mat4.translate(this.model_matrix, this.model_matrix, pos);
         mat4.rotate(this.model_matrix, this.model_matrix, 
             glm.glMatrix.toRadian(rotation_angle), rotation_axis);
         mat4.scale(this.model_matrix, this.model_matrix, scale);
+    }
+
+    updatePos(pos) {
+        this.transform(pos, this.scale, 
+            this.rotation_axis, this.rotation_angle);
     }
 
 
