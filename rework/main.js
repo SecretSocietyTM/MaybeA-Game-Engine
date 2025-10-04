@@ -27,11 +27,14 @@ const cube_mesh = cube;
 // ui elements
 // TODO: Object.freeze({}) normally goes here but Object conflicts with Object
 // need to change my class Name.
+const pos_ui = document.getElementById("position");
+const rot_ui = document.getElementById("rotation");
+const scl_ui = document.getElementById("scale");
 const OBJECT_INFO_UI = {
     name:  document.getElementById("name"),
-    pos: [document.getElementById("pos_x"), document.getElementById("pos_y"), document.getElementById("pos_z")],
-    rot: [document.getElementById("rot_x"), document.getElementById("rot_y"), document.getElementById("rot_z")],
-    scl: [document.getElementById("scl_x"), document.getElementById("scl_y"), document.getElementById("scl_z")]
+    pos: [pos_ui.querySelector(".x"), pos_ui.querySelector(".y"), pos_ui.querySelector(".z")],
+    rot: [rot_ui.querySelector(".x"), rot_ui.querySelector(".y"), rot_ui.querySelector(".z")],
+    scl: [scl_ui.querySelector(".x"), scl_ui.querySelector(".y"), scl_ui.querySelector(".z")]
 };
 
 //
@@ -54,6 +57,7 @@ let orbit_camera = false;
 const camera = new Camera([0,0,10], [0,0,0], [0,1,0]);
 
 let cur_selection = null;
+let prev_selection = null;
 let current_ray = {
     origin: camera.pos,
     dir: null
@@ -112,6 +116,7 @@ main();
 
 canvas.addEventListener("click", (e) => {
     if (cur_selection) {
+        prev_selection = cur_selection;
         cur_selection = null;
         return;
     }
@@ -122,17 +127,17 @@ canvas.addEventListener("click", (e) => {
         if (objects[i].aabb.isIntersecting(current_ray)) {
             cur_selection = objects[i];
             OBJECT_INFO_UI.name.textContent = cur_selection.name;
-            OBJECT_INFO_UI.pos[0].textContent = Math.round(cur_selection.pos[0] * 100) / 100;
-            OBJECT_INFO_UI.pos[1].textContent = Math.round(cur_selection.pos[1] * 100) / 100;
-            OBJECT_INFO_UI.pos[2].textContent = Math.round(cur_selection.pos[2] * 100) / 100;
+            OBJECT_INFO_UI.pos[0].value = Math.round(cur_selection.pos[0] * 100) / 100;
+            OBJECT_INFO_UI.pos[1].value = Math.round(cur_selection.pos[1] * 100) / 100;
+            OBJECT_INFO_UI.pos[2].value = Math.round(cur_selection.pos[2] * 100) / 100;
 
-            OBJECT_INFO_UI.rot[0].textContent = cur_selection.rotation_axis[0] * cur_selection.rotation_angle;
-            OBJECT_INFO_UI.rot[1].textContent = cur_selection.rotation_axis[1] * cur_selection.rotation_angle;
-            OBJECT_INFO_UI.rot[2].textContent = cur_selection.rotation_axis[2] * cur_selection.rotation_angle;
+            OBJECT_INFO_UI.rot[0].value = cur_selection.rotation_axis[0] * cur_selection.rotation_angle;
+            OBJECT_INFO_UI.rot[1].value = cur_selection.rotation_axis[1] * cur_selection.rotation_angle;
+            OBJECT_INFO_UI.rot[2].value = cur_selection.rotation_axis[2] * cur_selection.rotation_angle;
 
-            OBJECT_INFO_UI.scl[0].textContent = cur_selection.scale[0];
-            OBJECT_INFO_UI.scl[1].textContent = cur_selection.scale[1];
-            OBJECT_INFO_UI.scl[2].textContent = cur_selection.scale[2];
+            OBJECT_INFO_UI.scl[0].value = cur_selection.scale[0];
+            OBJECT_INFO_UI.scl[1].value = cur_selection.scale[1];
+            OBJECT_INFO_UI.scl[2].value = cur_selection.scale[2];
             return;
         }
     }
@@ -185,10 +190,9 @@ canvas.addEventListener("mousemove", (e) => {
         current_ray.dir = generateRayDir(mouse_x, mouse_y);
         const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
         cur_selection.updatePos(new_pos);
-        OBJECT_INFO_UI.pos[0].textContent = Math.round(cur_selection.pos[0] * 100) / 100;
-        OBJECT_INFO_UI.pos[1].textContent = Math.round(cur_selection.pos[1] * 100) / 100;
-        OBJECT_INFO_UI.pos[2].textContent = Math.round(cur_selection.pos[2] * 100) / 100;
-        // pass new pos to selected object;
+        OBJECT_INFO_UI.pos[0].value = Math.round(cur_selection.pos[0] * 100) / 100;
+        OBJECT_INFO_UI.pos[1].value = Math.round(cur_selection.pos[1] * 100) / 100;
+        OBJECT_INFO_UI.pos[2].value = Math.round(cur_selection.pos[2] * 100) / 100;
     }
 });
 
@@ -232,3 +236,26 @@ function calculatePlaneIntersectionPoint(dir) {
 
     return p;
 }
+
+
+
+// HTML interacta
+
+// input event listeners
+OBJECT_INFO_UI.pos[0].addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+        prev_selection.updatePos([+OBJECT_INFO_UI.pos[0].value, prev_selection.pos[1], prev_selection.pos[2]]);
+    }
+});
+
+OBJECT_INFO_UI.pos[1].addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+        prev_selection.updatePos([prev_selection.pos[0], +OBJECT_INFO_UI.pos[1].value, prev_selection.pos[2]]);
+    }
+});
+
+OBJECT_INFO_UI.pos[2].addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+        prev_selection.updatePos([prev_selection.pos[0], prev_selection.pos[1], +OBJECT_INFO_UI.pos[2].value]);
+    }
+});
