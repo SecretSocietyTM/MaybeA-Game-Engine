@@ -4,7 +4,6 @@ const vec4 = glm.vec4;
 const mat4 = glm.mat4;
 
 import AxisAlignedBoundingBox from "./axisalignedboundingbox.js";
-import AxisAlignedBoundingBox2 from "./axisalignedboundingbox2.js";
 
 export default class Object {
     constructor(name = "object",
@@ -81,11 +80,6 @@ export default class Object {
 
     generateAABB() {
         this.aabb = new AxisAlignedBoundingBox(
-            this.mesh.vertices, this.model_matrix, this.pos);
-    }
-
-    generateAABB2() {
-        this.aabb = new AxisAlignedBoundingBox2(
             this.mesh.vertices, this.model_matrix, this.pos);
     }
 }

@@ -25,24 +25,21 @@ const AABB_INDICES = [
 export default class AxisAlignedBoundingBox {
     constructor(mesh_vertices, model_matrix, object_pos) {
         this.mesh = {};
+        this.mesh.vertices = UNIT_CUBE_VERTICES;
         this.mesh.indices = AABB_INDICES;
         this.local_vertices = mesh_vertices;
+
+
         this.model_matrix = model_matrix;
         this.object_pos = object_pos;
 
-        this.aabb_model_matrix = mat4.translate([], mat4.create(), this.object_pos);
-
         this.convertVerticesLocalToWorld();
         this.getWorldAABB();
-        this.getAABBVertices();
+        this.getAABBModelMatrixForRendering();
     }
 
     assignVao(vao) {
         this.vao = vao;
-    }
-
-    updateAABBPos(object_pos) {
-        this.aabb_model_matrix = mat4.translate([], mat4.create(), object_pos);
     }
 
     updateModelMatrix(model_matrix) {
@@ -100,44 +97,15 @@ export default class AxisAlignedBoundingBox {
         this.extrema = extrema;
     }
 
-    /**
-     * Uses the provided min and max vertices to interpolate 
-     * the vertices needed to complete the cube.
-     * Then the vertices have the inverse of the translation applied.
-     * I forgot exactly why I had to do that. Likely some bug occured where
-     * moving the object wouldn't properly move the AABB
-     */
-    getAABBVertices() {
-        let translation = mat4.translate([], mat4.create(), this.object_pos);
-        let inverse_translation = mat4.invert([], translation);
+    getAABBModelMatrixForRendering() {
+        const center = (vec3.scale([], vec3.add([], this.extrema.min, this.extrema.max), 0.5));
+        const scale_factor = vec3.subtract([], this.extrema.max, this.extrema.min);
 
-        let  aabb_vertices = [
-            this.extrema.max[0], this.extrema.max[1], this.extrema.max[2],  // front-top-right
-            this.extrema.max[0], this.extrema.min[1], this.extrema.max[2],  // front-bot-right
-            this.extrema.min[0], this.extrema.max[1], this.extrema.max[2],  // front-top-left
-            this.extrema.min[0], this.extrema.min[1], this.extrema.max[2],  // front-bot-left
-            this.extrema.max[0], this.extrema.max[1], this.extrema.min[2],  // back-top-right
-            this.extrema.max[0], this.extrema.min[1], this.extrema.min[2],  // back-bot-right
-            this.extrema.min[0], this.extrema.max[1], this.extrema.min[2],  // back-top-left
-            this.extrema.min[0], this.extrema.min[1], this.extrema.min[2],  // back-bot-left
-        ];
-
-        // center the vertices as if at 0,0,0 to translate them..
-        for (let i = 0; i < aabb_vertices.length; i+=3) {
-            let aabb_vertex = vec3.transformMat4([], 
-                [aabb_vertices[i],
-                 aabb_vertices[i+1],
-                 aabb_vertices[i+2]], 
-                 inverse_translation);
-            aabb_vertices[i] = aabb_vertex[0];
-            aabb_vertices[i+1] = aabb_vertex[1];
-            aabb_vertices[i+2] = aabb_vertex[2];
-        }
-        
-        this.mesh.vertices = aabb_vertices;
+        this.aabb_model_matrix = mat4.create();
+        mat4.translate(this.aabb_model_matrix, this.aabb_model_matrix, center);
+        mat4.scale(this.aabb_model_matrix, this.aabb_model_matrix, scale_factor);
     }
 
-    // Interleaves an rgb value into the list of vertices for the AABB.
     setAABBColor(color) {
         let vertex_colors = new Float32Array(this.mesh.vertices.length * 3);
         for (let i = 0; i < this.mesh.vertices.length; i++) {
