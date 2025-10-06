@@ -139,9 +139,9 @@ canvas.addEventListener("click", (e) => {
             OBJECT_INFO_UI.pos[1].value = Math.round(cur_selection.pos[1] * 100) / 100;
             OBJECT_INFO_UI.pos[2].value = Math.round(cur_selection.pos[2] * 100) / 100;
 
-            OBJECT_INFO_UI.rot[0].value = cur_selection.rotation_axis[0] * cur_selection.rotation_angle;
-            OBJECT_INFO_UI.rot[1].value = cur_selection.rotation_axis[1] * cur_selection.rotation_angle;
-            OBJECT_INFO_UI.rot[2].value = cur_selection.rotation_axis[2] * cur_selection.rotation_angle;
+            OBJECT_INFO_UI.rot[0].value = cur_selection.rotation_angles[0];
+            OBJECT_INFO_UI.rot[1].value = cur_selection.rotation_angles[1];
+            OBJECT_INFO_UI.rot[2].value = cur_selection.rotation_angles[2];
 
             OBJECT_INFO_UI.scl[0].value = cur_selection.scale[0];
             OBJECT_INFO_UI.scl[1].value = cur_selection.scale[1];
@@ -273,17 +273,19 @@ OBJECT_INFO_UI.pos[2].addEventListener("keydown", (e) => {
 // rotation inputs
 OBJECT_INFO_UI.rot[0].addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
-        prev_selection.updateRot([1,0,0], +OBJECT_INFO_UI.rot[0].value);
+        prev_selection.updateRot([+OBJECT_INFO_UI.rot[0].value, prev_selection.rotation_angles[1], prev_selection.rotation_angles[2]]);
     }
 });
 
 OBJECT_INFO_UI.rot[1].addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
+        prev_selection.updateRot([prev_selection.rotation_angles[0], +OBJECT_INFO_UI.rot[1].value, prev_selection.rotation_angles[2]]);
     }
 });
 
 OBJECT_INFO_UI.rot[2].addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
+        prev_selection.updateRot([prev_selection.rotation_angles[0], prev_selection.rotation_angles[1], +OBJECT_INFO_UI.rot[2].value]);
     }
 });
 
