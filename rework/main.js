@@ -92,7 +92,7 @@ function main() {
     apple1.assignMesh(apple_mesh);
     apple1.assignVao(renderer.addObjectVAO(apple_mesh));
     objects.push(apple1);
-    apple1.generateAABB();
+    apple1.generateAABB2();
     apple1.aabb.setAABBColor([0.4, 1.0, 0.2]);
     apple1.aabb.assignVao(renderer.addObjectVAO(apple1.aabb.mesh));
 
