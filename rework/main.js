@@ -79,16 +79,16 @@ function main() {
     renderer.setupRender(WIDTH, HEIGHT, [0.3, 0.3, 0.3, 1.0]/* [0.45, 0.55, 0.5, 1.0] */);
 
 
-    const cube1 = new Object("cube", [0,0,0], [1,1,1], [0,45,0]);
+/*     const cube1 = new Object("cube", [0,0,0], [1,1,1], [0,45,0]);
     cube1.assignMesh(cube_mesh);
     cube1.assignVao(renderer.addObjectVAO(cube_mesh));
     objects.push(cube1);
     cube1.generateAABB();
     cube1.aabb.setAABBColor([0.4, 1.0, 0.2]);
-    cube1.aabb.assignVao(renderer.addObjectVAO(cube1.aabb.mesh));
+    cube1.aabb.assignVao(renderer.addObjectVAO(cube1.aabb.mesh)); */
 
 
-    const apple1 = new Object("apple", [2,0,0], [5,5,5], [0,0,0]);
+    const apple1 = new Object("apple", [2,0,0], [9,9,9], [0,0,0]);
     apple1.assignMesh(apple_mesh);
     apple1.assignVao(renderer.addObjectVAO(apple_mesh));
     objects.push(apple1);
@@ -96,13 +96,13 @@ function main() {
     apple1.aabb.setAABBColor([0.4, 1.0, 0.2]);
     apple1.aabb.assignVao(renderer.addObjectVAO(apple1.aabb.mesh));
 
-    const cube2 = new Object("weird cube", [0,0,0], [1,1,1], [0,0,0]);
+/*     const cube2 = new Object("weird cube", [0,0,0], [1,1,1], [0,0,0]);
     cube2.assignMesh(cube_mesh2);
     cube2.assignVao(renderer.addObjectVAO(cube_mesh2));
     objects.push(cube2);
     cube2.generateAABB();
     cube2.aabb.setAABBColor([0.4, 1.0, 0.2]); // Nice orange color: [1.0, 0.65, 0.0]
-    cube2.aabb.assignVao(renderer.addObjectVAO(cube2.aabb.mesh));
+    cube2.aabb.assignVao(renderer.addObjectVAO(cube2.aabb.mesh)); */
 
     objects.forEach(object => {
         const list_item = document.createElement("p");

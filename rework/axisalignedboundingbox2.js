@@ -28,10 +28,10 @@ export default class AxisAlignedBoundingBox2 {
         this.mesh.vertices = UNIT_CUBE_VERTICES;
         this.mesh.indices = AABB_INDICES;
         this.local_vertices = mesh_vertices;
+
+
         this.model_matrix = model_matrix;
         this.object_pos = object_pos;
-
-        this.aabb_model_matrix = mat4.translate([], mat4.create(), this.object_pos);
 
         this.convertVerticesLocalToWorld();
         this.getWorldAABB();
@@ -40,10 +40,6 @@ export default class AxisAlignedBoundingBox2 {
 
     assignVao(vao) {
         this.vao = vao;
-    }
-
-    updateAABBPos(object_pos) {
-        this.aabb_model_matrix = mat4.translate([], mat4.create(), object_pos);
     }
 
     updateModelMatrix(model_matrix) {
@@ -105,11 +101,11 @@ export default class AxisAlignedBoundingBox2 {
         const center = (vec3.scale([], vec3.add([], this.extrema.min, this.extrema.max), 0.5));
         const scale_factor = vec3.subtract([], this.extrema.max, this.extrema.min);
 
-        mat4.fromTranslation(this.aabb_model_matrix, center);
+        this.aabb_model_matrix = mat4.create();
+        mat4.translate(this.aabb_model_matrix, this.aabb_model_matrix, center);
         mat4.scale(this.aabb_model_matrix, this.aabb_model_matrix, scale_factor);
     }
 
-    // Interleaves an rgb value into the list of vertices for the AABB.
     setAABBColor(color) {
         let vertex_colors = new Float32Array(this.mesh.vertices.length * 3);
         for (let i = 0; i < this.mesh.vertices.length; i++) {

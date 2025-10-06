@@ -43,11 +43,10 @@ export default class Object {
         this.transform(pos, this.scale, this.rotation_angles);
 
         if ("aabb" in this) {
-            this.aabb.updateAABBPos(this.pos);
             this.aabb.updateModelMatrix(this.model_matrix);
             this.aabb.convertVerticesLocalToWorld();
             this.aabb.getWorldAABB();
-            this.aabb.getAABBVertices();
+            this.aabb.getAABBModelMatrixForRendering();
         }
     }
 
@@ -61,7 +60,7 @@ export default class Object {
             this.aabb.updateModelMatrix(this.model_matrix);
             this.aabb.convertVerticesLocalToWorld();
             this.aabb.getWorldAABB();
-            this.aabb.getAABBVertices();
+            this.aabb.getAABBModelMatrixForRendering();
         }     
     }
 
@@ -75,7 +74,7 @@ export default class Object {
             this.aabb.updateModelMatrix(this.model_matrix);
             this.aabb.convertVerticesLocalToWorld();
             this.aabb.getWorldAABB();
-            this.aabb.getAABBVertices();
+            this.aabb.getAABBModelMatrixForRendering();
         }          
         
     }
