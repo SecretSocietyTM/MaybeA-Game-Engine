@@ -9,11 +9,10 @@ export default class Object {
     constructor(name = "object",
               pos = [0, 0, 0],
               scale = [1, 1, 1],
-              rotation_axis = [0, 1, 0],
-              rotation_angle = 0) {
+              rotation_angles = [0,0,0]) {
 
         this.name = name;
-        this.transform(pos, scale, rotation_axis, rotation_angle);
+        this.transform(pos, scale, rotation_angles);
     }
 
     assignMesh(mesh) {
@@ -26,23 +25,21 @@ export default class Object {
 
     transform(pos = [0, 0, 0], 
               scale = [1, 1, 1], 
-              rotation_axis = [0, 1, 0], 
-              rotation_angle = 0) {
+              rotation_angles = [0,0,0]) {
         this.pos = pos;
         this.scale = scale;
-        this.rotation_axis = rotation_axis;
-        this.rotation_angle = rotation_angle;
+        this.rotation_angles = rotation_angles;
 
         this.model_matrix = mat4.create();
         mat4.translate(this.model_matrix, this.model_matrix, pos);
-        mat4.rotate(this.model_matrix, this.model_matrix, 
-            glm.glMatrix.toRadian(rotation_angle), rotation_axis);
+        mat4.rotateX(this.model_matrix, this.model_matrix, rotation_angles[0]);
+        mat4.rotateY(this.model_matrix, this.model_matrix, rotation_angles[1]);
+        mat4.rotateZ(this.model_matrix, this.model_matrix, rotation_angles[2]);
         mat4.scale(this.model_matrix, this.model_matrix, scale);
     }
 
     updatePos(pos) {
-        this.transform(pos, this.scale, 
-            this.rotation_axis, this.rotation_angle);
+        this.transform(pos, this.scale, this.rotation_angles);
 
         if ("aabb" in this) {
             this.aabb.updateAABBPos(this.pos);
@@ -53,8 +50,8 @@ export default class Object {
         }
     }
 
-    updateRot(axis, angle) {
-        this.transform(this.pos, this.scale, axis, angle);
+    updateRot(rotation_angles) {
+        this.transform(this.pos, this.scale, rotation_angles);
 
         // TODO: wont work visually. Translation works since that is simply
         // moving the AABB around, but rotating requires that a new AABB 
@@ -68,7 +65,7 @@ export default class Object {
     }
 
     updateScale(scale) {
-        this.transform(this.pos, scale, this.rotation_axis, this.rotation_angle);
+        this.transform(this.pos, scale, this.rotation_angles);
 
         // TODO: wont work visually. Translation works since that is simply
         // moving the AABB around, but scaling, especially if done on an 

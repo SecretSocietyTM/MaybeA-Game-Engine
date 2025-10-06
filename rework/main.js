@@ -79,7 +79,7 @@ function main() {
     renderer.setupRender(WIDTH, HEIGHT, [0.3, 0.3, 0.3, 1.0]/* [0.45, 0.55, 0.5, 1.0] */);
 
 
-    const cube1 = new Object("cube", [0,0,0], [1,1,1], [0,1,0], 45);
+    const cube1 = new Object("cube", [0,0,0], [1,1,1], [0,45,0]);
     cube1.assignMesh(cube_mesh);
     cube1.assignVao(renderer.addObjectVAO(cube_mesh));
     objects.push(cube1);
@@ -88,7 +88,7 @@ function main() {
     cube1.aabb.assignVao(renderer.addObjectVAO(cube1.aabb.mesh));
 
 
-    const apple1 = new Object("apple", [2,0,0], [5,5,5], [0,1,0], 0);
+    const apple1 = new Object("apple", [2,0,0], [5,5,5], [0,0,0]);
     apple1.assignMesh(apple_mesh);
     apple1.assignVao(renderer.addObjectVAO(apple_mesh));
     objects.push(apple1);
@@ -96,7 +96,7 @@ function main() {
     apple1.aabb.setAABBColor([0.4, 1.0, 0.2]);
     apple1.aabb.assignVao(renderer.addObjectVAO(apple1.aabb.mesh));
 
-    const cube2 = new Object("weird cube", [0,0,0], [1,1,1], [0,1,0], 0);
+    const cube2 = new Object("weird cube", [0,0,0], [1,1,1], [0,0,0]);
     cube2.assignMesh(cube_mesh2);
     cube2.assignVao(renderer.addObjectVAO(cube_mesh2));
     objects.push(cube2);
@@ -327,7 +327,7 @@ FILE_INPUT.addEventListener("change", (e) => {
         const name = file.name.split(".")[0];
 
         // create the object with the mesh
-        const object = new Object(name, [0,0,0], [1,1,1], [0,1,0], 0);
+        const object = new Object(name, [0,0,0], [1,1,1], [0,0,0]);
         object.assignMesh(mesh);
         object.assignVao(renderer.addObjectVAO(mesh));
         objects.push(object);
