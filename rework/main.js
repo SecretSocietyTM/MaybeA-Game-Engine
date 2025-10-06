@@ -39,25 +39,6 @@ const OBJECT_INFO_UI = {
 const SCENE_OBJECT_LIST_UI = document.getElementById("scene_objects_list");
 const FILE_INPUT = document.getElementById("file_input");
 
-FILE_INPUT.addEventListener("change", (e) => {
-    const file = FILE_INPUT.files[0];
-
-    if (!file) {
-        alert("No file selected.");
-        return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-        console.log(reader.result);
-        // create a new object with the imported mesh and add it to the scene
-    }
-    reader.onerror = () => {
-        alert("Error reading the file.");
-    }
-    reader.readAsText(file);
-});
-
 //
 // canvas variables
 const WIDTH = 800;
@@ -90,9 +71,9 @@ let view = mat4.create();
 let proj = mat4.create();
 mat4.perspective(proj, glm.glMatrix.toRadian(45), WIDTH / HEIGHT, 0.1, 1000);
 
+const renderer = new Renderer(canvas);
 
 function main() {
-    const renderer = new Renderer(canvas);
     renderer.createProgram(vs_src, fs_src);
     renderer.getShaderVariables();
     renderer.setupRender(WIDTH, HEIGHT, [0.3, 0.3, 0.3, 1.0]/* [0.45, 0.55, 0.5, 1.0] */);
@@ -285,4 +266,42 @@ OBJECT_INFO_UI.pos[2].addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
         prev_selection.updatePos([prev_selection.pos[0], prev_selection.pos[1], +OBJECT_INFO_UI.pos[2].value]);
     }
+});
+
+FILE_INPUT.addEventListener("change", (e) => {
+    const file = FILE_INPUT.files[0];
+
+    if (!file) {
+        alert("No file selected.");
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+        console.log(reader.result);
+        
+        // parse the file to get the necessary mesh data
+        const mesh_ply = reader.result;
+        const mesh = parsePLY(mesh_ply);
+
+        // splice the file name to name the object
+        const name = file.name.split(".")[0];
+
+        // create the object with the mesh
+        const object = new Object(name, [0,0,0], [1,1,1], [0,1,0], 0);
+        object.assignMesh(mesh);
+        object.assignVao(renderer.addObjectVAO(mesh));
+        objects.push(object);
+        object.generateAABB();
+        object.aabb.setAABBColor([0.4, 1.0, 0.2]);
+        object.aabb.assignVao(renderer.addObjectVAO(object.aabb.mesh));
+        
+        const list_item = document.createElement("p");
+        list_item.textContent = object.name;
+        SCENE_OBJECT_LIST_UI.appendChild(list_item);
+    }
+    reader.onerror = () => {
+        alert("Error reading the file.");
+    }
+    reader.readAsText(file);
 });
