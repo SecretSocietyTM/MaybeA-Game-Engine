@@ -36,6 +36,27 @@ const OBJECT_INFO_UI = {
     rot: [rot_ui.querySelector(".x"), rot_ui.querySelector(".y"), rot_ui.querySelector(".z")],
     scl: [scl_ui.querySelector(".x"), scl_ui.querySelector(".y"), scl_ui.querySelector(".z")]
 };
+const SCENE_OBJECT_LIST_UI = document.getElementById("scene_objects_list");
+const FILE_INPUT = document.getElementById("file_input");
+
+FILE_INPUT.addEventListener("change", (e) => {
+    const file = FILE_INPUT.files[0];
+
+    if (!file) {
+        alert("No file selected.");
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+        console.log(reader.result);
+        // create a new object with the imported mesh and add it to the scene
+    }
+    reader.onerror = () => {
+        alert("Error reading the file.");
+    }
+    reader.readAsText(file);
+});
 
 //
 // canvas variables
@@ -101,6 +122,12 @@ function main() {
     cube2.generateAABB();
     cube2.aabb.setAABBColor([0.4, 1.0, 0.2]); // Nice orange color: [1.0, 0.65, 0.0]
     cube2.aabb.assignVao(renderer.addObjectVAO(cube2.aabb.mesh));
+
+    objects.forEach(object => {
+        const list_item = document.createElement("p");
+        list_item.textContent = object.name;
+        SCENE_OBJECT_LIST_UI.appendChild(list_item);
+    });
 
 
     function frame() {

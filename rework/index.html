@@ -9,6 +9,12 @@
     <script type="module" src="./main.js" defer></script>
 </head>
 <body>
+    <div id="scene_info">
+        <input id="file_input" type="file" accept=".ply">
+        <p>Scene Info</p>
+        <ul id="scene_objects_list"></ul>
+    </div>
+    <canvas id="canvas"></canvas>
     <div id="object_info">
         <p id="name">Item Name</p>
         <p>Transform Section</p>
@@ -58,6 +64,5 @@
             </div>
         </div>
     </div>
-    <canvas id="canvas"></canvas>
 </body>
 </html>
