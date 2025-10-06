@@ -53,6 +53,35 @@ export default class Object {
         }
     }
 
+    updateRot(axis, angle) {
+        this.transform(this.pos, this.scale, axis, angle);
+
+        // TODO: wont work visually. Translation works since that is simply
+        // moving the AABB around, but rotating requires that a new AABB 
+        // be calculated
+        if ("aabb" in this) {
+            this.aabb.updateModelMatrix(this.model_matrix);
+            this.aabb.convertVerticesLocalToWorld();
+            this.aabb.getWorldAABB();
+            this.aabb.getAABBVertices();
+        }     
+    }
+
+    updateScale(scale) {
+        this.transform(this.pos, scale, this.rotation_axis, this.rotation_angle);
+
+        // TODO: wont work visually. Translation works since that is simply
+        // moving the AABB around, but scaling, especially if done on an 
+        // object that has been rotated, will not produce the correct AABB
+        if ("aabb" in this) {
+            this.aabb.updateModelMatrix(this.model_matrix);
+            this.aabb.convertVerticesLocalToWorld();
+            this.aabb.getWorldAABB();
+            this.aabb.getAABBVertices();
+        }          
+        
+    }
+
     generateAABB() {
         this.aabb = new AxisAlignedBoundingBox(
             this.mesh.vertices, this.model_matrix, this.pos);

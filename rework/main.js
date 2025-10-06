@@ -250,6 +250,8 @@ function calculatePlaneIntersectionPoint(dir) {
 // HTML interacta
 
 // input event listeners
+
+// position inputs
 OBJECT_INFO_UI.pos[0].addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
         prev_selection.updatePos([+OBJECT_INFO_UI.pos[0].value, prev_selection.pos[1], prev_selection.pos[2]]);
@@ -268,6 +270,43 @@ OBJECT_INFO_UI.pos[2].addEventListener("keydown", (e) => {
     }
 });
 
+// rotation inputs
+OBJECT_INFO_UI.rot[0].addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+        prev_selection.updateRot([1,0,0], +OBJECT_INFO_UI.rot[0].value);
+    }
+});
+
+OBJECT_INFO_UI.rot[1].addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+    }
+});
+
+OBJECT_INFO_UI.rot[2].addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+    }
+});
+
+// scale inputs
+OBJECT_INFO_UI.scl[0].addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+        prev_selection.updateScale([+OBJECT_INFO_UI.scl[0].value, prev_selection.scale[1], prev_selection.scale[2]]);
+    }
+});
+
+OBJECT_INFO_UI.scl[1].addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+        prev_selection.updateScale([prev_selection.scale[0], +OBJECT_INFO_UI.scl[1].value, prev_selection.scale[2]]);
+    }
+});
+
+OBJECT_INFO_UI.scl[2].addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+        prev_selection.updateScale([prev_selection.scale[0], prev_selection.scale[1], +OBJECT_INFO_UI.scl[2].value]);
+    }
+});
+
+// file input
 FILE_INPUT.addEventListener("change", (e) => {
     const file = FILE_INPUT.files[0];
 

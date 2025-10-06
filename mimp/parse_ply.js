@@ -6,8 +6,6 @@
  * @returns {object} mesh to be inserted into a scene
  */
 
-// TODO: maybe remove the \r from the strings or find a workaround
-// Also need to fix the empty line at the end of the files.
 export function parsePLY(ply) {
     // start by breaking string up by presence of new line
     ply = ply.replace(/\r/g, "");
