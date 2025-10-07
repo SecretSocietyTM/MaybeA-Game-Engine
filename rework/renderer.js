@@ -90,6 +90,7 @@ export default class Renderer {
         this.gl.uniformMatrix4fv(this.view_uniform, this.gl.FALSE, view);
         this.gl.uniformMatrix4fv(this.proj_uniform, this.gl.FALSE, proj);
 
+        // TODO: remove below line
         const example = objects[0];
 
         objects.forEach(object => {
@@ -108,18 +109,19 @@ export default class Renderer {
             }
         });
 
+        this.renderUIPass(view, proj, example);
+    }
 
+    renderUIPass(view, proj, selected_object) {
         this.gl.disable(this.gl.DEPTH_TEST);
-        // UI pass
 
         const matrix = mat4.create();
-        const pos = vec4.fromValues(example.pos[0], example.pos[1], example.pos[2], 1);
+        const pos = vec4.fromValues(selected_object.pos[0], selected_object.pos[1], selected_object.pos[2], 1);
         vec4.transformMat4(pos, pos, view);
         vec4.transformMat4(pos, pos, proj);
         pos[0] /= pos[3];
         pos[1] /= pos[3];
         pos[2] /= pos[3];
-        console.log(pos);
 
         // attempting to overlay a triangle
         this.gl.uniformMatrix4fv(this.view_uniform, this.gl.FALSE, mat4.create());
@@ -150,6 +152,5 @@ export default class Renderer {
         this.gl.vertexAttribPointer(this.clr_attrib, 3, this.gl.FLOAT, this.gl.FALSE, 0, 0);
 
         this.gl.drawArrays(this.gl.TRIANGLES, 0, 3);
-
     }
 }
