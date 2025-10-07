@@ -194,6 +194,7 @@ canvas.addEventListener("mousemove", (e) => {
         
         if (pan_camera) camera.pan(1 * x_sign, -1 * y_sign);
         if (orbit_camera) camera.orbit(1 * x_sign, 1 * y_sign);
+        current_ray.origin = camera.pos;
     } else if (cur_selection) {
         current_ray.dir = generateRayDir(mouse_x, mouse_y);
         const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
@@ -206,6 +207,7 @@ canvas.addEventListener("mousemove", (e) => {
 
 canvas.addEventListener("wheel", (e) => {
     camera.zoom(e.deltaY);
+    current_ray.origin = camera.pos;
 });
 
 
@@ -247,7 +249,8 @@ function calculatePlaneIntersectionPoint(dir) {
 
 
 
-// HTML interacta
+// HTML interactactions
+
 
 // input event listeners
 
@@ -345,4 +348,33 @@ FILE_INPUT.addEventListener("change", (e) => {
         alert("Error reading the file.");
     }
     reader.readAsText(file);
+});
+
+
+// TODO: clean ALL of this up after done with mini project
+let copied_object = null;
+
+// keyboard shortcuts
+document.addEventListener("keydown", (e) => {
+    if (e.ctrlKey && e.key === "c" && prev_selection) {
+        copied_object = prev_selection;
+    }
+    if (e.ctrlKey && e.key === "v" && copied_object) {
+        const object = new Object(
+            copied_object.name, 
+            copied_object.pos, 
+            copied_object.scale, 
+            copied_object.rotation_angles
+        );
+        object.assignMesh(copied_object.mesh);
+        object.assignVao(copied_object.vao);
+        objects.push(object);
+        object.generateAABB();
+        object.aabb.setAABBColor([0.4, 1.0, 0.2]);
+        object.aabb.assignVao(copied_object.aabb.vao);
+        
+        const list_item = document.createElement("p");
+        list_item.textContent = object.name;
+        SCENE_OBJECT_LIST_UI.appendChild(list_item);
+    }
 });

@@ -1,3 +1,8 @@
+const glm = glMatrix;
+const vec3 = glm.vec3;
+const vec4 = glm.vec4;
+const mat4 = glm.mat4;
+
 export default class Renderer {
     constructor(canvas) {
         this.gl = canvas.getContext("webgl2");
@@ -79,10 +84,13 @@ export default class Renderer {
     }
 
     renderFrame(view, proj, objects) {
+        this.gl.enable(this.gl.DEPTH_TEST);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
         this.gl.uniformMatrix4fv(this.view_uniform, this.gl.FALSE, view);
         this.gl.uniformMatrix4fv(this.proj_uniform, this.gl.FALSE, proj);
+
+        const example = objects[0];
 
         objects.forEach(object => {
             this.gl.uniformMatrix4fv(this.model_uniform, this.gl.FALSE, object.model_matrix);
@@ -99,5 +107,49 @@ export default class Renderer {
                 this.gl.bindVertexArray(null);
             }
         });
+
+
+        this.gl.disable(this.gl.DEPTH_TEST);
+        // UI pass
+
+        const matrix = mat4.create();
+        const pos = vec4.fromValues(example.pos[0], example.pos[1], example.pos[2], 1);
+        vec4.transformMat4(pos, pos, view);
+        vec4.transformMat4(pos, pos, proj);
+        pos[0] /= pos[3];
+        pos[1] /= pos[3];
+        pos[2] /= pos[3];
+        console.log(pos);
+
+        // attempting to overlay a triangle
+        this.gl.uniformMatrix4fv(this.view_uniform, this.gl.FALSE, mat4.create());
+        this.gl.uniformMatrix4fv(this.proj_uniform, this.gl.FALSE, mat4.create());
+        mat4.translate(matrix, matrix, [pos[0], pos[1], pos[2]]);
+        this.gl.uniformMatrix4fv(this.model_uniform, this.gl.FALSE, matrix);
+        const vertices = new Float32Array([
+             0.000,  0.125,  0.0,
+            -0.125, -0.125,  0.0,
+             0.125, -0.125,  0.0
+        ]);
+        const vertex_colors = new Float32Array([
+            1.0, 0.65, 0.0,
+            1.0, 0.65, 0.0,
+            1.0, 0.65, 0.0
+        ]);
+
+        const pos_buffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, pos_buffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices, this.gl.STATIC_DRAW);
+        this.gl.enableVertexAttribArray(this.pos_attrib);
+        this.gl.vertexAttribPointer(this.pos_attrib, 3, this.gl.FLOAT, this.gl.FALSE, 0, 0);
+
+        const col_buffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, col_buffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, vertex_colors, this.gl.STATIC_DRAW);
+        this.gl.enableVertexAttribArray(this.clr_attrib);
+        this.gl.vertexAttribPointer(this.clr_attrib, 3, this.gl.FLOAT, this.gl.FALSE, 0, 0);
+
+        this.gl.drawArrays(this.gl.TRIANGLES, 0, 3);
+
     }
 }
