@@ -111,7 +111,6 @@ export default class Renderer {
     setupRender(width, height, color) {
         this.WIDTH = width;
         this.HEIGHT = height;
-
         this.gl.viewport(0, 0, width, height)
 
         this.gl.clearColor(color[0], color[1], color[2], color[3]);
