@@ -1,4 +1,5 @@
 const glm = glMatrix;
+const vec2 = glm.vec2;
 const vec3 = glm.vec3;
 const vec4 = glm.vec4;
 const mat4 = glm.mat4;
@@ -66,6 +67,7 @@ export default class Renderer {
         this.ui_pass_pos_attrib = this.gl.getAttribLocation(this.ui_program, "a_pos");
         this.ui_pass_uv_attrib = this.gl.getAttribLocation(this.ui_program, "a_uv");
 
+        this.ui_pass_circle_center_uniform = this.gl.getUniformLocation(this.ui_program, "u_cntr");
         this.ui_pass_clr_uniform = this.gl.getUniformLocation(this.ui_program, "u_clr");
 
         return true;
@@ -157,9 +159,15 @@ export default class Renderer {
         const pos = vec4.fromValues(selected_object.pos[0], selected_object.pos[1], selected_object.pos[2], 1);
         vec4.transformMat4(pos, pos, view);
         vec4.transformMat4(pos, pos, proj);
-        pos[0] /= pos[3];
+        // coords in NDC (-1, -1) --> (1, 1)
+        pos[0] /= pos[3]; 
         pos[1] /= pos[3];
         pos[2] /= pos[3];
+
+        const pos2 = [pos[0], pos[1]];
+
+        const uv_pos = vec2.scaleAndAdd([], [0.5, 0.5], pos2, 0.5);
+        console.log(uv_pos);
 
         // fullscreen quad vertices
         const vertices = new Float32Array([
@@ -187,6 +195,7 @@ export default class Renderer {
         this.gl.enableVertexAttribArray(this.ui_pass_uv_attrib);
         this.gl.vertexAttribPointer(this.ui_pass_uv_attrib, 2, this.gl.FLOAT, this.gl.FALSE, 0, 0);
 
+        this.gl.uniform2fv(this.ui_pass_circle_center_uniform, uv_pos);
         this.gl.uniform3fv(this.ui_pass_clr_uniform, [1.0, 0.5, 0.0])
 
         this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);

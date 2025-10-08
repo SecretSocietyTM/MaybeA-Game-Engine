@@ -5,14 +5,14 @@ in vec2 v_uv;
 
 out vec4 frag_color;
 
+uniform vec2 u_cntr;
 uniform vec3 u_clr;
 
 void main() {
-    vec2 center = vec2(0.5, 0.5);
-    float radius = 0.015625;
+    float radius = 0.0078125;
 
     // Compute distance from current pixel to circle center
-    float dist = length(v_uv - center);
+    float dist = length(v_uv - u_cntr);
 
     // If outside radius, discard the fragment (transparent)
     if (dist > radius)
