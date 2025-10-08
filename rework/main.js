@@ -11,6 +11,9 @@ import Camera from "./camera.js";
 import vs_src from "../shaders/vertexshader.js";
 import fs_src from "../shaders/fragmentshader.js";
 
+import ui_pass_vs_src from "../shaders/ui_pass/vertexshader.js";
+import ui_pass_fs_src from "../shaders/ui_pass/fragmentshader.js";
+
 // mesh
 import { parsePLY } from "../mimp/parse_ply.js";
 import apple_ply from "../mimp/models/apple_ply.js";
@@ -77,6 +80,9 @@ function main() {
     renderer.createProgram(vs_src, fs_src);
     renderer.getShaderVariables();
     renderer.setupRender(WIDTH, HEIGHT, [0.3, 0.3, 0.3, 1.0]/* [0.45, 0.55, 0.5, 1.0] */);
+
+    renderer.createUIPassProgram(ui_pass_vs_src, ui_pass_fs_src);
+    renderer.getUIPassShaderVariables();
 
 
     const cube1 = new Object("cube", [0,0,0], [1,1,1], [0,45,0]);
@@ -370,6 +376,13 @@ document.addEventListener("keydown", (e) => {
         object.assignVao(copied_object.vao);
         objects.push(object);
         object.generateAABB();
+        
+        // TODO: add a boolean flag for whether or not the
+        // AABB should be drawn. Most objects will NEED an
+        // AABB in order to interact with them, but we might not
+        // want the AABB to be rendered for some.
+        
+        // if (object.renderAABB) do the below 
         object.aabb.setAABBColor([0.4, 1.0, 0.2]);
         object.aabb.assignVao(copied_object.aabb.vao);
         

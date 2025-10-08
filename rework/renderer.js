@@ -9,6 +9,10 @@ export default class Renderer {
         this.object_vaos = [];
     }
 
+    // TODO: this code is redundant with the function below. Change it so that
+    // the function takes in another variable "pipeline_stage??" and an object of 
+    // programs is created
+    // for example this.programs = {3D: 3d program, UI: ui program}
     createProgram(vertex_src, fragment_src) {
         const vertex_shader = this.gl.createShader(this.gl.VERTEX_SHADER);
         const fragment_shader = this.gl.createShader(this.gl.FRAGMENT_SHADER);
@@ -27,6 +31,24 @@ export default class Renderer {
         return true;
     }
 
+    createUIPassProgram(vertex_src, fragment_src) {
+        const vertex_shader = this.gl.createShader(this.gl.VERTEX_SHADER);
+        const fragment_shader = this.gl.createShader(this.gl.FRAGMENT_SHADER);
+        this.ui_program = this.gl.createProgram();
+
+        this.gl.shaderSource(vertex_shader, vertex_src);
+        this.gl.compileShader(vertex_shader);
+
+        this.gl.shaderSource(fragment_shader, fragment_src);
+        this.gl.compileShader(fragment_shader);
+
+        this.gl.attachShader(this.ui_program, vertex_shader);
+        this.gl.attachShader(this.ui_program, fragment_shader);
+        this.gl.linkProgram(this.ui_program);
+
+        return true;    
+    }
+
 
     // TODO: non-fixed function | in the future, this will likely change as the shader changes. If  I want to implement a way to change the shader, I will need to find a way to dynammically obtain shader variables dynamically.
     getShaderVariables() {
@@ -36,6 +58,15 @@ export default class Renderer {
         this.model_uniform = this.gl.getUniformLocation(this.program, "u_model");
         this.view_uniform = this.gl.getUniformLocation(this.program, "u_view");
         this.proj_uniform = this.gl.getUniformLocation(this.program, "u_proj");
+
+        return true;
+    }
+
+    getUIPassShaderVariables() {
+        this.ui_pass_pos_attrib = this.gl.getAttribLocation(this.ui_program, "a_pos");
+        this.ui_pass_uv_attrib = this.gl.getAttribLocation(this.ui_program, "a_uv");
+
+        this.ui_pass_clr_uniform = this.gl.getUniformLocation(this.ui_program, "u_clr");
 
         return true;
     }
@@ -80,10 +111,11 @@ export default class Renderer {
         this.gl.clearColor(color[0], color[1], color[2], color[3]);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
         this.gl.enable(this.gl.DEPTH_TEST);
-        this.gl.useProgram(this.program);
+        /* this.gl.useProgram(this.program); */
     }
 
     renderFrame(view, proj, objects) {
+        this.gl.useProgram(this.program);
         this.gl.enable(this.gl.DEPTH_TEST);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
@@ -112,10 +144,16 @@ export default class Renderer {
         this.renderUIPass(view, proj, example);
     }
 
+
+
+
+
+
+
     renderUIPass(view, proj, selected_object) {
+        this.gl.useProgram(this.ui_program);
         this.gl.disable(this.gl.DEPTH_TEST);
 
-        const matrix = mat4.create();
         const pos = vec4.fromValues(selected_object.pos[0], selected_object.pos[1], selected_object.pos[2], 1);
         vec4.transformMat4(pos, pos, view);
         vec4.transformMat4(pos, pos, proj);
@@ -123,34 +161,34 @@ export default class Renderer {
         pos[1] /= pos[3];
         pos[2] /= pos[3];
 
-        // attempting to overlay a triangle
-        this.gl.uniformMatrix4fv(this.view_uniform, this.gl.FALSE, mat4.create());
-        this.gl.uniformMatrix4fv(this.proj_uniform, this.gl.FALSE, mat4.create());
-        mat4.translate(matrix, matrix, [pos[0], pos[1], pos[2]]);
-        this.gl.uniformMatrix4fv(this.model_uniform, this.gl.FALSE, matrix);
+        // fullscreen quad vertices
         const vertices = new Float32Array([
-             0.000,  0.125,  0.0,
-            -0.125, -0.125,  0.0,
-             0.125, -0.125,  0.0
+            -1, -1, // bot-left
+             1, -1, // bot-right
+            -1,  1, // top-left
+             1,  1  // top-right
         ]);
-        const vertex_colors = new Float32Array([
-            1.0, 0.65, 0.0,
-            1.0, 0.65, 0.0,
-            1.0, 0.65, 0.0
+        const vertex_uvs = new Float32Array([
+            0, 0,
+            1, 0,
+            0, 1,
+            1, 1
         ]);
 
         const pos_buffer = this.gl.createBuffer();
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, pos_buffer);
         this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices, this.gl.STATIC_DRAW);
-        this.gl.enableVertexAttribArray(this.pos_attrib);
-        this.gl.vertexAttribPointer(this.pos_attrib, 3, this.gl.FLOAT, this.gl.FALSE, 0, 0);
+        this.gl.enableVertexAttribArray(this.ui_pass_pos_attrib);
+        this.gl.vertexAttribPointer(this.ui_pass_pos_attrib, 2, this.gl.FLOAT, this.gl.FALSE, 0, 0);
 
-        const col_buffer = this.gl.createBuffer();
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, col_buffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, vertex_colors, this.gl.STATIC_DRAW);
-        this.gl.enableVertexAttribArray(this.clr_attrib);
-        this.gl.vertexAttribPointer(this.clr_attrib, 3, this.gl.FLOAT, this.gl.FALSE, 0, 0);
+        const uv_buffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, uv_buffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, vertex_uvs, this.gl.STATIC_DRAW);
+        this.gl.enableVertexAttribArray(this.ui_pass_uv_attrib);
+        this.gl.vertexAttribPointer(this.ui_pass_uv_attrib, 2, this.gl.FLOAT, this.gl.FALSE, 0, 0);
 
-        this.gl.drawArrays(this.gl.TRIANGLES, 0, 3);
+        this.gl.uniform3fv(this.ui_pass_clr_uniform, [1.0, 0.5, 0.0])
+
+        this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
     }
 }

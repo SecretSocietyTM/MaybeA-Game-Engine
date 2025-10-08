@@ -1,8 +1,9 @@
-export default `
-attribute vec4 a_pos;
-attribute vec4 a_clr;
+export default `#version 300 es
 
-varying vec4 v_clr;
+in vec4 a_pos;
+in vec4 a_clr;
+
+out vec4 v_clr;
 
 uniform mat4 u_model;
 uniform mat4 u_view;

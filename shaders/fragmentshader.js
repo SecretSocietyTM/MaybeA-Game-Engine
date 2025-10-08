@@ -1,9 +1,11 @@
-export default `
+export default `#version 300 es
 precision mediump float;
 
-varying vec4 v_clr;
+in vec4 v_clr;
+
+out vec4 frag_color;
 
 void main() {
-    gl_FragColor = v_clr;
+    frag_color = v_clr;
 }
 `
