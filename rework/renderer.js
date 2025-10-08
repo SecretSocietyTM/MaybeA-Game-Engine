@@ -111,6 +111,8 @@ export default class Renderer {
     setupRender(width, height, color) {
         this.WIDTH = width;
         this.HEIGHT = height;
+        this.ASPECT = width / height;
+
         this.gl.viewport(0, 0, width, height)
 
         this.gl.clearColor(color[0], color[1], color[2], color[3]);
@@ -198,7 +200,7 @@ export default class Renderer {
 
         this.gl.uniform2fv(this.ui_pass_circle_center_uniform, uv_pos);
         this.gl.uniform3fv(this.ui_pass_clr_uniform, [1.0, 0.5, 0.0])
-        this.gl.uniform1f(this.ui_pass_aspect_ratio_uniform, (this.WIDTH / this.HEIGHT));
+        this.gl.uniform1f(this.ui_pass_aspect_ratio_uniform, this.ASPECT);
 
         this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
     }
