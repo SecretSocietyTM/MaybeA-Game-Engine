@@ -65,11 +65,9 @@ export default class Renderer {
 
     getUIPassShaderVariables() {
         this.ui_pass_pos_attrib = this.gl.getAttribLocation(this.ui_program, "a_pos");
-        this.ui_pass_uv_attrib = this.gl.getAttribLocation(this.ui_program, "a_uv");
 
         this.ui_pass_circle_center_uniform = this.gl.getUniformLocation(this.ui_program, "u_cntr");
         this.ui_pass_clr_uniform = this.gl.getUniformLocation(this.ui_program, "u_clr");
-        this.ui_pass_aspect_ratio_uniform = this.gl.getUniformLocation(this.ui_program, "u_aspect_ratio");
 
         return true;
     }
@@ -120,7 +118,7 @@ export default class Renderer {
         this.gl.enable(this.gl.DEPTH_TEST);
     }
 
-    renderFrame(view, proj, objects) {
+    renderFrame(view, proj, objects, selected) {
         this.gl.useProgram(this.program);
         this.gl.enable(this.gl.DEPTH_TEST);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
@@ -160,6 +158,7 @@ export default class Renderer {
         this.gl.useProgram(this.ui_program);
         this.gl.disable(this.gl.DEPTH_TEST);
 
+        // transform pos from world to screen
         const pos = vec4.fromValues(selected_object.pos[0], selected_object.pos[1], selected_object.pos[2], 1);
         vec4.transformMat4(pos, pos, view);
         vec4.transformMat4(pos, pos, proj);
@@ -167,10 +166,10 @@ export default class Renderer {
         pos[0] /= pos[3]; 
         pos[1] /= pos[3];
         pos[2] /= pos[3];
-
         const pos2 = [pos[0], pos[1]];
-
-        const uv_pos = vec2.scaleAndAdd([], [0.5, 0.5], pos2, 0.5);
+        const screen_x = (pos2[0] * 0.5 + 0.5) * this.WIDTH;
+        const screen_y = (pos2[1] * 0.5 + 0.5) * this.HEIGHT;
+        const cntr_screen = [screen_x, screen_y];
 
         // fullscreen quad vertices
         const vertices = new Float32Array([
@@ -179,12 +178,6 @@ export default class Renderer {
             -1,  1, // top-left
              1,  1  // top-right
         ]);
-        const vertex_uvs = new Float32Array([
-            0, 0,
-            1, 0,
-            0, 1,
-            1, 1
-        ]);
 
         const pos_buffer = this.gl.createBuffer();
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, pos_buffer);
@@ -192,15 +185,8 @@ export default class Renderer {
         this.gl.enableVertexAttribArray(this.ui_pass_pos_attrib);
         this.gl.vertexAttribPointer(this.ui_pass_pos_attrib, 2, this.gl.FLOAT, this.gl.FALSE, 0, 0);
 
-        const uv_buffer = this.gl.createBuffer();
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, uv_buffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, vertex_uvs, this.gl.STATIC_DRAW);
-        this.gl.enableVertexAttribArray(this.ui_pass_uv_attrib);
-        this.gl.vertexAttribPointer(this.ui_pass_uv_attrib, 2, this.gl.FLOAT, this.gl.FALSE, 0, 0);
-
-        this.gl.uniform2fv(this.ui_pass_circle_center_uniform, uv_pos);
+        this.gl.uniform2fv(this.ui_pass_circle_center_uniform, cntr_screen);
         this.gl.uniform3fv(this.ui_pass_clr_uniform, [1.0, 0.5, 0.0])
-        this.gl.uniform1f(this.ui_pass_aspect_ratio_uniform, this.ASPECT);
 
         this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
     }

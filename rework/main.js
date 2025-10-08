@@ -119,7 +119,7 @@ function main() {
 
     function frame() {
         mat4.lookAt(view, camera.pos, vec3.subtract([], camera.pos, camera.dir), camera.up);
-        renderer.renderFrame(view, proj, objects);
+        renderer.renderFrame(view, proj, objects, cur_selection);
         requestAnimationFrame(frame);
     }
 
@@ -252,7 +252,6 @@ function calculatePlaneIntersectionPoint(dir) {
 
     return p;
 }
-
 
 
 // HTML interactactions
