@@ -7,12 +7,16 @@ out vec4 frag_color;
 
 uniform vec2 u_cntr;
 uniform vec3 u_clr;
+uniform float u_aspect_ratio;
 
 void main() {
-    float radius = 0.0078125;
+    vec2 uv = v_uv - u_cntr;
+    uv.x *= u_aspect_ratio;
+
+    float radius = 0.02;
 
     // Compute distance from current pixel to circle center
-    float dist = length(v_uv - u_cntr);
+    float dist = length(uv);
 
     // If outside radius, discard the fragment (transparent)
     if (dist > radius)

@@ -69,6 +69,7 @@ export default class Renderer {
 
         this.ui_pass_circle_center_uniform = this.gl.getUniformLocation(this.ui_program, "u_cntr");
         this.ui_pass_clr_uniform = this.gl.getUniformLocation(this.ui_program, "u_clr");
+        this.ui_pass_aspect_ratio_uniform = this.gl.getUniformLocation(this.ui_program, "u_aspect_ratio");
 
         return true;
     }
@@ -108,12 +109,14 @@ export default class Renderer {
     }
 
     setupRender(width, height, color) {
+        this.WIDTH = width;
+        this.HEIGHT = height;
+
         this.gl.viewport(0, 0, width, height)
 
         this.gl.clearColor(color[0], color[1], color[2], color[3]);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
         this.gl.enable(this.gl.DEPTH_TEST);
-        /* this.gl.useProgram(this.program); */
     }
 
     renderFrame(view, proj, objects) {
@@ -167,7 +170,6 @@ export default class Renderer {
         const pos2 = [pos[0], pos[1]];
 
         const uv_pos = vec2.scaleAndAdd([], [0.5, 0.5], pos2, 0.5);
-        console.log(uv_pos);
 
         // fullscreen quad vertices
         const vertices = new Float32Array([
@@ -197,6 +199,7 @@ export default class Renderer {
 
         this.gl.uniform2fv(this.ui_pass_circle_center_uniform, uv_pos);
         this.gl.uniform3fv(this.ui_pass_clr_uniform, [1.0, 0.5, 0.0])
+        this.gl.uniform1f(this.ui_pass_aspect_ratio_uniform, (this.WIDTH / this.HEIGHT));
 
         this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
     }
