@@ -1,4 +1,5 @@
 const glm = glMatrix;
+const vec2 = glm.vec2;
 const vec3 = glm.vec3;
 const vec4 = glm.vec4;
 const mat4 = glm.mat4;
@@ -30,6 +31,7 @@ const cube_mesh = cube;
 // ui elements
 // TODO: Object.freeze({}) normally goes here but Object conflicts with Object
 // need to change my class Name.
+const gizmo_ui = document.getElementById("gizmo_pos");
 const pos_ui = document.getElementById("position");
 const rot_ui = document.getElementById("rotation");
 const scl_ui = document.getElementById("scale");
@@ -53,6 +55,10 @@ const rect = canvas.getBoundingClientRect();
 
 //
 // state variables?
+let gizmo_radius = 10;
+let gizmo_center = null;
+let gizmo_interact = false;
+
 let cur_x;
 let prev_x;
 let cur_y;
@@ -119,7 +125,8 @@ function main() {
 
     function frame() {
         mat4.lookAt(view, camera.pos, vec3.subtract([], camera.pos, camera.dir), camera.up);
-        renderer.renderFrame(view, proj, objects, cur_selection);
+        renderer.renderFrame(view, proj, objects, gizmo_center);
+
         requestAnimationFrame(frame);
     }
 
@@ -129,17 +136,21 @@ function main() {
 main();
 
 canvas.addEventListener("click", (e) => {
-    if (cur_selection) {
-        prev_selection = cur_selection;
-        cur_selection = null;
-        return;
-    }
     const mouse_x = e.clientX - rect.left;
     const mouse_y = e.clientY - rect.top;
     current_ray.dir = generateRayDir(mouse_x, mouse_y);
+
+    let selected = null;
     for (let i = 0; i < objects.length; i++) {
-        if (objects[i].aabb.isIntersecting(current_ray)) {
+        selected = objects[i].aabb.isIntersecting(current_ray);
+
+        if (selected) {
+
+            // update the state
             cur_selection = objects[i];
+            gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
+
+            // update the UI
             OBJECT_INFO_UI.name.textContent = cur_selection.name;
             OBJECT_INFO_UI.pos[0].value = Math.round(cur_selection.pos[0] * 100) / 100;
             OBJECT_INFO_UI.pos[1].value = Math.round(cur_selection.pos[1] * 100) / 100;
@@ -152,8 +163,23 @@ canvas.addEventListener("click", (e) => {
             OBJECT_INFO_UI.scl[0].value = cur_selection.scale[0];
             OBJECT_INFO_UI.scl[1].value = cur_selection.scale[1];
             OBJECT_INFO_UI.scl[2].value = cur_selection.scale[2];
-            return;
+
+            gizmo_ui.textContent = `(${Math.round(gizmo_center[0] * 100) / 100}, 
+                                    ${Math.round(gizmo_center[1] * 100) / 100})`;
+
+            break;
         }
+    }
+
+    if (!selected) {
+        prev_selection = cur_selection;
+        cur_selection = null;
+        gizmo_center = null;
+        gizmo_interact = false;
+    }
+
+    if (gizmo_center) {
+        gizmo_interact = isIntersectingGizmo(mouse_x, mouse_y);
     }
 });
 
@@ -201,13 +227,19 @@ canvas.addEventListener("mousemove", (e) => {
         if (pan_camera) camera.pan(1 * x_sign, -1 * y_sign);
         if (orbit_camera) camera.orbit(1 * x_sign, 1 * y_sign);
         current_ray.origin = camera.pos;
-    } else if (cur_selection) {
+    } else if (gizmo_interact) {
         current_ray.dir = generateRayDir(mouse_x, mouse_y);
         const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
         cur_selection.updatePos(new_pos);
+        gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
+
+        // update the ui
         OBJECT_INFO_UI.pos[0].value = Math.round(cur_selection.pos[0] * 100) / 100;
         OBJECT_INFO_UI.pos[1].value = Math.round(cur_selection.pos[1] * 100) / 100;
         OBJECT_INFO_UI.pos[2].value = Math.round(cur_selection.pos[2] * 100) / 100;
+
+        gizmo_ui.textContent = `(${Math.round(gizmo_center[0] * 100) / 100}, 
+                                 ${Math.round(gizmo_center[1] * 100) / 100})`;
     }
 });
 
@@ -253,6 +285,33 @@ function calculatePlaneIntersectionPoint(dir) {
     return p;
 }
 
+
+function calculateObjectCenterScreenCoord(object) {
+    const cntr = vec4.fromValues(object.pos[0], object.pos[1], object.pos[2], 1);
+    vec4.transformMat4(cntr, cntr, view); // world space --> view space
+    vec4.transformMat4(cntr, cntr, proj); // view space  --> clip space
+    vec4.scale(cntr, cntr, 1 / cntr[3]);   // clip space  --> NDC coords
+    const cntr_ndc = [cntr[0], cntr[1]];
+
+    const screen_x = (cntr_ndc[0] * 0.5 + 0.5) * WIDTH;
+    const screen_y = (cntr_ndc[1] * 0.5 + 0.5) * HEIGHT;
+    return [screen_x, screen_y];
+}
+
+
+function isIntersectingGizmo(mouse_x, mouse_y) {
+    const mouse_pos = [mouse_x, mouse_y];
+
+    const dist = vec2.length(vec2.subtract([], mouse_pos, gizmo_center));
+    console.log("mouse pos", mouse_pos);
+    console.log("gizmo pos", gizmo_center);
+    console.log("");
+
+    if (dist <= gizmo_radius) {
+        return true;
+    }
+    return false;
+}
 
 // HTML interactactions
 
