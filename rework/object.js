@@ -12,6 +12,7 @@ export default class Object {
               rotation_angles = [0,0,0]) {
 
         this.name = name;
+        this.is_interactable = true;
         this.transform(pos, scale, rotation_angles);
     }
 
@@ -32,9 +33,9 @@ export default class Object {
 
         this.model_matrix = mat4.create();
         mat4.translate(this.model_matrix, this.model_matrix, pos);
-        mat4.rotateX(this.model_matrix, this.model_matrix, rotation_angles[0]);
-        mat4.rotateY(this.model_matrix, this.model_matrix, rotation_angles[1]);
-        mat4.rotateZ(this.model_matrix, this.model_matrix, rotation_angles[2]);
+        mat4.rotateX(this.model_matrix, this.model_matrix, glm.glMatrix.toRadian(rotation_angles[0]));
+        mat4.rotateY(this.model_matrix, this.model_matrix, glm.glMatrix.toRadian(rotation_angles[1]));
+        mat4.rotateZ(this.model_matrix, this.model_matrix, glm.glMatrix.toRadian(rotation_angles[2]));
         mat4.scale(this.model_matrix, this.model_matrix, scale);
     }
 
@@ -76,6 +77,15 @@ export default class Object {
             this.aabb.getAABBModelMatrixForRendering();
         }          
         
+    }
+
+    // if no argument provided, toggle
+    isInteractable(is_interactable = null) {
+        if (!is_interactable) {
+            this.is_interactable = !this.is_interactable;
+            return;
+        }
+        this.is_interactable = is_interactable;
     }
 
     generateAABB() {

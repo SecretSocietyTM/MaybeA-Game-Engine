@@ -61,6 +61,7 @@ let gizmo_radius = 10;
 let gizmo_center = null;
 let gizmo_exists = false;
 let gizmo_interact = false;
+let gizmo_interact_up = false;
 
 let cur_x;
 let prev_x;
@@ -68,7 +69,9 @@ let cur_y;
 let prev_y;
 let pan_camera = false;
 let orbit_camera = false;
-const camera = new Camera([0,0,10], [0,0,0], [0,1,0]);
+
+// TODO: put the cam back at 0,0,10
+const camera = new Camera([2,1,5], [0,0,0], [0,1,0]);
 
 let cur_selection = null;
 let current_ray = {
@@ -97,15 +100,34 @@ function main() {
     // need a variable to store arrow vao;
     const arrow_VAO = renderer.addObjectVAO(arrow_mesh);
 
-    const dir_arrow = new Object("arrow", [0,0,0], [0.5,0.5,0.5], [0,0,0]);
-    dir_arrow.assignMesh(arrow_mesh);
-    dir_arrow.assignVao(arrow_VAO);
-    gizmo_objects.push(dir_arrow);
-    dir_arrow.generateAABB();
-    dir_arrow.aabb.setAABBColor([1.0, 0.65, 0.0]);
-    dir_arrow.aabb.assignVao(renderer.addObjectVAO(dir_arrow.aabb.mesh));
+    //
+    // gizmo objects
+    const dir_arrow_x = new Object("arrow", [0,0,0], [0.5,0.5,0.5], [0,0,-90]);
+    dir_arrow_x.assignMesh(arrow_mesh);
+    dir_arrow_x.assignVao(arrow_VAO);
+    gizmo_objects.push(dir_arrow_x);
+    dir_arrow_x.generateAABB();
+    dir_arrow_x.aabb.setAABBColor([1.0, 0.65, 0.0]);
+    dir_arrow_x.aabb.assignVao(renderer.addObjectVAO(dir_arrow_x.aabb.mesh));
 
+    const dir_arrow_y = new Object("arrow", [0,0,0], [0.5,0.5,0.5], [0,0,0]);
+    dir_arrow_y.assignMesh(arrow_mesh);
+    dir_arrow_y.assignVao(arrow_VAO);
+    gizmo_objects.push(dir_arrow_y);
+    dir_arrow_y.generateAABB();
+    dir_arrow_y.aabb.setAABBColor([1.0, 0.65, 0.0]);
+    dir_arrow_y.aabb.assignVao(renderer.addObjectVAO(dir_arrow_y.aabb.mesh));
 
+    const dir_arrow_z = new Object("arrow", [0,0,0], [0.5,0.5,0.5], [90,0,0]);
+    dir_arrow_z.assignMesh(arrow_mesh);
+    dir_arrow_z.assignVao(arrow_VAO);
+    gizmo_objects.push(dir_arrow_z);
+    dir_arrow_z.generateAABB();
+    dir_arrow_z.aabb.setAABBColor([1.0, 0.65, 0.0]);
+    dir_arrow_z.aabb.assignVao(renderer.addObjectVAO(dir_arrow_z.aabb.mesh));
+
+    //
+    // scene objects
     const cube1 = new Object("cube", [-0.5,0,0], [1,1,1], [0,0,0]);
     cube1.assignMesh(cube_mesh);
     cube1.assignVao(renderer.addObjectVAO(cube_mesh));
@@ -153,8 +175,9 @@ canvas.addEventListener("click", (e) => {
     const mouse_x = e.clientX - rect.left;
     const mouse_y = e.clientY - rect.top;
 
-    if (gizmo_interact) {
+    if (gizmo_interact || gizmo_interact_up) {
         gizmo_interact = false;
+        gizmo_interact_up = false;
         return;
     };
 
@@ -211,6 +234,12 @@ canvas.addEventListener("mousedown", (e) => {
         isIntersectingGizmo(cur_x, cur_y)) {
         gizmo_interact = true;
         return;
+    }
+    if (e.button === 0 && gizmo_exists) {
+        current_ray.dir = generateRayDir(cur_x, cur_y);
+        if (gizmo_objects[0].aabb.isIntersecting(current_ray)) {
+            gizmo_interact_up = true;
+        }
     }
     if (e.button === 1 && e.shiftKey) {
         pan_camera = true;
@@ -271,6 +300,9 @@ canvas.addEventListener("mousemove", (e) => {
 
         gizmo_ui.textContent = `(${Math.round(gizmo_center[0] * 100) / 100}, 
                                  ${Math.round(gizmo_center[1] * 100) / 100})`;
+    } else if (gizmo_interact_up) {
+        /* current_ray.dir = generateRayDir(mouse_x, mouse_y);
+        const new_pos =  */
     }
 });
 
@@ -279,8 +311,6 @@ canvas.addEventListener("wheel", (e) => {
     current_ray.origin = camera.pos;
     mat4.lookAt(view, camera.pos, vec3.subtract([], camera.pos, camera.dir), camera.up);
     gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
-
-    // TODO: update gizmo_center (view matrix changes)
 });
 
 
