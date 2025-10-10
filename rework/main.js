@@ -140,10 +140,10 @@ canvas.addEventListener("click", (e) => {
     const mouse_x = e.clientX - rect.left;
     const mouse_y = e.clientY - rect.top;
 
-    // keep click interacts simple, for now we only want to 
-    // * set the cur_selection to whichever object was clicked on
-    // * display the gizmo if an object was selected
-    // * remove the gizmo is no object is selected
+    if (gizmo_interact) {
+        gizmo_interact = false;
+        return;
+    };
 
     current_ray.dir = generateRayDir(mouse_x, mouse_y);
 
@@ -264,10 +264,8 @@ canvas.addEventListener("mousedown", (e) => {
     cur_y = e.clientY - rect.top;
 
     if (e.button === 0) { // if clicking (and holding) over the gizmo radius enable
-        console.log("mouse0 clicked");
         if (gizmo_exists) {
             if (isIntersectingGizmo(cur_x, cur_y)) {
-                console.log("gizmo interaction");
                 gizmo_interact = true;
             }
         }
@@ -280,9 +278,9 @@ canvas.addEventListener("mousedown", (e) => {
 });
 
 canvas.addEventListener("mouseup", (e) => {
-    if (e.button ===0) {
+    /* if (e.button === 0) {
         gizmo_interact = false;
-    }
+    } */
 
     if (e.button === 1 || e.shiftKey) {
         pan_camera = false;
