@@ -118,16 +118,13 @@ export default class Renderer {
         this.gl.enable(this.gl.DEPTH_TEST);
     }
 
-    renderFrame(view, proj, objects, gizmo_center) {
+    renderFrame(view, proj, objects, gizmo_objects, gizmo_center) {
         this.gl.useProgram(this.program);
         this.gl.enable(this.gl.DEPTH_TEST);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
         this.gl.uniformMatrix4fv(this.view_uniform, this.gl.FALSE, view);
         this.gl.uniformMatrix4fv(this.proj_uniform, this.gl.FALSE, proj);
-
-        // TODO: remove below line
-        const example = objects[0];
 
         objects.forEach(object => {
             this.gl.uniformMatrix4fv(this.model_uniform, this.gl.FALSE, object.model_matrix);
@@ -146,6 +143,13 @@ export default class Renderer {
         });
 
         if (gizmo_center) {
+            this.gl.disable(this.gl.DEPTH_TEST);
+            gizmo_objects.forEach(object => {
+                this.gl.uniformMatrix4fv(this.model_uniform, this.gl.FALSE, object.model_matrix);
+                this.gl.bindVertexArray(object.vao);
+                this.gl.drawElements(this.gl.TRIANGLES, object.mesh.indices.length, this.gl.UNSIGNED_SHORT, 0);
+                this.gl.bindVertexArray(null);
+            });
             this.renderUIPass(gizmo_center);
         }
     }
@@ -158,7 +162,6 @@ export default class Renderer {
 
     renderUIPass(gizmo_center) {
         this.gl.useProgram(this.ui_program);
-        this.gl.disable(this.gl.DEPTH_TEST);
 
         // fullscreen quad vertices
         const vertices = new Float32Array([
@@ -176,7 +179,7 @@ export default class Renderer {
 
         this.gl.uniform2fv(this.ui_pass_circle_center_uniform, gizmo_center);
         // this.gl.uniform1f(this.ui_pass_circle_radius, gizmo_radius);
-        this.gl.uniform3fv(this.ui_pass_clr_uniform, [1.0, 0.5, 0.0])
+        this.gl.uniform3fv(this.ui_pass_clr_uniform, [1.0, 1.0, 1.0])
 
         this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
     }

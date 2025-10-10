@@ -19,12 +19,14 @@ import ui_pass_fs_src from "../shaders/ui_pass/fragmentshader.js";
 import { parsePLY } from "../mimp/parse_ply.js";
 import apple_ply from "../mimp/models/apple_ply.js";
 import cube_ply from "../mimp/models/cube_ply.js";
+import arrow_ply from "../mimp/models/arrow_ply.js";
 import cube from "../util/buffer_data/cube.js";
 
 
 // meshes
 const apple_mesh = parsePLY(apple_ply);
 const cube_mesh2 = parsePLY(cube_ply);
+const arrow_mesh = parsePLY(arrow_ply);
 const cube_mesh = cube;
 
 //
@@ -69,16 +71,17 @@ let orbit_camera = false;
 const camera = new Camera([0,0,10], [0,0,0], [0,1,0]);
 
 let cur_selection = null;
-let prev_selection = null;
 let current_ray = {
     origin: camera.pos,
     dir: null
 }
 
 let objects = [];
+let gizmo_objects = [];
 
 let view = mat4.create();
 let proj = mat4.create();
+mat4.lookAt(view, camera.pos, vec3.subtract([], camera.pos, camera.dir), camera.up);
 mat4.perspective(proj, glm.glMatrix.toRadian(45), WIDTH / HEIGHT, 0.1, 1000);
 
 const renderer = new Renderer(canvas);
@@ -90,6 +93,17 @@ function main() {
     renderer.getShaderVariables();
     renderer.getUIPassShaderVariables();
     renderer.setupRender(WIDTH, HEIGHT, [0.3, 0.3, 0.3, 1.0]/* [0.45, 0.55, 0.5, 1.0] */);
+
+    // need a variable to store arrow vao;
+    const arrow_VAO = renderer.addObjectVAO(arrow_mesh);
+
+    const dir_arrow = new Object("arrow", [0,0,0], [0.5,0.5,0.5], [0,0,0]);
+    dir_arrow.assignMesh(arrow_mesh);
+    dir_arrow.assignVao(arrow_VAO);
+    gizmo_objects.push(dir_arrow);
+    dir_arrow.generateAABB();
+    dir_arrow.aabb.setAABBColor([1.0, 0.65, 0.0]);
+    dir_arrow.aabb.assignVao(renderer.addObjectVAO(dir_arrow.aabb.mesh));
 
 
     const cube1 = new Object("cube", [-0.5,0,0], [1,1,1], [0,0,0]);
@@ -125,8 +139,7 @@ function main() {
 
 
     function frame() {
-        mat4.lookAt(view, camera.pos, vec3.subtract([], camera.pos, camera.dir), camera.up);
-        renderer.renderFrame(view, proj, objects, gizmo_center);
+        renderer.renderFrame(view, proj, objects, gizmo_objects, gizmo_center);
 
         requestAnimationFrame(frame);
     }
@@ -157,6 +170,9 @@ canvas.addEventListener("click", (e) => {
 
             gizmo_exists = true;
             gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
+            gizmo_objects.forEach(object => {
+                object.updatePos(cur_selection.pos);
+            });
 
             // update the UI
             OBJECT_INFO_UI.name.textContent = cur_selection.name;
@@ -237,11 +253,16 @@ canvas.addEventListener("mousemove", (e) => {
         if (pan_camera) camera.pan(1 * x_sign, -1 * y_sign);
         if (orbit_camera) camera.orbit(1 * x_sign, 1 * y_sign);
         current_ray.origin = camera.pos;
+        mat4.lookAt(view, camera.pos, vec3.subtract([], camera.pos, camera.dir), camera.up);
+        gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
     } else if (gizmo_interact) {
         current_ray.dir = generateRayDir(mouse_x, mouse_y);
         const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
         cur_selection.updatePos(new_pos);
         gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
+        gizmo_objects.forEach(object => {
+                object.updatePos(cur_selection.pos);
+            });
 
         // update the ui
         OBJECT_INFO_UI.pos[0].value = Math.round(cur_selection.pos[0] * 100) / 100;
@@ -256,6 +277,10 @@ canvas.addEventListener("mousemove", (e) => {
 canvas.addEventListener("wheel", (e) => {
     camera.zoom(e.deltaY);
     current_ray.origin = camera.pos;
+    mat4.lookAt(view, camera.pos, vec3.subtract([], camera.pos, camera.dir), camera.up);
+    gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
+
+    // TODO: update gizmo_center (view matrix changes)
 });
 
 
@@ -328,57 +353,57 @@ function isIntersectingGizmo(mouse_x, mouse_y) {
 // position inputs
 OBJECT_INFO_UI.pos[0].addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
-        prev_selection.updatePos([+OBJECT_INFO_UI.pos[0].value, prev_selection.pos[1], prev_selection.pos[2]]);
+        cur_selection.updatePos([+OBJECT_INFO_UI.pos[0].value, cur_selection.pos[1], cur_selection.pos[2]]);
     }
 });
 
 OBJECT_INFO_UI.pos[1].addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
-        prev_selection.updatePos([prev_selection.pos[0], +OBJECT_INFO_UI.pos[1].value, prev_selection.pos[2]]);
+        cur_selection.updatePos([cur_selection.pos[0], +OBJECT_INFO_UI.pos[1].value, cur_selection.pos[2]]);
     }
 });
 
 OBJECT_INFO_UI.pos[2].addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
-        prev_selection.updatePos([prev_selection.pos[0], prev_selection.pos[1], +OBJECT_INFO_UI.pos[2].value]);
+        cur_selection.updatePos([cur_selection.pos[0], cur_selection.pos[1], +OBJECT_INFO_UI.pos[2].value]);
     }
 });
 
 // rotation inputs
 OBJECT_INFO_UI.rot[0].addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
-        prev_selection.updateRot([+OBJECT_INFO_UI.rot[0].value, prev_selection.rotation_angles[1], prev_selection.rotation_angles[2]]);
+        cur_selection.updateRot([+OBJECT_INFO_UI.rot[0].value, cur_selection.rotation_angles[1], cur_selection.rotation_angles[2]]);
     }
 });
 
 OBJECT_INFO_UI.rot[1].addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
-        prev_selection.updateRot([prev_selection.rotation_angles[0], +OBJECT_INFO_UI.rot[1].value, prev_selection.rotation_angles[2]]);
+        cur_selection.updateRot([cur_selection.rotation_angles[0], +OBJECT_INFO_UI.rot[1].value, cur_selection.rotation_angles[2]]);
     }
 });
 
 OBJECT_INFO_UI.rot[2].addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
-        prev_selection.updateRot([prev_selection.rotation_angles[0], prev_selection.rotation_angles[1], +OBJECT_INFO_UI.rot[2].value]);
+        cur_selection.updateRot([cur_selection.rotation_angles[0], cur_selection.rotation_angles[1], +OBJECT_INFO_UI.rot[2].value]);
     }
 });
 
 // scale inputs
 OBJECT_INFO_UI.scl[0].addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
-        prev_selection.updateScale([+OBJECT_INFO_UI.scl[0].value, prev_selection.scale[1], prev_selection.scale[2]]);
+        cur_selection.updateScale([+OBJECT_INFO_UI.scl[0].value, cur_selection.scale[1], cur_selection.scale[2]]);
     }
 });
 
 OBJECT_INFO_UI.scl[1].addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
-        prev_selection.updateScale([prev_selection.scale[0], +OBJECT_INFO_UI.scl[1].value, prev_selection.scale[2]]);
+        cur_selection.updateScale([cur_selection.scale[0], +OBJECT_INFO_UI.scl[1].value, cur_selection.scale[2]]);
     }
 });
 
 OBJECT_INFO_UI.scl[2].addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
-        prev_selection.updateScale([prev_selection.scale[0], prev_selection.scale[1], +OBJECT_INFO_UI.scl[2].value]);
+        cur_selection.updateScale([cur_selection.scale[0], cur_selection.scale[1], +OBJECT_INFO_UI.scl[2].value]);
     }
 });
 
@@ -425,8 +450,8 @@ let copied_object = null;
 
 // keyboard shortcuts
 document.addEventListener("keydown", (e) => {
-    if (e.ctrlKey && e.key === "c" && prev_selection) {
-        copied_object = prev_selection;
+    if (e.ctrlKey && e.key === "c" && cur_selection) {
+        copied_object = cur_selection;
     }
     if (e.ctrlKey && e.key === "v" && copied_object) {
         const object = new Object(
