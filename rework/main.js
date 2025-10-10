@@ -152,78 +152,10 @@ canvas.addEventListener("click", (e) => {
     for (let i = 0; i < objects.length; i++) {
         if (objects[i].aabb.isIntersecting(current_ray)) {
             ray_hit = true;
-            if (cur_selection === objects[i]) return // TODO: not sure if this does anything
+            if (cur_selection === objects[i]) return;
             cur_selection = objects[i];
 
             gizmo_exists = true;
-            gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
-            return;
-        }
-    }
-
-    if (!ray_hit) {
-        cur_selection = null;
-
-        gizmo_exists = false;
-        gizmo_center = null;
-        return;
-    }
-    // TODO: most likely remove this, for now just keeping as a reference
-/*     let is_selected = false;
-
-    // if the gizmo exists we want to check whether this click interacts with it or not
-    // if it does interact with it, set the flag and return
-    // if it does not interact with it, find out what we interacted with
-    if (gizmo_center) {
-        // check if the click interacts with it
-        gizmo_interact = isIntersectingGizmo(mouse_x, mouse_y);
-        if (gizmo_interact) {
-            // do nothing as that will be taken care of by the mousemove event
-            return;
-        } // else check to see what was clicked on instead
-        current_ray.dir = generateRayDir(mouse_x, mouse_y);
-        for (let i = 0; i < objects.length; i++) {
-            is_selected = objects[i].aabb.isIntersecting(current_ray);
-
-            if (is_selected) {
-                cur_selection = objects[i];
-                gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
-                break;
-                // do UI stuff too;
-            } else {
-                cur_selection = null;
-            }
-        }
-    } else {
-        current_ray.dir = generateRayDir(mouse_x, mouse_y);
-        for (let i = 0; i < objects.length; i++) {
-            is_selected = objects[i].aabb.isIntersecting(current_ray);
-
-            if (is_selected) {
-                cur_selection = objects[i];
-                gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
-                break;
-                // do UI stuff too;
-            } else {
-                cur_selection = null;
-            }
-        }     
-    }
-
-    console.log(cur_selection); */
-
-    // TODO: maybe remove this, keeping as backup in case new method doesn't work
-/* 
-    current_ray.dir = generateRayDir(mouse_x, mouse_y);
-
-    let selected = null;
-    for (let i = 0; i < objects.length; i++) {
-        selected = objects[i].aabb.isIntersecting(current_ray);
-
-        if (selected) {
-
-            // update the state
-            cur_selection = objects[i];
             gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
 
             // update the UI
@@ -242,46 +174,38 @@ canvas.addEventListener("click", (e) => {
 
             gizmo_ui.textContent = `(${Math.round(gizmo_center[0] * 100) / 100}, 
                                     ${Math.round(gizmo_center[1] * 100) / 100})`;
-
-            break;
+            return;
         }
     }
 
-    if (!selected) {
-        prev_selection = cur_selection;
+    if (!ray_hit) {
         cur_selection = null;
-        gizmo_center = null;
-        gizmo_interact = false;
-    }
 
-    if (gizmo_center) {
-        gizmo_interact = isIntersectingGizmo(mouse_x, mouse_y);
-    } */
+        gizmo_exists = false;
+        gizmo_center = null;
+        return;
+    }
 });
 
 canvas.addEventListener("mousedown", (e) => {
     cur_x = e.clientX - rect.left;
     cur_y = e.clientY - rect.top;
 
-    if (e.button === 0) { // if clicking (and holding) over the gizmo radius enable
-        if (gizmo_exists) {
-            if (isIntersectingGizmo(cur_x, cur_y)) {
-                gizmo_interact = true;
-            }
-        }
+    if (e.button === 0 && gizmo_exists &&
+        isIntersectingGizmo(cur_x, cur_y)) {
+        gizmo_interact = true;
+        return;
     }
     if (e.button === 1 && e.shiftKey) {
         pan_camera = true;
-    } else if (e.button === 1) {
+        return;
+    } 
+    if (e.button === 1) {
         orbit_camera = true;
     }
 });
 
 canvas.addEventListener("mouseup", (e) => {
-    /* if (e.button === 0) {
-        gizmo_interact = false;
-    } */
-
     if (e.button === 1 || e.shiftKey) {
         pan_camera = false;
         orbit_camera = false;
@@ -289,7 +213,6 @@ canvas.addEventListener("mouseup", (e) => {
 });
 
 canvas.addEventListener("mousemove", (e) => {
-    // do x if item is currently selected
     const mouse_x = e.clientX - rect.left;
     const mouse_y = e.clientY - rect.top;
     
