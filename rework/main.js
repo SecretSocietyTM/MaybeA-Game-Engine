@@ -102,7 +102,7 @@ function main() {
 
     //
     // gizmo objects
-    const dir_arrow_x = new Object("arrow", [0,0,0], [0.5,0.5,0.5], [0,0,-90]);
+    const dir_arrow_x = new Object("arrow", [0,0,0], [0.5,5,0.5], [0,0,-90]);
     dir_arrow_x.assignMesh(arrow_mesh);
     dir_arrow_x.assignVao(arrow_VAO);
     gizmo_objects.push(dir_arrow_x);
@@ -351,6 +351,23 @@ function calculatePlaneIntersectionPoint(dir) {
 }
 
 
+function calculateLineIntersectionPoint(v, a, b) {
+    let numerator = vec2.dot((vec2.subtract([], a, b)), v);
+    console.log(numerator);
+    let denominator = vec2.length(v)**2;
+    console.log(denominator);
+
+    let t = numerator / denominator;
+    console.log(t);
+
+    let p = vec2.scaleAndAdd([], b, v, t);
+    return p;
+}
+
+console.log(calculateLineIntersectionPoint([0,1], [0,0], [1,0], [2,1]));
+
+console.log(vec2.dot([2,1], [0,1]));
+
 function calculateObjectCenterScreenCoord(object) {
     const cntr = vec4.fromValues(object.pos[0], object.pos[1], object.pos[2], 1);
     vec4.transformMat4(cntr, cntr, view); // world space --> view space
@@ -362,6 +379,32 @@ function calculateObjectCenterScreenCoord(object) {
     const screen_y = (cntr_ndc[1] * 0.5 + 0.5) * HEIGHT;
     return [screen_x, screen_y];
 }
+
+function calculateWorldToScreenCoords(coords) {
+    const p = vec4.fromValues(coords[0], coords[1], coords[2], 1);
+    vec4.transformMat4(p, p, view); // world space --> view space
+    vec4.transformMat4(p, p, proj); // view space  --> clip space
+    vec4.scale(p, p, 1 / p[3]);   // clip space  --> NDC coords
+    const p_ndc = [p[0], p[1]];
+
+    const screen_x = (p_ndc[0] * 0.5 + 0.5) * WIDTH;
+    const screen_y = (p_ndc[1] * 0.5 + 0.5) * HEIGHT;
+    return [screen_x, screen_y]; 
+}
+
+// TODO: remove
+const coord1 = calculateWorldToScreenCoords([2, 0, 0]);
+const coord2 = calculateWorldToScreenCoords([3, 0, 0]);
+console.log(coord1);
+console.log(coord2);
+
+const axis1_dir = vec2.normalize([], vec2.subtract([], coord2, coord1));
+console.log(axis1_dir);
+const axis2_dir = [-axis1_dir[1], axis1_dir[0]];
+console.log(axis2_dir);
+
+// given some random point on the new 2d plane, x, compute the distance along the desired axis by
+// finding interesection between vector (axis y) from point x to desired axis
 
 
 function isIntersectingGizmo(mouse_x, mouse_y) {
