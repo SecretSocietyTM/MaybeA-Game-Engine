@@ -138,6 +138,11 @@ main();
 canvas.addEventListener("click", (e) => {
     const mouse_x = e.clientX - rect.left;
     const mouse_y = e.clientY - rect.top;
+
+    // TODO: remove
+    console.log("mouse pos", [mouse_x, mouse_y]);
+
+
     current_ray.dir = generateRayDir(mouse_x, mouse_y);
 
     let selected = null;
@@ -184,14 +189,13 @@ canvas.addEventListener("click", (e) => {
 });
 
 canvas.addEventListener("mousedown", (e) => {
+    cur_x = e.clientX - rect.left;
+    cur_y = e.clientY - rect.top;
+
     if (e.button === 1 && e.shiftKey) {
         pan_camera = true;
-        cur_x = e.clientX - rect.left;
-        cur_y = e.clientY - rect.top;
     } else if (e.button === 1) {
         orbit_camera = true;
-        cur_x = e.clientX - rect.left;
-        cur_y = e.clientY - rect.top;
     }
 });
 
@@ -206,6 +210,7 @@ canvas.addEventListener("mousemove", (e) => {
     // do x if item is currently selected
     const mouse_x = e.clientX - rect.left;
     const mouse_y = e.clientY - rect.top;
+    
     if (pan_camera || orbit_camera) {
         prev_x = cur_x;
         prev_y = cur_y;
@@ -300,11 +305,12 @@ function calculateObjectCenterScreenCoord(object) {
 
 
 function isIntersectingGizmo(mouse_x, mouse_y) {
-    const mouse_pos = [mouse_x, mouse_y];
+    const mouse_pos = [mouse_x, HEIGHT - mouse_y];
 
     const dist = vec2.length(vec2.subtract([], mouse_pos, gizmo_center));
     console.log("mouse pos", mouse_pos);
     console.log("gizmo pos", gizmo_center);
+    console.log("dist", dist);
     console.log("");
 
     if (dist <= gizmo_radius) {
