@@ -63,6 +63,15 @@ let gizmo_exists = false;
 let gizmo_interact = false;
 let gizmo_interact_up = false;
 
+let cur_selection_prev_static_pos = null;
+
+// variables for translation via gizmo
+let start_x = null;
+let start_y = null;
+let delta = 0;
+let prev_delta;
+
+
 let cur_x;
 let prev_x;
 let cur_y;
@@ -71,7 +80,7 @@ let pan_camera = false;
 let orbit_camera = false;
 
 // TODO: put the cam back at 0,0,10
-const camera = new Camera([2,1,5], [0,0,0], [0,1,0]);
+const camera = new Camera([5,1,2], [0,0,0], [0,1,0]);
 
 let cur_selection = null;
 let current_ray = {
@@ -102,13 +111,13 @@ function main() {
 
     //
     // gizmo objects
-    const dir_arrow_x = new Object("arrow", [0,0,0], [0.5,5,0.5], [0,0,-90]);
+    /* const dir_arrow_x = new Object("arrow", [0,0,0], [0.5,5,0.5], [0,0,-90]);
     dir_arrow_x.assignMesh(arrow_mesh);
     dir_arrow_x.assignVao(arrow_VAO);
     gizmo_objects.push(dir_arrow_x);
     dir_arrow_x.generateAABB();
     dir_arrow_x.aabb.setAABBColor([1.0, 0.65, 0.0]);
-    dir_arrow_x.aabb.assignVao(renderer.addObjectVAO(dir_arrow_x.aabb.mesh));
+    dir_arrow_x.aabb.assignVao(renderer.addObjectVAO(dir_arrow_x.aabb.mesh)); */
 
     const dir_arrow_y = new Object("arrow", [0,0,0], [0.5,0.5,0.5], [0,0,0]);
     dir_arrow_y.assignMesh(arrow_mesh);
@@ -118,17 +127,17 @@ function main() {
     dir_arrow_y.aabb.setAABBColor([1.0, 0.65, 0.0]);
     dir_arrow_y.aabb.assignVao(renderer.addObjectVAO(dir_arrow_y.aabb.mesh));
 
-    const dir_arrow_z = new Object("arrow", [0,0,0], [0.5,0.5,0.5], [90,0,0]);
+    /* const dir_arrow_z = new Object("arrow", [0,0,0], [0.5,0.5,0.5], [90,0,0]);
     dir_arrow_z.assignMesh(arrow_mesh);
     dir_arrow_z.assignVao(arrow_VAO);
     gizmo_objects.push(dir_arrow_z);
     dir_arrow_z.generateAABB();
     dir_arrow_z.aabb.setAABBColor([1.0, 0.65, 0.0]);
-    dir_arrow_z.aabb.assignVao(renderer.addObjectVAO(dir_arrow_z.aabb.mesh));
+    dir_arrow_z.aabb.assignVao(renderer.addObjectVAO(dir_arrow_z.aabb.mesh)); */
 
     //
     // scene objects
-    const cube1 = new Object("cube", [-0.5,0,0], [1,1,1], [0,0,0]);
+    const cube1 = new Object("cube", [0,0,0], [1,1,1], [0,0,0]);
     cube1.assignMesh(cube_mesh);
     cube1.assignVao(renderer.addObjectVAO(cube_mesh));
     objects.push(cube1);
@@ -137,7 +146,7 @@ function main() {
     cube1.aabb.assignVao(renderer.addObjectVAO(cube1.aabb.mesh));
 
 
-    const apple1 = new Object("apple", [2,0,0], [9,9,9], [0,0,0]);
+    const apple1 = new Object("apple", [0,0,-5], [9,9,9], [0,0,0]);
     apple1.assignMesh(apple_mesh);
     apple1.assignVao(renderer.addObjectVAO(apple_mesh));
     objects.push(apple1);
@@ -178,6 +187,9 @@ canvas.addEventListener("click", (e) => {
     if (gizmo_interact || gizmo_interact_up) {
         gizmo_interact = false;
         gizmo_interact_up = false;
+
+        start_x = null;
+        start_y = null;
         return;
     };
 
@@ -239,6 +251,10 @@ canvas.addEventListener("mousedown", (e) => {
         current_ray.dir = generateRayDir(cur_x, cur_y);
         if (gizmo_objects[0].aabb.isIntersecting(current_ray)) {
             gizmo_interact_up = true;
+            start_x = cur_x;
+            start_y = cur_y;
+            cur_selection_prev_static_pos = cur_selection.pos;
+            console.log(cur_selection_prev_static_pos);
         }
     }
     if (e.button === 1 && e.shiftKey) {
@@ -301,8 +317,41 @@ canvas.addEventListener("mousemove", (e) => {
         gizmo_ui.textContent = `(${Math.round(gizmo_center[0] * 100) / 100}, 
                                  ${Math.round(gizmo_center[1] * 100) / 100})`;
     } else if (gizmo_interact_up) {
-        /* current_ray.dir = generateRayDir(mouse_x, mouse_y);
-        const new_pos =  */
+        // up is along y axis [0,1,0]
+        const coord1 = calculateWorldToScreenCoords(cur_selection_prev_static_pos);
+        const coord2 = calculateWorldToScreenCoords([cur_selection_prev_static_pos[0], 
+            cur_selection_prev_static_pos[1] + 1, 
+            cur_selection_prev_static_pos[2]]);
+    
+        const axis1_dir = vec2.normalize([], vec2.subtract([], coord2, coord1));
+        /* console.log(axis1_dir); */
+        const axis2_dir = [-axis1_dir[1], axis1_dir[0]];
+        /* console.log(axis2_dir); */
+
+        const p0 = calculateLineIntersectionPoint(axis1_dir, [start_x, HEIGHT - start_y], gizmo_center);
+        const p = calculateLineIntersectionPoint(axis1_dir, [mouse_x, HEIGHT - mouse_y], gizmo_center);
+
+        prev_delta = delta;
+        delta = vec2.subtract([], p, p0);
+
+        let move_amt = 1;
+        if (prev_delta[1] < delta[1]) move_amt = 1;
+        else if (prev_delta[1] > delta[1]) move_amt = -1;
+        else move_amt = 0;
+
+        console.log("delta", delta);
+
+        // TODO: dont want to move by some amount + sens, want to move x distance from where mouse originally began to hold
+        // this way the object will end up at the same distance from the mouse as when the gizmo was first selected
+        // (ex: click and hold from tip of arrow, final spot, mouse remains at tip of arrow)
+        cur_selection.updatePos([cur_selection.pos[0], cur_selection.pos[1] + move_amt * 0.05, cur_selection.pos[2]]);
+        gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
+        gizmo_objects.forEach(object => {
+                object.updatePos(cur_selection.pos);
+            });
+        
+        /* console.log("delta", vec2.subtract([], p, [start_x, start_y])); */
+        /* console.log(p); */
     }
 });
 
@@ -350,23 +399,20 @@ function calculatePlaneIntersectionPoint(dir) {
     return p;
 }
 
-
+// v and b are connected, a is part of w
 function calculateLineIntersectionPoint(v, a, b) {
     let numerator = vec2.dot((vec2.subtract([], a, b)), v);
-    console.log(numerator);
     let denominator = vec2.length(v)**2;
-    console.log(denominator);
-
     let t = numerator / denominator;
-    console.log(t);
+
+    /* console.log(numerator);
+    console.log(denominator);
+    console.log(t); */
 
     let p = vec2.scaleAndAdd([], b, v, t);
     return p;
 }
 
-console.log(calculateLineIntersectionPoint([0,1], [0,0], [1,0], [2,1]));
-
-console.log(vec2.dot([2,1], [0,1]));
 
 function calculateObjectCenterScreenCoord(object) {
     const cntr = vec4.fromValues(object.pos[0], object.pos[1], object.pos[2], 1);
@@ -393,7 +439,7 @@ function calculateWorldToScreenCoords(coords) {
 }
 
 // TODO: remove
-const coord1 = calculateWorldToScreenCoords([2, 0, 0]);
+/* const coord1 = calculateWorldToScreenCoords([2, 0, 0]);
 const coord2 = calculateWorldToScreenCoords([3, 0, 0]);
 console.log(coord1);
 console.log(coord2);
@@ -401,10 +447,7 @@ console.log(coord2);
 const axis1_dir = vec2.normalize([], vec2.subtract([], coord2, coord1));
 console.log(axis1_dir);
 const axis2_dir = [-axis1_dir[1], axis1_dir[0]];
-console.log(axis2_dir);
-
-// given some random point on the new 2d plane, x, compute the distance along the desired axis by
-// finding interesection between vector (axis y) from point x to desired axis
+console.log(axis2_dir); */
 
 
 function isIntersectingGizmo(mouse_x, mouse_y) {
