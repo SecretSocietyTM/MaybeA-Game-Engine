@@ -61,7 +61,9 @@ let gizmo_radius = 10;
 let gizmo_center = null;
 let gizmo_exists = false;
 let gizmo_interact = false;
-let gizmo_interact_up = false;
+let gizmo_interact_x = false;
+let gizmo_interact_y = false;
+let gizmo_interact_z = false;
 
 
 // variables for translation via gizmo
@@ -108,15 +110,15 @@ function main() {
 
     //
     // gizmo objects
-    /* const dir_arrow_x = new Object("arrow", [0,0,0], [0.5,5,0.5], [0,0,-90]);
+    const dir_arrow_x = new Object("arrow_x", [0,0,0], [0.5,0.5,0.5], [0,0,-90]);
     dir_arrow_x.assignMesh(arrow_mesh);
     dir_arrow_x.assignVao(arrow_VAO);
     gizmo_objects.push(dir_arrow_x);
     dir_arrow_x.generateAABB();
     dir_arrow_x.aabb.setAABBColor([1.0, 0.65, 0.0]);
-    dir_arrow_x.aabb.assignVao(renderer.addObjectVAO(dir_arrow_x.aabb.mesh)); */
+    dir_arrow_x.aabb.assignVao(renderer.addObjectVAO(dir_arrow_x.aabb.mesh));
 
-    const dir_arrow_y = new Object("arrow", [0,0,0], [0.5,0.5,0.5], [0,0,0]);
+    const dir_arrow_y = new Object("arrow_y", [0,0,0], [0.5,0.5,0.5], [0,0,0]);
     dir_arrow_y.assignMesh(arrow_mesh);
     dir_arrow_y.assignVao(arrow_VAO);
     gizmo_objects.push(dir_arrow_y);
@@ -124,13 +126,13 @@ function main() {
     dir_arrow_y.aabb.setAABBColor([1.0, 0.65, 0.0]);
     dir_arrow_y.aabb.assignVao(renderer.addObjectVAO(dir_arrow_y.aabb.mesh));
 
-    /* const dir_arrow_z = new Object("arrow", [0,0,0], [0.5,0.5,0.5], [90,0,0]);
+    const dir_arrow_z = new Object("arrow_z", [0,0,0], [0.5,0.5,0.5], [90,0,0]);
     dir_arrow_z.assignMesh(arrow_mesh);
     dir_arrow_z.assignVao(arrow_VAO);
     gizmo_objects.push(dir_arrow_z);
     dir_arrow_z.generateAABB();
     dir_arrow_z.aabb.setAABBColor([1.0, 0.65, 0.0]);
-    dir_arrow_z.aabb.assignVao(renderer.addObjectVAO(dir_arrow_z.aabb.mesh)); */
+    dir_arrow_z.aabb.assignVao(renderer.addObjectVAO(dir_arrow_z.aabb.mesh));
 
     //
     // scene objects
@@ -181,9 +183,12 @@ canvas.addEventListener("click", (e) => {
     const mouse_x = e.clientX - rect.left;
     const mouse_y = e.clientY - rect.top;
 
-    if (gizmo_interact || gizmo_interact_up) {
+    if (gizmo_interact || gizmo_interact_x || 
+        gizmo_interact_y || gizmo_interact_z) {
         gizmo_interact = false;
-        gizmo_interact_up = false;
+        gizmo_interact_x = false;
+        gizmo_interact_y = false;
+        gizmo_interact_z = false;
         return;
     };
 
@@ -243,14 +248,18 @@ canvas.addEventListener("mousedown", (e) => {
     }
     if (e.button === 0 && gizmo_exists) {
         current_ray.dir = generateRayDir(cur_x, cur_y);
-        if (gizmo_objects[0].aabb.isIntersecting(current_ray)) {
-            gizmo_interact_up = true;
 
-            current_ray.dir = generateRayDir(cur_x, cur_y);
-            start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
-            cur_selection_prev_pos = cur_selection.pos;
-        }
-        return;
+        gizmo_objects.forEach(object => {
+            if (object.aabb.isIntersecting(current_ray)) {
+                if (object.name === "arrow_x") gizmo_interact_x = true;
+                else if (object.name === "arrow_y") gizmo_interact_y = true;
+                else gizmo_interact_z = true;
+                current_ray.dir = generateRayDir(cur_x, cur_y);
+                start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
+                cur_selection_prev_pos = cur_selection.pos;
+                return;
+            }
+        });
     }
     if (e.button === 1 && e.shiftKey) {
         pan_camera = true;
@@ -315,11 +324,29 @@ canvas.addEventListener("mousemove", (e) => {
 
         gizmo_ui.textContent = `(${Math.round(gizmo_center[0] * 100) / 100}, 
                                  ${Math.round(gizmo_center[1] * 100) / 100})`;
-    } else if (gizmo_interact_up) {
+    } else if (gizmo_interact_x) {
         current_ray.dir = generateRayDir(mouse_x, mouse_y);
         const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
-        console.log("new pos", new_pos[1]);
-        console.log("start pos", start_pos[1]);        
+
+        cur_selection.updatePos([
+            cur_selection_prev_pos[0] + new_pos[0] - start_pos[0],
+            cur_selection.pos[1],
+            cur_selection.pos[2]]);
+        gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
+        gizmo_objects.forEach(object => {
+                object.updatePos(cur_selection.pos);
+            });
+
+        // update the ui
+        OBJECT_INFO_UI.pos[0].value = Math.round(cur_selection.pos[0] * 100) / 100;
+        OBJECT_INFO_UI.pos[1].value = Math.round(cur_selection.pos[1] * 100) / 100;
+        OBJECT_INFO_UI.pos[2].value = Math.round(cur_selection.pos[2] * 100) / 100;
+
+        gizmo_ui.textContent = `(${Math.round(gizmo_center[0] * 100) / 100}, 
+                                 ${Math.round(gizmo_center[1] * 100) / 100})`;
+    } else if (gizmo_interact_y) {
+        current_ray.dir = generateRayDir(mouse_x, mouse_y);
+        const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
 
         cur_selection.updatePos([
             cur_selection.pos[0], 
@@ -330,6 +357,26 @@ canvas.addEventListener("mousemove", (e) => {
                 object.updatePos(cur_selection.pos);
             });
 
+        // update the ui
+        OBJECT_INFO_UI.pos[0].value = Math.round(cur_selection.pos[0] * 100) / 100;
+        OBJECT_INFO_UI.pos[1].value = Math.round(cur_selection.pos[1] * 100) / 100;
+        OBJECT_INFO_UI.pos[2].value = Math.round(cur_selection.pos[2] * 100) / 100;
+
+        gizmo_ui.textContent = `(${Math.round(gizmo_center[0] * 100) / 100}, 
+                                 ${Math.round(gizmo_center[1] * 100) / 100})`;
+
+    } else if (gizmo_interact_z) {
+        current_ray.dir = generateRayDir(mouse_x, mouse_y);
+        const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
+
+        cur_selection.updatePos([
+            cur_selection.pos[0], 
+            cur_selection.pos[1],
+            cur_selection_prev_pos[2] + new_pos[2] - start_pos[2]]);
+        gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
+        gizmo_objects.forEach(object => {
+                object.updatePos(cur_selection.pos);
+            });
 
         // update the ui
         OBJECT_INFO_UI.pos[0].value = Math.round(cur_selection.pos[0] * 100) / 100;
