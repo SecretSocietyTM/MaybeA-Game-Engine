@@ -70,6 +70,7 @@ let start_x = null;
 let start_y = null;
 let delta = 0;
 let prev_delta;
+let start_pos;
 
 
 let cur_x;
@@ -80,7 +81,7 @@ let pan_camera = false;
 let orbit_camera = false;
 
 // TODO: put the cam back at 0,0,10
-const camera = new Camera([5,1,2], [0,0,0], [0,1,0]);
+const camera = new Camera([5,2,5], [0,0,0], [0,1,0]);
 
 let cur_selection = null;
 let current_ray = {
@@ -255,6 +256,10 @@ canvas.addEventListener("mousedown", (e) => {
             start_y = cur_y;
             cur_selection_prev_static_pos = cur_selection.pos;
             console.log(cur_selection_prev_static_pos);
+            
+            // testing
+            current_ray.dir = generateRayDir(cur_x, cur_y);
+            start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
         }
     }
     if (e.button === 1 && e.shiftKey) {
@@ -300,6 +305,10 @@ canvas.addEventListener("mousemove", (e) => {
         current_ray.origin = camera.pos;
         mat4.lookAt(view, camera.pos, vec3.subtract([], camera.pos, camera.dir), camera.up);
         gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
+
+        //update ui
+        gizmo_ui.textContent = `(${Math.round(gizmo_center[0] * 100) / 100}, 
+                                 ${Math.round(gizmo_center[1] * 100) / 100})`;
     } else if (gizmo_interact) {
         current_ray.dir = generateRayDir(mouse_x, mouse_y);
         const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
@@ -317,16 +326,26 @@ canvas.addEventListener("mousemove", (e) => {
         gizmo_ui.textContent = `(${Math.round(gizmo_center[0] * 100) / 100}, 
                                  ${Math.round(gizmo_center[1] * 100) / 100})`;
     } else if (gizmo_interact_up) {
-        // up is along y axis [0,1,0]
-        const coord1 = calculateWorldToScreenCoords(cur_selection_prev_static_pos);
+        
+        // need to calculate in world delta between pos of object and 
+        // where my mouse in when i begin to interact with gizmo
+
+        current_ray.dir = generateRayDir(mouse_x, mouse_y);
+        const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
+        cur_selection.updatePos([cur_selection.pos[0], new_pos[1] - start_pos[1], cur_selection.pos[2]]);
+        gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
+        gizmo_objects.forEach(object => {
+                object.updatePos(cur_selection.pos);
+            });
+
+        
+
+        /* const coord1 = calculateWorldToScreenCoords(cur_selection_prev_static_pos);
         const coord2 = calculateWorldToScreenCoords([cur_selection_prev_static_pos[0], 
             cur_selection_prev_static_pos[1] + 1, 
             cur_selection_prev_static_pos[2]]);
     
         const axis1_dir = vec2.normalize([], vec2.subtract([], coord2, coord1));
-        /* console.log(axis1_dir); */
-        const axis2_dir = [-axis1_dir[1], axis1_dir[0]];
-        /* console.log(axis2_dir); */
 
         const p0 = calculateLineIntersectionPoint(axis1_dir, [start_x, HEIGHT - start_y], gizmo_center);
         const p = calculateLineIntersectionPoint(axis1_dir, [mouse_x, HEIGHT - mouse_y], gizmo_center);
@@ -348,10 +367,16 @@ canvas.addEventListener("mousemove", (e) => {
         gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
         gizmo_objects.forEach(object => {
                 object.updatePos(cur_selection.pos);
-            });
-        
-        /* console.log("delta", vec2.subtract([], p, [start_x, start_y])); */
-        /* console.log(p); */
+            }); */
+
+        // update the ui
+        OBJECT_INFO_UI.pos[0].value = Math.round(cur_selection.pos[0] * 100) / 100;
+        OBJECT_INFO_UI.pos[1].value = Math.round(cur_selection.pos[1] * 100) / 100;
+        OBJECT_INFO_UI.pos[2].value = Math.round(cur_selection.pos[2] * 100) / 100;
+
+        gizmo_ui.textContent = `(${Math.round(gizmo_center[0] * 100) / 100}, 
+                                 ${Math.round(gizmo_center[1] * 100) / 100})`;
+
     }
 });
 
