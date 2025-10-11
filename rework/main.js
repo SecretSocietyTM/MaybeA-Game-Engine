@@ -80,6 +80,9 @@ let orbit_camera = false;
 
 // TODO: put the cam back at 0,0,10
 const camera = new Camera([5,2,5], [0,0,0], [0,1,0]);
+const reference_distance = vec3.distance(camera.pos, [0,0,0]);
+const reference_scale = 0.3;
+
 
 let cur_selection = null;
 let current_ray = {
@@ -110,7 +113,7 @@ function main() {
 
     //
     // gizmo objects
-    const dir_arrow_x = new Object("arrow_x", [0,0,0], [0.5,0.5,0.5], [0,0,-90]);
+    const dir_arrow_x = new Object("arrow_x", [0,0,0], [reference_scale, reference_scale, reference_scale], [0,0,-90]);
     dir_arrow_x.assignMesh(arrow_mesh);
     dir_arrow_x.assignVao(arrow_VAO);
     gizmo_objects.push(dir_arrow_x);
@@ -118,7 +121,7 @@ function main() {
     dir_arrow_x.aabb.setAABBColor([1.0, 0.65, 0.0]);
     dir_arrow_x.aabb.assignVao(renderer.addObjectVAO(dir_arrow_x.aabb.mesh));
 
-    const dir_arrow_y = new Object("arrow_y", [0,0,0], [0.5,0.5,0.5], [0,0,0]);
+    const dir_arrow_y = new Object("arrow_y", [0,0,0], [reference_scale, reference_scale, reference_scale], [0,0,0]);
     dir_arrow_y.assignMesh(arrow_mesh);
     dir_arrow_y.assignVao(arrow_VAO);
     gizmo_objects.push(dir_arrow_y);
@@ -126,7 +129,7 @@ function main() {
     dir_arrow_y.aabb.setAABBColor([1.0, 0.65, 0.0]);
     dir_arrow_y.aabb.assignVao(renderer.addObjectVAO(dir_arrow_y.aabb.mesh));
 
-    const dir_arrow_z = new Object("arrow_z", [0,0,0], [0.5,0.5,0.5], [90,0,0]);
+    const dir_arrow_z = new Object("arrow_z", [0,0,0], [reference_scale, reference_scale, reference_scale], [90,0,0]);
     dir_arrow_z.assignMesh(arrow_mesh);
     dir_arrow_z.assignVao(arrow_VAO);
     gizmo_objects.push(dir_arrow_z);
@@ -394,6 +397,13 @@ canvas.addEventListener("wheel", (e) => {
     current_ray.origin = camera.pos;
     mat4.lookAt(view, camera.pos, vec3.subtract([], camera.pos, camera.dir), camera.up);
     gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
+
+    // update arrows scale factor when zooming 
+    const distance = vec3.distance(camera.pos, cur_selection.pos);
+    const scale = (distance / reference_distance) * reference_scale;
+    gizmo_objects.forEach(object => {
+        object.updateScale([scale, scale, scale]);
+    });
 });
 
 
