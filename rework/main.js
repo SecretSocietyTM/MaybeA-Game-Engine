@@ -1,3 +1,16 @@
+// TODO: WHY DID THIS HAPPEN:
+// index.html:1  WebGL: CONTEXT_LOST_WEBGL: loseContext: context lost
+/* 
+    Was importing various ply files
+    Imported teapot and was scaling it down to fit in my viewport when the screen went blank. 
+*/
+
+
+
+
+
+
+
 const glm = glMatrix;
 const vec2 = glm.vec2;
 const vec3 = glm.vec3;
@@ -20,6 +33,7 @@ import { parsePLY } from "../mimp/parse_ply.js";
 import apple_ply from "../mimp/models/apple_ply.js";
 import cube_ply from "../mimp/models/cube_ply.js";
 import arrow_ply from "../mimp/models/arrow_ply.js";
+import half_torus_ply from "../mimp/models/half_torus_ply.js";
 import cube from "../util/buffer_data/cube.js";
 
 
@@ -27,6 +41,7 @@ import cube from "../util/buffer_data/cube.js";
 const apple_mesh = parsePLY(apple_ply);
 const cube_mesh2 = parsePLY(cube_ply);
 const arrow_mesh = parsePLY(arrow_ply);
+const half_torus_mesh = parsePLY(half_torus_ply);
 const cube_mesh = cube;
 
 //
@@ -65,10 +80,12 @@ let gizmo_interact_x = false;
 let gizmo_interact_y = false;
 let gizmo_interact_z = false;
 
+let gizmo_interact_y_rotate = false;
 
-// variables for translation via gizmo
+// variables for mouse controlled gizmos
 let start_pos;
 let cur_selection_prev_pos;
+let cur_selection_prev_rot;
 
 
 let cur_x;
@@ -110,6 +127,7 @@ function main() {
 
     // need a variable to store arrow vao;
     const arrow_VAO = renderer.addObjectVAO(arrow_mesh);
+    const half_torus_VAO = renderer.addObjectVAO(half_torus_mesh);
 
     //
     // gizmo objects
@@ -136,6 +154,14 @@ function main() {
     dir_arrow_z.generateAABB();
     dir_arrow_z.aabb.setAABBColor([1.0, 0.65, 0.0]);
     dir_arrow_z.aabb.assignVao(renderer.addObjectVAO(dir_arrow_z.aabb.mesh));
+
+    const half_torus = new Object("half_torus", [0,0,0], [0.1, 0.1, 0.1], [0,-45,0]);
+    half_torus.assignMesh(half_torus_mesh);
+    half_torus.assignVao(half_torus_VAO);
+    gizmo_objects.push(half_torus);
+    half_torus.generateAABB();
+    half_torus.aabb.setAABBColor([0.50, 0.65, 0.8]);
+    half_torus.aabb.assignVao(renderer.addObjectVAO(half_torus.aabb.mesh));
 
     //
     // scene objects
@@ -170,10 +196,8 @@ function main() {
         SCENE_OBJECT_LIST_UI.appendChild(list_item);
     });
 
-
     function frame() {
         renderer.renderFrame(view, proj, objects, gizmo_objects, gizmo_center);
-
         requestAnimationFrame(frame);
     }
 
@@ -187,11 +211,16 @@ canvas.addEventListener("click", (e) => {
     const mouse_y = e.clientY - rect.top;
 
     if (gizmo_interact || gizmo_interact_x || 
-        gizmo_interact_y || gizmo_interact_z) {
+        gizmo_interact_y || gizmo_interact_z ||
+        gizmo_interact_y_rotate) {
         gizmo_interact = false;
+
         gizmo_interact_x = false;
         gizmo_interact_y = false;
         gizmo_interact_z = false;
+
+        gizmo_interact_y_rotate = false;
+
         return;
     };
 
@@ -256,10 +285,12 @@ canvas.addEventListener("mousedown", (e) => {
             if (object.aabb.isIntersecting(current_ray)) {
                 if (object.name === "arrow_x") gizmo_interact_x = true;
                 else if (object.name === "arrow_y") gizmo_interact_y = true;
-                else gizmo_interact_z = true;
+                else if (object.name === "arrow_z") gizmo_interact_z = true;
+                else gizmo_interact_y_rotate = true;
                 current_ray.dir = generateRayDir(cur_x, cur_y);
                 start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
                 cur_selection_prev_pos = cur_selection.pos;
+                cur_selection_prev_rot = cur_selection.rotation_angles;
                 return;
             }
         });
@@ -389,8 +420,33 @@ canvas.addEventListener("mousemove", (e) => {
         gizmo_ui.textContent = `(${Math.round(gizmo_center[0] * 100) / 100}, 
                                  ${Math.round(gizmo_center[1] * 100) / 100})`;
 
+    } else if (gizmo_interact_y_rotate) {
+        current_ray.dir = generateRayDir(mouse_x, mouse_y);
+        const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
+        console.log(new_pos[0] - start_pos[0]);
+        cur_selection.updateRot([
+            cur_selection.rotation_angles[0],
+            cur_selection_prev_rot[1] + (new_pos[0] - start_pos[0]) * 50,
+            cur_selection.rotation_angles[2]]);
+        /* gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
+        gizmo_objects.forEach(object => {
+                object.updatePos(cur_selection.pos);
+            });  */ 
+
+        // update the ui
+        OBJECT_INFO_UI.rot[0].value = cur_selection.rotation_angles[0];
+        OBJECT_INFO_UI.rot[1].value = cur_selection.rotation_angles[1];
+        OBJECT_INFO_UI.rot[2].value = cur_selection.rotation_angles[2];
     }
 });
+
+
+// TODO: use this to find the angle between our starting point and our ending point for the rotation gizmos
+const os = [1,0]; // origin and our starting point
+const oe = [0,3]; // origin and our ending point
+const num = vec2.dot(os, oe);
+const den = vec2.length(os) * vec2.length(oe);
+console.log("angle test ", Math.acos(num / den) * 180 / 3.14);
 
 canvas.addEventListener("wheel", (e) => {
     camera.zoom(e.deltaY);
