@@ -63,14 +63,10 @@ let gizmo_exists = false;
 let gizmo_interact = false;
 let gizmo_interact_up = false;
 
-let cur_selection_prev_static_pos = null;
 
 // variables for translation via gizmo
-let start_x = null;
-let start_y = null;
-let delta = 0;
-let prev_delta;
 let start_pos;
+let cur_selection_prev_pos;
 
 
 let cur_x;
@@ -188,9 +184,6 @@ canvas.addEventListener("click", (e) => {
     if (gizmo_interact || gizmo_interact_up) {
         gizmo_interact = false;
         gizmo_interact_up = false;
-
-        start_x = null;
-        start_y = null;
         return;
     };
 
@@ -252,15 +245,12 @@ canvas.addEventListener("mousedown", (e) => {
         current_ray.dir = generateRayDir(cur_x, cur_y);
         if (gizmo_objects[0].aabb.isIntersecting(current_ray)) {
             gizmo_interact_up = true;
-            start_x = cur_x;
-            start_y = cur_y;
-            cur_selection_prev_static_pos = cur_selection.pos;
-            console.log(cur_selection_prev_static_pos);
-            
-            // testing
+
             current_ray.dir = generateRayDir(cur_x, cur_y);
             start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
+            cur_selection_prev_pos = cur_selection.pos;
         }
+        return;
     }
     if (e.button === 1 && e.shiftKey) {
         pan_camera = true;
@@ -326,48 +316,20 @@ canvas.addEventListener("mousemove", (e) => {
         gizmo_ui.textContent = `(${Math.round(gizmo_center[0] * 100) / 100}, 
                                  ${Math.round(gizmo_center[1] * 100) / 100})`;
     } else if (gizmo_interact_up) {
-        
-        // need to calculate in world delta between pos of object and 
-        // where my mouse in when i begin to interact with gizmo
-
         current_ray.dir = generateRayDir(mouse_x, mouse_y);
         const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
-        cur_selection.updatePos([cur_selection.pos[0], new_pos[1] - start_pos[1], cur_selection.pos[2]]);
+        console.log("new pos", new_pos[1]);
+        console.log("start pos", start_pos[1]);        
+
+        cur_selection.updatePos([
+            cur_selection.pos[0], 
+            cur_selection_prev_pos[1] + new_pos[1] - start_pos[1], 
+            cur_selection.pos[2]]);
         gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
         gizmo_objects.forEach(object => {
                 object.updatePos(cur_selection.pos);
             });
 
-        
-
-        /* const coord1 = calculateWorldToScreenCoords(cur_selection_prev_static_pos);
-        const coord2 = calculateWorldToScreenCoords([cur_selection_prev_static_pos[0], 
-            cur_selection_prev_static_pos[1] + 1, 
-            cur_selection_prev_static_pos[2]]);
-    
-        const axis1_dir = vec2.normalize([], vec2.subtract([], coord2, coord1));
-
-        const p0 = calculateLineIntersectionPoint(axis1_dir, [start_x, HEIGHT - start_y], gizmo_center);
-        const p = calculateLineIntersectionPoint(axis1_dir, [mouse_x, HEIGHT - mouse_y], gizmo_center);
-
-        prev_delta = delta;
-        delta = vec2.subtract([], p, p0);
-
-        let move_amt = 1;
-        if (prev_delta[1] < delta[1]) move_amt = 1;
-        else if (prev_delta[1] > delta[1]) move_amt = -1;
-        else move_amt = 0;
-
-        console.log("delta", delta);
-
-        // TODO: dont want to move by some amount + sens, want to move x distance from where mouse originally began to hold
-        // this way the object will end up at the same distance from the mouse as when the gizmo was first selected
-        // (ex: click and hold from tip of arrow, final spot, mouse remains at tip of arrow)
-        cur_selection.updatePos([cur_selection.pos[0], cur_selection.pos[1] + move_amt * 0.05, cur_selection.pos[2]]);
-        gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
-        gizmo_objects.forEach(object => {
-                object.updatePos(cur_selection.pos);
-            }); */
 
         // update the ui
         OBJECT_INFO_UI.pos[0].value = Math.round(cur_selection.pos[0] * 100) / 100;
