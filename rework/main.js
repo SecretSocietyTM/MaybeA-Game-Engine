@@ -96,7 +96,7 @@ let pan_camera = false;
 let orbit_camera = false;
 
 // TODO: put the cam back at 0,0,10
-const camera = new Camera([5,2,5], [0,0,0], [0,1,0]);
+const camera = new Camera([5,4,5], [0,0,0], [0,1,0]);
 const reference_distance = vec3.distance(camera.pos, [0,0,0]);
 const reference_scale = 0.3;
 
@@ -288,7 +288,8 @@ canvas.addEventListener("mousedown", (e) => {
                 else if (object.name === "arrow_z") gizmo_interact_z = true;
                 else gizmo_interact_y_rotate = true;
                 current_ray.dir = generateRayDir(cur_x, cur_y);
-                start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
+                /* start_pos = calculatePlaneIntersectionPoint(current_ray.dir); */
+                start_pos = calculatePlaneIntersectionPoint2([0,1,0], cur_selection.pos, current_ray.dir);
                 cur_selection_prev_pos = cur_selection.pos;
                 cur_selection_prev_rot = cur_selection.rotation_angles;
                 return;
@@ -422,16 +423,28 @@ canvas.addEventListener("mousemove", (e) => {
 
     } else if (gizmo_interact_y_rotate) {
         current_ray.dir = generateRayDir(mouse_x, mouse_y);
-        const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
+        const cur_pos = calculatePlaneIntersectionPoint2([0,1,0], cur_selection.pos, current_ray.dir);
+        /* console.log(cur_pos);
+        console.log(start_pos);
+
+        console.log(vec3.subtract([], start_pos, cur_selection.pos)); */
+
+        const v = vec3.normalize([], vec3.subtract([], start_pos, cur_selection.pos));
+        const w = vec3.normalize([], vec3.subtract([], cur_pos, cur_selection.pos));
+
+        const angle = Math.atan2(vec3.dot([0,1,0], vec3.cross([], v, w)), vec3.dot(v, w)) * 180 / Math.PI;
+        console.log(angle);
+
+        cur_selection.updateRot([
+            cur_selection.rotation_angles[0],
+            cur_selection_prev_rot[1] + angle,
+            cur_selection.rotation_angles[2]]);
+        /* const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
         console.log(new_pos[0] - start_pos[0]);
         cur_selection.updateRot([
             cur_selection.rotation_angles[0],
             cur_selection_prev_rot[1] + (new_pos[0] - start_pos[0]) * 50,
-            cur_selection.rotation_angles[2]]);
-        /* gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
-        gizmo_objects.forEach(object => {
-                object.updatePos(cur_selection.pos);
-            });  */ 
+            cur_selection.rotation_angles[2]]); */
 
         // update the ui
         OBJECT_INFO_UI.rot[0].value = cur_selection.rotation_angles[0];
@@ -439,14 +452,6 @@ canvas.addEventListener("mousemove", (e) => {
         OBJECT_INFO_UI.rot[2].value = cur_selection.rotation_angles[2];
     }
 });
-
-
-// TODO: use this to find the angle between our starting point and our ending point for the rotation gizmos
-const os = [1,0]; // origin and our starting point
-const oe = [0,3]; // origin and our ending point
-const num = vec2.dot(os, oe);
-const den = vec2.length(os) * vec2.length(oe);
-console.log("angle test ", Math.acos(num / den) * 180 / 3.14);
 
 canvas.addEventListener("wheel", (e) => {
     camera.zoom(e.deltaY);
@@ -461,6 +466,16 @@ canvas.addEventListener("wheel", (e) => {
         object.updateScale([scale, scale, scale]);
     });
 });
+
+function calculateAngleBetweenVectors(v, w) {
+
+    // equation: theta = acos((v dot w / len(v) * len(w)));
+    const numerator = vec2.dot(v, w);
+    const denominator = vec2.length(v) * vec2.length(w);
+    const angle = Math.acos(numerator / denominator) * 180 / Math.PI;
+
+    return angle;
+}
 
 
 function generateRayDir(x, y) {
@@ -478,6 +493,24 @@ function generateRayDir(x, y) {
     vec3.normalize(ray_world, ray_world);
 
     return ray_world;
+}
+
+// equation is t = - (dot(ray_origin, plane_normal) + d) / (dot(ray_dir, plane_normal)) 
+function calculatePlaneIntersectionPoint2(plane_normal, plane_p0, dir) {
+    let d = -vec3.dot(plane_normal, plane_p0);
+
+    let numerator = vec3.dot(camera.pos, plane_normal) + d;
+    let denominator = vec3.dot(dir, plane_normal);
+    if (denominator === 0) {
+        console.log("ray missed plane with normal = ", plane_normal);
+        return;
+    }
+
+    let t = -(numerator / denominator);
+
+    let p = vec3.scaleAndAdd([], camera.pos, dir, t);
+
+    return p;
 }
 
 function calculatePlaneIntersectionPoint(dir) {
