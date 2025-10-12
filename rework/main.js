@@ -34,6 +34,7 @@ import apple_ply from "../mimp/models/apple_ply.js";
 import cube_ply from "../mimp/models/cube_ply.js";
 import arrow_ply from "../mimp/models/arrow_ply.js";
 import half_torus_ply from "../mimp/models/half_torus_ply.js";
+import scale_gizmo_ply from "../mimp/models/scale_gizmo_ply.js";
 import cube from "../util/buffer_data/cube.js";
 
 
@@ -42,6 +43,7 @@ const apple_mesh = parsePLY(apple_ply);
 const cube_mesh2 = parsePLY(cube_ply);
 const arrow_mesh = parsePLY(arrow_ply);
 const half_torus_mesh = parsePLY(half_torus_ply);
+const scale_gizmo_mesh = parsePLY(scale_gizmo_ply);
 const cube_mesh = cube;
 
 //
@@ -84,10 +86,16 @@ let gizmo_interact_x_rotate = false;
 let gizmo_interact_y_rotate = false;
 let gizmo_interact_z_rotate = false;
 
+
+let gizmo_interact_x_scale = false;
+let gizmo_interact_y_scale = false;
+let gizmo_interact_z_scale = false;
+
 // variables for mouse controlled gizmos
 let start_pos;
 let cur_selection_prev_pos;
 let cur_selection_prev_rot;
+let cur_selection_prev_scale;
 let cur_rotation_axis;
 
 
@@ -131,10 +139,11 @@ function main() {
     // need a variable to store arrow vao;
     const arrow_VAO = renderer.addObjectVAO(arrow_mesh);
     const half_torus_VAO = renderer.addObjectVAO(half_torus_mesh);
+    const scale_gizmo_VAO = renderer.addObjectVAO(scale_gizmo_mesh);
 
     //
     // gizmo objects
-    const dir_arrow_x = new Object("arrow_x", [0,0,0], [reference_scale, reference_scale, reference_scale], [0,0,-90]);
+    /* const dir_arrow_x = new Object("arrow_x", [0,0,0], [reference_scale, reference_scale, reference_scale], [0,0,-90]);
     dir_arrow_x.assignMesh(arrow_mesh);
     dir_arrow_x.assignVao(arrow_VAO);
     gizmo_objects.push(dir_arrow_x);
@@ -180,7 +189,31 @@ function main() {
     gizmo_objects.push(half_torus_z);
     half_torus_z.generateAABB();
     half_torus_z.aabb.setAABBColor([0.50, 0.65, 0.8]);
-    half_torus_z.aabb.assignVao(renderer.addObjectVAO(half_torus_z.aabb.mesh));
+    half_torus_z.aabb.assignVao(renderer.addObjectVAO(half_torus_z.aabb.mesh)); */
+
+    const scale_gizmo_x = new Object("scale_x", [0,0,0], [reference_scale, reference_scale, reference_scale], [0, 90, 0]);
+    scale_gizmo_x.assignMesh(scale_gizmo_mesh);
+    scale_gizmo_x.assignVao(scale_gizmo_VAO);
+    gizmo_objects.push(scale_gizmo_x);
+    scale_gizmo_x.generateAABB();
+    scale_gizmo_x.aabb.setAABBColor([1.0, 0.5, 0.25]);
+    scale_gizmo_x.aabb.assignVao(renderer.addObjectVAO(scale_gizmo_x.aabb.mesh));
+
+    const scale_gizmo_y = new Object("scale_y", [0,0,0], [reference_scale, reference_scale, reference_scale], [-90,0,0]);
+    scale_gizmo_y.assignMesh(scale_gizmo_mesh);
+    scale_gizmo_y.assignVao(scale_gizmo_VAO);
+    gizmo_objects.push(scale_gizmo_y);
+    scale_gizmo_y.generateAABB();
+    scale_gizmo_y.aabb.setAABBColor([1.0, 0.5, 0.25]);
+    scale_gizmo_y.aabb.assignVao(renderer.addObjectVAO(scale_gizmo_y.aabb.mesh));
+
+    const scale_gizmo_z = new Object("scale_z", [0,0,0], [reference_scale, reference_scale, reference_scale], [0,0,0]);
+    scale_gizmo_z.assignMesh(scale_gizmo_mesh);
+    scale_gizmo_z.assignVao(scale_gizmo_VAO);
+    gizmo_objects.push(scale_gizmo_z);
+    scale_gizmo_z.generateAABB();
+    scale_gizmo_z.aabb.setAABBColor([1.0, 0.5, 0.25]);
+    scale_gizmo_z.aabb.assignVao(renderer.addObjectVAO(scale_gizmo_z.aabb.mesh));
 
     //
     // scene objects
@@ -233,7 +266,10 @@ canvas.addEventListener("click", (e) => {
         gizmo_interact_y || gizmo_interact_z ||
         gizmo_interact_x_rotate ||
         gizmo_interact_y_rotate ||
-        gizmo_interact_z_rotate) {
+        gizmo_interact_z_rotate || 
+        gizmo_interact_x_scale || 
+        gizmo_interact_y_scale ||
+        gizmo_interact_z_scale) {
         gizmo_interact = false;
 
         gizmo_interact_x = false;
@@ -243,6 +279,10 @@ canvas.addEventListener("click", (e) => {
         gizmo_interact_x_rotate = false;
         gizmo_interact_y_rotate = false;
         gizmo_interact_z_rotate = false;
+
+        gizmo_interact_x_scale = false;
+        gizmo_interact_y_scale = false;
+        gizmo_interact_z_scale = false;
 
         return;
     };
@@ -306,27 +346,51 @@ canvas.addEventListener("mousedown", (e) => {
 
         gizmo_objects.forEach(object => {
             if (object.aabb.isIntersecting(current_ray)) {
-                if (object.name === "arrow_x") gizmo_interact_x = true;
-                else if (object.name === "arrow_y") gizmo_interact_y = true;
-                else if (object.name === "arrow_z") gizmo_interact_z = true;
+                current_ray.dir = generateRayDir(cur_x, cur_y);
+
+                if (object.name === "arrow_x") {
+                    gizmo_interact_x = true;
+                    start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
+                }
+                else if (object.name === "arrow_y") {
+                    gizmo_interact_y = true;
+                    start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
+                }
+                else if (object.name === "arrow_z") {
+                    gizmo_interact_z = true;
+                    start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
+                }
+                else if (object.name === "scale_x") {
+                    gizmo_interact_x_scale = true;
+                    start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
+                }
+                else if (object.name === "scale_y") {
+                    gizmo_interact_y_scale = true;
+                    start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
+                }
+                else if (object.name === "scale_z") {
+                    gizmo_interact_z_scale = true;
+                    start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
+                }
                 else if (object.name === "half_torus_x") {
                     gizmo_interact_x_rotate = true;
                     cur_rotation_axis = [1,0,0];
+                    start_pos = calculatePlaneIntersectionPoint2(cur_rotation_axis, cur_selection.pos, current_ray.dir);
                 }
                 else if (object.name === "half_torus_y") {
                     gizmo_interact_y_rotate = true;
                     cur_rotation_axis = [0,1,0];
+                    start_pos = calculatePlaneIntersectionPoint2(cur_rotation_axis, cur_selection.pos, current_ray.dir);
                 }
                 else if (object.name === "half_torus_z") {
                     gizmo_interact_z_rotate = true;
                     cur_rotation_axis = [0,0,1];
+                    start_pos = calculatePlaneIntersectionPoint2(cur_rotation_axis, cur_selection.pos, current_ray.dir);
                 }
-
-                current_ray.dir = generateRayDir(cur_x, cur_y);
-                start_pos = calculatePlaneIntersectionPoint2(cur_rotation_axis, cur_selection.pos, current_ray.dir);
 
                 cur_selection_prev_pos = cur_selection.pos;
                 cur_selection_prev_rot = cur_selection.rotation_angles;
+                cur_selection_prev_scale = cur_selection.scale;
                 return;
             }
         });
@@ -456,6 +520,45 @@ canvas.addEventListener("mousemove", (e) => {
         gizmo_ui.textContent = `(${Math.round(gizmo_center[0] * 100) / 100}, 
                                  ${Math.round(gizmo_center[1] * 100) / 100})`;
 
+    } else if (gizmo_interact_x_scale) {
+        current_ray.dir = generateRayDir(mouse_x, mouse_y);
+        const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
+
+        cur_selection.updateScale([
+            cur_selection_prev_scale[0] + new_pos[0] - start_pos[0],
+            cur_selection.scale[1],
+            cur_selection.scale[2]]);
+
+        // update the ui
+        OBJECT_INFO_UI.scl[0].value = Math.round(cur_selection.scale[0] * 100) / 100;
+        OBJECT_INFO_UI.scl[1].value = Math.round(cur_selection.scale[1] * 100) / 100;
+        OBJECT_INFO_UI.scl[2].value = Math.round(cur_selection.scale[2] * 100) / 100;
+    } else if (gizmo_interact_y_scale) {
+        current_ray.dir = generateRayDir(mouse_x, mouse_y);
+        const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
+
+        cur_selection.updateScale([
+            cur_selection.scale[0],
+            cur_selection_prev_scale[1] + new_pos[1] - start_pos[1],
+            cur_selection.scale[2]]);
+
+        // update the ui
+        OBJECT_INFO_UI.scl[0].value = Math.round(cur_selection.scale[0] * 100) / 100;
+        OBJECT_INFO_UI.scl[1].value = Math.round(cur_selection.scale[1] * 100) / 100;
+        OBJECT_INFO_UI.scl[2].value = Math.round(cur_selection.scale[2] * 100) / 100;
+    } else if (gizmo_interact_z_scale) {
+        current_ray.dir = generateRayDir(mouse_x, mouse_y);
+        const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
+
+        cur_selection.updateScale([
+            cur_selection.scale[0],
+            cur_selection.scale[1],
+            cur_selection_prev_scale[2] + new_pos[2] - start_pos[2]]);
+
+        // update the ui
+        OBJECT_INFO_UI.scl[0].value = Math.round(cur_selection.scale[0] * 100) / 100;
+        OBJECT_INFO_UI.scl[1].value = Math.round(cur_selection.scale[1] * 100) / 100;
+        OBJECT_INFO_UI.scl[2].value = Math.round(cur_selection.scale[2] * 100) / 100;
     } else if (gizmo_interact_x_rotate) {
         current_ray.dir = generateRayDir(mouse_x, mouse_y);
         const cur_pos = calculatePlaneIntersectionPoint2(cur_rotation_axis, cur_selection.pos, current_ray.dir);
