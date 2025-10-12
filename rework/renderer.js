@@ -118,7 +118,7 @@ export default class Renderer {
         this.gl.enable(this.gl.DEPTH_TEST);
     }
 
-    renderFrame(view, proj, objects, gizmo_objects, gizmo_center) {
+    renderFrame(view, proj, objects, gizmo_objects, gizmo_center, gizmo_indices) {
         this.gl.useProgram(this.program);
         this.gl.enable(this.gl.DEPTH_TEST);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
@@ -144,7 +144,9 @@ export default class Renderer {
 
         if (gizmo_center) {
             this.gl.disable(this.gl.DEPTH_TEST);
-            gizmo_objects.forEach(object => {
+
+            for (let i = gizmo_indices[0]; i < gizmo_indices[2] + 1; i++) {
+                const object = gizmo_objects[i];
                 this.gl.uniformMatrix4fv(this.model_uniform, this.gl.FALSE, object.model_matrix);
                 this.gl.bindVertexArray(object.vao);
                 this.gl.drawElements(this.gl.TRIANGLES, object.mesh.indices.length, this.gl.UNSIGNED_SHORT, 0);
@@ -158,7 +160,22 @@ export default class Renderer {
                     this.gl.drawElements(this.gl.LINES, aabb.mesh.indices.length, this.gl.UNSIGNED_SHORT, 0);
                     this.gl.bindVertexArray(null);
                 }
-            });
+            }
+            /* gizmo_objects.forEach(object => {
+                this.gl.uniformMatrix4fv(this.model_uniform, this.gl.FALSE, object.model_matrix);
+                this.gl.bindVertexArray(object.vao);
+                this.gl.drawElements(this.gl.TRIANGLES, object.mesh.indices.length, this.gl.UNSIGNED_SHORT, 0);
+                this.gl.bindVertexArray(null);
+
+                if ("aabb" in object) {
+                    const aabb = object.aabb;
+                    this.gl.uniformMatrix4fv(this.model_uniform, 
+                        this.gl.FALSE, aabb.aabb_model_matrix);
+                    this.gl.bindVertexArray(aabb.vao);
+                    this.gl.drawElements(this.gl.LINES, aabb.mesh.indices.length, this.gl.UNSIGNED_SHORT, 0);
+                    this.gl.bindVertexArray(null);
+                }
+            }); */
             this.renderUIPass(gizmo_center);
         }
     }

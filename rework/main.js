@@ -7,10 +7,6 @@
 
 
 
-
-
-
-
 const glm = glMatrix;
 const vec2 = glm.vec2;
 const vec3 = glm.vec3;
@@ -46,11 +42,13 @@ const half_torus_mesh = parsePLY(half_torus_ply);
 const scale_gizmo_mesh = parsePLY(scale_gizmo_ply);
 const cube_mesh = cube;
 
+
 //
 // ui elements
 // TODO: Object.freeze({}) normally goes here but Object conflicts with Object
 // need to change my class Name.
 const gizmo_ui = document.getElementById("gizmo_pos");
+const cur_mode_ui = document.getElementById("cur_mode");
 const pos_ui = document.getElementById("position");
 const rot_ui = document.getElementById("rotation");
 const scl_ui = document.getElementById("scale");
@@ -78,6 +76,7 @@ let gizmo_radius = 10;
 let gizmo_center = null;
 let gizmo_exists = false;
 let gizmo_interact = false;
+
 let gizmo_interact_x = false;
 let gizmo_interact_y = false;
 let gizmo_interact_z = false;
@@ -86,10 +85,13 @@ let gizmo_interact_x_rotate = false;
 let gizmo_interact_y_rotate = false;
 let gizmo_interact_z_rotate = false;
 
-
 let gizmo_interact_x_scale = false;
 let gizmo_interact_y_scale = false;
 let gizmo_interact_z_scale = false;
+
+let cur_mode = "translate";
+cur_mode_ui.textContent = cur_mode;
+let gizmo_indices = [0,1,2];
 
 // variables for mouse controlled gizmos
 let start_pos;
@@ -143,7 +145,7 @@ function main() {
 
     //
     // gizmo objects
-    /* const dir_arrow_x = new Object("arrow_x", [0,0,0], [reference_scale, reference_scale, reference_scale], [0,0,-90]);
+    const dir_arrow_x = new Object("arrow_x", [0,0,0], [reference_scale, reference_scale, reference_scale], [0,0,-90]);
     dir_arrow_x.assignMesh(arrow_mesh);
     dir_arrow_x.assignVao(arrow_VAO);
     gizmo_objects.push(dir_arrow_x);
@@ -189,7 +191,7 @@ function main() {
     gizmo_objects.push(half_torus_z);
     half_torus_z.generateAABB();
     half_torus_z.aabb.setAABBColor([0.50, 0.65, 0.8]);
-    half_torus_z.aabb.assignVao(renderer.addObjectVAO(half_torus_z.aabb.mesh)); */
+    half_torus_z.aabb.assignVao(renderer.addObjectVAO(half_torus_z.aabb.mesh));
 
     const scale_gizmo_x = new Object("scale_x", [0,0,0], [reference_scale, reference_scale, reference_scale], [0, 90, 0]);
     scale_gizmo_x.assignMesh(scale_gizmo_mesh);
@@ -249,12 +251,13 @@ function main() {
     });
 
     function frame() {
-        renderer.renderFrame(view, proj, objects, gizmo_objects, gizmo_center);
+        renderer.renderFrame(view, proj, objects, gizmo_objects, gizmo_center, gizmo_indices);
         requestAnimationFrame(frame);
     }
 
     frame();
 }
+
 
 main();
 
@@ -348,44 +351,48 @@ canvas.addEventListener("mousedown", (e) => {
             if (object.aabb.isIntersecting(current_ray)) {
                 current_ray.dir = generateRayDir(cur_x, cur_y);
 
-                if (object.name === "arrow_x") {
-                    gizmo_interact_x = true;
-                    start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
-                }
-                else if (object.name === "arrow_y") {
-                    gizmo_interact_y = true;
-                    start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
-                }
-                else if (object.name === "arrow_z") {
-                    gizmo_interact_z = true;
-                    start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
-                }
-                else if (object.name === "scale_x") {
+                if (cur_mode === "translate") {
+                    if (object.name === "arrow_x") {
+                        gizmo_interact_x = true;
+                        start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
+                    }
+                    else if (object.name === "arrow_y") {
+                        gizmo_interact_y = true;
+                        start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
+                    }
+                    else if (object.name === "arrow_z") {
+                        gizmo_interact_z = true;
+                        start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
+                    }
+                } else if (cur_mode === "scale") {
+                    if (object.name === "scale_x") {
                     gizmo_interact_x_scale = true;
                     start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
-                }
-                else if (object.name === "scale_y") {
-                    gizmo_interact_y_scale = true;
-                    start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
-                }
-                else if (object.name === "scale_z") {
-                    gizmo_interact_z_scale = true;
-                    start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
-                }
-                else if (object.name === "half_torus_x") {
+                    }
+                    else if (object.name === "scale_y") {
+                        gizmo_interact_y_scale = true;
+                        start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
+                    }
+                    else if (object.name === "scale_z") {
+                        gizmo_interact_z_scale = true;
+                        start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
+                    }
+                } else if (cur_mode === "rotate") {
+                    if (object.name === "half_torus_x") {
                     gizmo_interact_x_rotate = true;
                     cur_rotation_axis = [1,0,0];
                     start_pos = calculatePlaneIntersectionPoint2(cur_rotation_axis, cur_selection.pos, current_ray.dir);
-                }
-                else if (object.name === "half_torus_y") {
-                    gizmo_interact_y_rotate = true;
-                    cur_rotation_axis = [0,1,0];
-                    start_pos = calculatePlaneIntersectionPoint2(cur_rotation_axis, cur_selection.pos, current_ray.dir);
-                }
-                else if (object.name === "half_torus_z") {
-                    gizmo_interact_z_rotate = true;
-                    cur_rotation_axis = [0,0,1];
-                    start_pos = calculatePlaneIntersectionPoint2(cur_rotation_axis, cur_selection.pos, current_ray.dir);
+                    }
+                    else if (object.name === "half_torus_y") {
+                        gizmo_interact_y_rotate = true;
+                        cur_rotation_axis = [0,1,0];
+                        start_pos = calculatePlaneIntersectionPoint2(cur_rotation_axis, cur_selection.pos, current_ray.dir);
+                    }
+                    else if (object.name === "half_torus_z") {
+                        gizmo_interact_z_rotate = true;
+                        cur_rotation_axis = [0,0,1];
+                        start_pos = calculatePlaneIntersectionPoint2(cur_rotation_axis, cur_selection.pos, current_ray.dir);
+                    }
                 }
 
                 cur_selection_prev_pos = cur_selection.pos;
@@ -867,6 +874,7 @@ let copied_object = null;
 document.addEventListener("keydown", (e) => {
     if (e.ctrlKey && e.key === "c" && cur_selection) {
         copied_object = cur_selection;
+        return;
     }
     if (e.ctrlKey && e.key === "v" && copied_object) {
         const object = new Object(
@@ -892,5 +900,19 @@ document.addEventListener("keydown", (e) => {
         const list_item = document.createElement("p");
         list_item.textContent = object.name;
         SCENE_OBJECT_LIST_UI.appendChild(list_item);
+        return;
+    }
+    if (e.key === "t") {
+        cur_mode = "translate";
+        gizmo_indices = [0,1,2];
+        cur_mode_ui.textContent = cur_mode;
+    } else if (e.key === "r") {
+        cur_mode = "rotate";
+        gizmo_indices = [3,4,5];
+        cur_mode_ui.textContent = cur_mode;
+    } else if (e.key === "s") {
+        cur_mode = "scale";
+        gizmo_indices = [6,7,8];
+        cur_mode_ui.textContent = cur_mode;
     }
 });
