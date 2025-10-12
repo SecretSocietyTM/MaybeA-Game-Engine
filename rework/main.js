@@ -80,12 +80,15 @@ let gizmo_interact_x = false;
 let gizmo_interact_y = false;
 let gizmo_interact_z = false;
 
+let gizmo_interact_x_rotate = false;
 let gizmo_interact_y_rotate = false;
+let gizmo_interact_z_rotate = false;
 
 // variables for mouse controlled gizmos
 let start_pos;
 let cur_selection_prev_pos;
 let cur_selection_prev_rot;
+let cur_rotation_axis;
 
 
 let cur_x;
@@ -155,13 +158,29 @@ function main() {
     dir_arrow_z.aabb.setAABBColor([1.0, 0.65, 0.0]);
     dir_arrow_z.aabb.assignVao(renderer.addObjectVAO(dir_arrow_z.aabb.mesh));
 
-    const half_torus = new Object("half_torus", [0,0,0], [0.1, 0.1, 0.1], [0,-45,0]);
-    half_torus.assignMesh(half_torus_mesh);
-    half_torus.assignVao(half_torus_VAO);
-    gizmo_objects.push(half_torus);
-    half_torus.generateAABB();
-    half_torus.aabb.setAABBColor([0.50, 0.65, 0.8]);
-    half_torus.aabb.assignVao(renderer.addObjectVAO(half_torus.aabb.mesh));
+    const half_torus_x = new Object("half_torus_x", [0,0,0], [0.1, 0.1, 0.1], [0,0,90]);
+    half_torus_x.assignMesh(half_torus_mesh);
+    half_torus_x.assignVao(half_torus_VAO);
+    gizmo_objects.push(half_torus_x);
+    half_torus_x.generateAABB();
+    half_torus_x.aabb.setAABBColor([0.50, 0.65, 0.8]);
+    half_torus_x.aabb.assignVao(renderer.addObjectVAO(half_torus_x.aabb.mesh));
+
+    const half_torus_y = new Object("half_torus_y", [0,0,0], [0.1, 0.1, 0.1], [0,-45,0]);
+    half_torus_y.assignMesh(half_torus_mesh);
+    half_torus_y.assignVao(half_torus_VAO);
+    gizmo_objects.push(half_torus_y);
+    half_torus_y.generateAABB();
+    half_torus_y.aabb.setAABBColor([0.50, 0.65, 0.8]);
+    half_torus_y.aabb.assignVao(renderer.addObjectVAO(half_torus_y.aabb.mesh));
+
+    const half_torus_z = new Object("half_torus_z", [0,0,0], [0.1, 0.1, 0.1], [90,0,0]);
+    half_torus_z.assignMesh(half_torus_mesh);
+    half_torus_z.assignVao(half_torus_VAO);
+    gizmo_objects.push(half_torus_z);
+    half_torus_z.generateAABB();
+    half_torus_z.aabb.setAABBColor([0.50, 0.65, 0.8]);
+    half_torus_z.aabb.assignVao(renderer.addObjectVAO(half_torus_z.aabb.mesh));
 
     //
     // scene objects
@@ -212,14 +231,18 @@ canvas.addEventListener("click", (e) => {
 
     if (gizmo_interact || gizmo_interact_x || 
         gizmo_interact_y || gizmo_interact_z ||
-        gizmo_interact_y_rotate) {
+        gizmo_interact_x_rotate ||
+        gizmo_interact_y_rotate ||
+        gizmo_interact_z_rotate) {
         gizmo_interact = false;
 
         gizmo_interact_x = false;
         gizmo_interact_y = false;
         gizmo_interact_z = false;
 
+        gizmo_interact_x_rotate = false;
         gizmo_interact_y_rotate = false;
+        gizmo_interact_z_rotate = false;
 
         return;
     };
@@ -286,10 +309,22 @@ canvas.addEventListener("mousedown", (e) => {
                 if (object.name === "arrow_x") gizmo_interact_x = true;
                 else if (object.name === "arrow_y") gizmo_interact_y = true;
                 else if (object.name === "arrow_z") gizmo_interact_z = true;
-                else gizmo_interact_y_rotate = true;
+                else if (object.name === "half_torus_x") {
+                    gizmo_interact_x_rotate = true;
+                    cur_rotation_axis = [1,0,0];
+                }
+                else if (object.name === "half_torus_y") {
+                    gizmo_interact_y_rotate = true;
+                    cur_rotation_axis = [0,1,0];
+                }
+                else if (object.name === "half_torus_z") {
+                    gizmo_interact_z_rotate = true;
+                    cur_rotation_axis = [0,0,1];
+                }
+
                 current_ray.dir = generateRayDir(cur_x, cur_y);
-                /* start_pos = calculatePlaneIntersectionPoint(current_ray.dir); */
-                start_pos = calculatePlaneIntersectionPoint2([0,1,0], cur_selection.pos, current_ray.dir);
+                start_pos = calculatePlaneIntersectionPoint2(cur_rotation_axis, cur_selection.pos, current_ray.dir);
+
                 cur_selection_prev_pos = cur_selection.pos;
                 cur_selection_prev_rot = cur_selection.rotation_angles;
                 return;
@@ -421,30 +456,58 @@ canvas.addEventListener("mousemove", (e) => {
         gizmo_ui.textContent = `(${Math.round(gizmo_center[0] * 100) / 100}, 
                                  ${Math.round(gizmo_center[1] * 100) / 100})`;
 
-    } else if (gizmo_interact_y_rotate) {
+    } else if (gizmo_interact_x_rotate) {
         current_ray.dir = generateRayDir(mouse_x, mouse_y);
-        const cur_pos = calculatePlaneIntersectionPoint2([0,1,0], cur_selection.pos, current_ray.dir);
-        /* console.log(cur_pos);
-        console.log(start_pos);
-
-        console.log(vec3.subtract([], start_pos, cur_selection.pos)); */
+        const cur_pos = calculatePlaneIntersectionPoint2(cur_rotation_axis, cur_selection.pos, current_ray.dir);
 
         const v = vec3.normalize([], vec3.subtract([], start_pos, cur_selection.pos));
         const w = vec3.normalize([], vec3.subtract([], cur_pos, cur_selection.pos));
 
-        const angle = Math.atan2(vec3.dot([0,1,0], vec3.cross([], v, w)), vec3.dot(v, w)) * 180 / Math.PI;
+        const angle = Math.atan2(vec3.dot(cur_rotation_axis, vec3.cross([], v, w)), vec3.dot(v, w)) * 180 / Math.PI;
+        console.log(angle);
+
+        cur_selection.updateRot([
+            cur_selection_prev_rot[0] + angle,
+            cur_selection.rotation_angles[1],
+            cur_selection.rotation_angles[2]]);
+
+        // update the ui
+        OBJECT_INFO_UI.rot[0].value = cur_selection.rotation_angles[0];
+        OBJECT_INFO_UI.rot[1].value = cur_selection.rotation_angles[1];
+        OBJECT_INFO_UI.rot[2].value = cur_selection.rotation_angles[2];
+    } else if (gizmo_interact_y_rotate) {
+        current_ray.dir = generateRayDir(mouse_x, mouse_y);
+        const cur_pos = calculatePlaneIntersectionPoint2(cur_rotation_axis, cur_selection.pos, current_ray.dir);
+
+        const v = vec3.normalize([], vec3.subtract([], start_pos, cur_selection.pos));
+        const w = vec3.normalize([], vec3.subtract([], cur_pos, cur_selection.pos));
+
+        const angle = Math.atan2(vec3.dot(cur_rotation_axis, vec3.cross([], v, w)), vec3.dot(v, w)) * 180 / Math.PI;
         console.log(angle);
 
         cur_selection.updateRot([
             cur_selection.rotation_angles[0],
             cur_selection_prev_rot[1] + angle,
             cur_selection.rotation_angles[2]]);
-        /* const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
-        console.log(new_pos[0] - start_pos[0]);
+
+        // update the ui
+        OBJECT_INFO_UI.rot[0].value = cur_selection.rotation_angles[0];
+        OBJECT_INFO_UI.rot[1].value = cur_selection.rotation_angles[1];
+        OBJECT_INFO_UI.rot[2].value = cur_selection.rotation_angles[2];
+    } else if (gizmo_interact_z_rotate) {
+        current_ray.dir = generateRayDir(mouse_x, mouse_y);
+        const cur_pos = calculatePlaneIntersectionPoint2(cur_rotation_axis, cur_selection.pos, current_ray.dir);
+
+        const v = vec3.normalize([], vec3.subtract([], start_pos, cur_selection.pos));
+        const w = vec3.normalize([], vec3.subtract([], cur_pos, cur_selection.pos));
+
+        const angle = Math.atan2(vec3.dot(cur_rotation_axis, vec3.cross([], v, w)), vec3.dot(v, w)) * 180 / Math.PI;
+        console.log(angle);
+
         cur_selection.updateRot([
             cur_selection.rotation_angles[0],
-            cur_selection_prev_rot[1] + (new_pos[0] - start_pos[0]) * 50,
-            cur_selection.rotation_angles[2]]); */
+            cur_selection.rotation_angles[1],
+            cur_selection_prev_rot[2] + angle]);
 
         // update the ui
         OBJECT_INFO_UI.rot[0].value = cur_selection.rotation_angles[0];
