@@ -13,13 +13,14 @@ const vec3 = glm.vec3;
 const vec4 = glm.vec4;
 const mat4 = glm.mat4;
 
-import Renderer from "./renderer.js";
-import Object from "./object.js";
-import Camera from "./camera.js";
+import Renderer from "../util/Renderer.js";
+import SceneObject from "../util/SceneObject.js";
+import Camera from "../util/Camera.js";
+import TransformGizmos from "../util/TransformGizmos.js";
 
 
-import vs_src from "../shaders/vertexshader.js";
-import fs_src from "../shaders/fragmentshader.js";
+import vs_src from "../shaders/3d_pass/vertexshader.js";
+import fs_src from "../shaders/3d_pass/fragmentshader.js";
 
 import ui_pass_vs_src from "../shaders/ui_pass/vertexshader.js";
 import ui_pass_fs_src from "../shaders/ui_pass/fragmentshader.js";
@@ -32,6 +33,8 @@ import cube_ply from "../mimp/models/js_ply_files/cube_ply.js";
 import arrow_ply from "../mimp/models/js_ply_files/arrow_ply.js";
 import half_torus_ply from "../mimp/models/js_ply_files/half_torus_ply.js";
 import scale_gizmo_ply from "../mimp/models/js_ply_files/scale_gizmo_ply.js";
+
+import aabb_wireframe_mesh from "../util/aabb_wireframe_mesh.js";
 
 
 
@@ -47,7 +50,7 @@ const scale_gizmo_mesh = parsePLY(scale_gizmo_ply);
 
 //
 // ui elements
-// TODO: Object.freeze({}) normally goes here but Object conflicts with Object
+// TODO: SceneObject.freeze({}) normally goes here but SceneObject conflicts with SceneObject
 // need to change my class Name.
 const gizmo_ui = document.getElementById("gizmo_pos");
 const cur_mode_ui = document.getElementById("cur_mode");
@@ -142,111 +145,119 @@ function main() {
     renderer.getUIPassShaderVariables();
     renderer.setupRender(WIDTH, HEIGHT, [0.3, 0.3, 0.3, 1.0]/* [0.45, 0.55, 0.5, 1.0] */);
 
-    // need a variable to store arrow vao;
+    // reusable VAOs
+    // need a variable to model mesh VAOs and aabb mesh VAO
     const arrow_VAO = renderer.addObjectVAO(arrow_mesh);
     const half_torus_VAO = renderer.addObjectVAO(half_torus_mesh);
     const scale_gizmo_VAO = renderer.addObjectVAO(scale_gizmo_mesh);
 
+    const aabb_wireframe_VAO = renderer.addObjectVAO(aabb_wireframe_mesh);
+
     //
     // gizmo objects
-    const dir_arrow_x = new Object("arrow_x", [0,0,0], [reference_scale, reference_scale, reference_scale], [0,0,-90]);
+    const dir_arrow_x = new SceneObject("arrow_x", [0,0,0], [reference_scale, reference_scale, reference_scale], [0,0,-90]);
     dir_arrow_x.assignMesh(arrow_mesh);
     dir_arrow_x.assignVao(arrow_VAO);
     gizmo_objects.push(dir_arrow_x);
     dir_arrow_x.generateAABB();
     dir_arrow_x.aabb.setAABBColor([1.0, 0.65, 0.0]);
-    dir_arrow_x.aabb.assignVao(renderer.addObjectVAO(dir_arrow_x.aabb.mesh));
+    dir_arrow_x.aabb.assignVao(aabb_wireframe_VAO);
 
-    const dir_arrow_y = new Object("arrow_y", [0,0,0], [reference_scale, reference_scale, reference_scale], [0,0,0]);
+    const dir_arrow_y = new SceneObject("arrow_y", [0,0,0], [reference_scale, reference_scale, reference_scale], [0,0,0]);
     dir_arrow_y.assignMesh(arrow_mesh);
     dir_arrow_y.assignVao(arrow_VAO);
     gizmo_objects.push(dir_arrow_y);
     dir_arrow_y.generateAABB();
     dir_arrow_y.aabb.setAABBColor([1.0, 0.65, 0.0]);
-    dir_arrow_y.aabb.assignVao(renderer.addObjectVAO(dir_arrow_y.aabb.mesh));
+    dir_arrow_y.aabb.assignVao(aabb_wireframe_VAO);
 
-    const dir_arrow_z = new Object("arrow_z", [0,0,0], [reference_scale, reference_scale, reference_scale], [90,0,0]);
+    const dir_arrow_z = new SceneObject("arrow_z", [0,0,0], [reference_scale, reference_scale, reference_scale], [90,0,0]);
     dir_arrow_z.assignMesh(arrow_mesh);
     dir_arrow_z.assignVao(arrow_VAO);
     gizmo_objects.push(dir_arrow_z);
     dir_arrow_z.generateAABB();
     dir_arrow_z.aabb.setAABBColor([1.0, 0.65, 0.0]);
-    dir_arrow_z.aabb.assignVao(renderer.addObjectVAO(dir_arrow_z.aabb.mesh));
+    dir_arrow_z.aabb.assignVao(aabb_wireframe_VAO);
 
-    const half_torus_x = new Object("half_torus_x", [0,0,0], [0.1, 0.1, 0.1], [90,0,90]);
+    const half_torus_x = new SceneObject("half_torus_x", [0,0,0], [0.1, 0.1, 0.1], [90,0,90]);
     half_torus_x.assignMesh(half_torus_mesh);
     half_torus_x.assignVao(half_torus_VAO);
     gizmo_objects.push(half_torus_x);
     half_torus_x.generateAABB();
     half_torus_x.aabb.setAABBColor([0.50, 0.65, 0.8]);
-    half_torus_x.aabb.assignVao(renderer.addObjectVAO(half_torus_x.aabb.mesh));
+    half_torus_x.aabb.assignVao(aabb_wireframe_VAO);
 
-    const half_torus_y = new Object("half_torus_y", [0,0,0], [0.1, 0.1, 0.1], [0,-45,0]);
+    const half_torus_y = new SceneObject("half_torus_y", [0,0,0], [0.1, 0.1, 0.1], [0,-45,0]);
     half_torus_y.assignMesh(half_torus_mesh);
     half_torus_y.assignVao(half_torus_VAO);
     gizmo_objects.push(half_torus_y);
     half_torus_y.generateAABB();
     half_torus_y.aabb.setAABBColor([0.50, 0.65, 0.8]);
-    half_torus_y.aabb.assignVao(renderer.addObjectVAO(half_torus_y.aabb.mesh));
+    half_torus_y.aabb.assignVao(aabb_wireframe_VAO);
 
-    const half_torus_z = new Object("half_torus_z", [0,0,0], [0.1, 0.1, 0.1], [90,0,0]);
+    const half_torus_z = new SceneObject("half_torus_z", [0,0,0], [0.1, 0.1, 0.1], [90,0,0]);
     half_torus_z.assignMesh(half_torus_mesh);
     half_torus_z.assignVao(half_torus_VAO);
     gizmo_objects.push(half_torus_z);
     half_torus_z.generateAABB();
     half_torus_z.aabb.setAABBColor([0.50, 0.65, 0.8]);
-    half_torus_z.aabb.assignVao(renderer.addObjectVAO(half_torus_z.aabb.mesh));
+    half_torus_z.aabb.assignVao(aabb_wireframe_VAO);
 
-    const scale_gizmo_x = new Object("scale_x", [0,0,0], [reference_scale, reference_scale, reference_scale], [0, 90, 0]);
+    const scale_gizmo_x = new SceneObject("scale_x", [0,0,0], [reference_scale, reference_scale, reference_scale], [0, 90, 0]);
     scale_gizmo_x.assignMesh(scale_gizmo_mesh);
     scale_gizmo_x.assignVao(scale_gizmo_VAO);
     gizmo_objects.push(scale_gizmo_x);
     scale_gizmo_x.generateAABB();
     scale_gizmo_x.aabb.setAABBColor([1.0, 0.5, 0.25]);
-    scale_gizmo_x.aabb.assignVao(renderer.addObjectVAO(scale_gizmo_x.aabb.mesh));
+    scale_gizmo_x.aabb.assignVao(aabb_wireframe_VAO);
 
-    const scale_gizmo_y = new Object("scale_y", [0,0,0], [reference_scale, reference_scale, reference_scale], [-90,0,0]);
+    const scale_gizmo_y = new SceneObject("scale_y", [0,0,0], [reference_scale, reference_scale, reference_scale], [-90,0,0]);
     scale_gizmo_y.assignMesh(scale_gizmo_mesh);
     scale_gizmo_y.assignVao(scale_gizmo_VAO);
     gizmo_objects.push(scale_gizmo_y);
     scale_gizmo_y.generateAABB();
     scale_gizmo_y.aabb.setAABBColor([1.0, 0.5, 0.25]);
-    scale_gizmo_y.aabb.assignVao(renderer.addObjectVAO(scale_gizmo_y.aabb.mesh));
+    scale_gizmo_y.aabb.assignVao(aabb_wireframe_VAO);
 
-    const scale_gizmo_z = new Object("scale_z", [0,0,0], [reference_scale, reference_scale, reference_scale], [0,0,0]);
+    const scale_gizmo_z = new SceneObject("scale_z", [0,0,0], [reference_scale, reference_scale, reference_scale], [0,0,0]);
     scale_gizmo_z.assignMesh(scale_gizmo_mesh);
     scale_gizmo_z.assignVao(scale_gizmo_VAO);
     gizmo_objects.push(scale_gizmo_z);
     scale_gizmo_z.generateAABB();
     scale_gizmo_z.aabb.setAABBColor([1.0, 0.5, 0.25]);
-    scale_gizmo_z.aabb.assignVao(renderer.addObjectVAO(scale_gizmo_z.aabb.mesh));
+    scale_gizmo_z.aabb.assignVao(aabb_wireframe_VAO);
+
+
+
 
     //
     // scene objects
-    const cube1 = new Object("cube", [0,0,0], [1,1,1], [0,0,0]);
+    const cube1 = new SceneObject("cube", [0,0,0], [1,1,1], [0,0,0]);
     cube1.assignMesh(unit_cube_mesh);
     cube1.assignVao(renderer.addObjectVAO(unit_cube_mesh));
     objects.push(cube1);
     cube1.generateAABB();
     cube1.aabb.setAABBColor([0.4, 1.0, 0.2]);
-    cube1.aabb.assignVao(renderer.addObjectVAO(cube1.aabb.mesh));
+    cube1.aabb.assignVao(aabb_wireframe_VAO);
+
+    console.log(cube1);
 
 
-    const apple1 = new Object("apple", [0,0,-5], [9,9,9], [0,0,0]);
+    const apple1 = new SceneObject("apple", [0,0,-5], [9,9,9], [0,0,0]);
     apple1.assignMesh(apple_mesh);
     apple1.assignVao(renderer.addObjectVAO(apple_mesh));
     objects.push(apple1);
     apple1.generateAABB();
     apple1.aabb.setAABBColor([0.4, 1.0, 0.2]);
-    apple1.aabb.assignVao(renderer.addObjectVAO(apple1.aabb.mesh));
+    apple1.aabb.assignVao(aabb_wireframe_VAO);
 
-    const cube2 = new Object("weird cube", [0,0,0], [1,1,1], [0,0,0]);
+    const cube2 = new SceneObject("weird cube", [0,0,0], [1,1,1], [0,0,0]);
     cube2.assignMesh(cube_mesh2);
     cube2.assignVao(renderer.addObjectVAO(cube_mesh2));
     objects.push(cube2);
     cube2.generateAABB();
     cube2.aabb.setAABBColor([0.4, 1.0, 0.2]); // Nice orange color: [1.0, 0.65, 0.0]
-    cube2.aabb.assignVao(renderer.addObjectVAO(cube2.aabb.mesh));
+    cube2.aabb.assignVao(aabb_wireframe_VAO);
 
     objects.forEach(object => {
         const list_item = document.createElement("p");
@@ -448,11 +459,14 @@ canvas.addEventListener("mousemove", (e) => {
         if (orbit_camera) camera.orbit(1 * x_sign, 1 * y_sign);
         current_ray.origin = camera.pos;
         mat4.lookAt(view, camera.pos, vec3.subtract([], camera.pos, camera.dir), camera.up);
-        gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
+        if (cur_selection) {
+            gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
 
-        //update ui
-        gizmo_ui.textContent = `(${Math.round(gizmo_center[0] * 100) / 100}, 
+            //update ui
+            gizmo_ui.textContent = `(${Math.round(gizmo_center[0] * 100) / 100}, 
                                  ${Math.round(gizmo_center[1] * 100) / 100})`;
+        }
+
     } else if (gizmo_interact) {
         current_ray.dir = generateRayDir(mouse_x, mouse_y);
         const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
@@ -841,7 +855,7 @@ FILE_INPUT.addEventListener("change", (e) => {
         const name = file.name.split(".")[0];
 
         // create the object with the mesh
-        const object = new Object(name, [0,0,0], [1,1,1], [0,0,0]);
+        const object = new SceneObject(name, [0,0,0], [1,1,1], [0,0,0]);
         object.assignMesh(mesh);
         object.assignVao(renderer.addObjectVAO(mesh));
         objects.push(object);
@@ -867,7 +881,7 @@ document.addEventListener("keydown", (e) => {
         return;
     }
     if (e.ctrlKey && e.key === "v" && copied_object) {
-        const object = new Object(
+        const object = new SceneObject(
             copied_object.name, 
             copied_object.pos, 
             copied_object.scale, 

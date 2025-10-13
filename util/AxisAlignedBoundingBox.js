@@ -22,6 +22,10 @@ const AABB_INDICES = [
     4,5,  4,6,  7,6,  7,5  // back
 ];
 
+const DEFAULT_AABB_VERTEX_COLORS = [
+    
+];
+
 export default class AxisAlignedBoundingBox {
     constructor(mesh_vertices, model_matrix, object_pos) {
         this.mesh = {};
@@ -106,6 +110,9 @@ export default class AxisAlignedBoundingBox {
         mat4.scale(this.aabb_model_matrix, this.aabb_model_matrix, scale_factor);
     }
 
+    // TODO: this is deprecated. Ideally mesh colors can be adjusted on the fly
+    // this method requires reassigning VAOs. The better option is to change the
+    // color passed into the fragment shader
     setAABBColor(color) {
         let vertex_colors = new Float32Array(this.mesh.vertices.length * 3);
         for (let i = 0; i < this.mesh.vertices.length; i++) {

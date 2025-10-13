@@ -3,9 +3,9 @@ const vec3 = glm.vec3;
 const vec4 = glm.vec4;
 const mat4 = glm.mat4;
 
-import AxisAlignedBoundingBox from "./axisalignedboundingbox.js";
+import AxisAlignedBoundingBox from "./AxisAlignedBoundingBox.js";
 
-export default class Object {
+export default class SceneObject {
     constructor(name = "object",
               pos = [0, 0, 0],
               scale = [1, 1, 1],
