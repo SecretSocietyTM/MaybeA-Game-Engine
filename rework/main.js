@@ -169,7 +169,7 @@ function main() {
     dir_arrow_z.aabb.setAABBColor([1.0, 0.65, 0.0]);
     dir_arrow_z.aabb.assignVao(renderer.addObjectVAO(dir_arrow_z.aabb.mesh));
 
-    const half_torus_x = new Object("half_torus_x", [0,0,0], [0.1, 0.1, 0.1], [0,0,90]);
+    const half_torus_x = new Object("half_torus_x", [0,0,0], [0.1, 0.1, 0.1], [90,0,90]);
     half_torus_x.assignMesh(half_torus_mesh);
     half_torus_x.assignVao(half_torus_VAO);
     gizmo_objects.push(half_torus_x);
