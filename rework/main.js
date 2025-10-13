@@ -81,6 +81,7 @@ let gizmo_interact_x = false;
 let gizmo_interact_y = false;
 let gizmo_interact_z = false;
 
+let cur_rotation_axis;
 let gizmo_interact_x_rotate = false;
 let gizmo_interact_y_rotate = false;
 let gizmo_interact_z_rotate = false;
@@ -95,10 +96,13 @@ let gizmo_indices = [0,1,2];
 
 // variables for mouse controlled gizmos
 let start_pos;
+
+
+let cur_selection = null;
+let copied_object = null;
 let cur_selection_prev_pos;
 let cur_selection_prev_rot;
 let cur_selection_prev_scale;
-let cur_rotation_axis;
 
 
 let cur_x;
@@ -108,13 +112,11 @@ let prev_y;
 let pan_camera = false;
 let orbit_camera = false;
 
-// TODO: put the cam back at 0,0,10
-const camera = new Camera([5,4,5], [0,0,0], [0,1,0]);
+
+const camera = new Camera([0, 0, 10], [0,0,0], [0,1,0]);
 const reference_distance = vec3.distance(camera.pos, [0,0,0]);
 const reference_scale = 0.3;
 
-
-let cur_selection = null;
 let current_ray = {
     origin: camera.pos,
     dir: null
@@ -744,17 +746,6 @@ function calculateWorldToScreenCoords(coords) {
     return [screen_x, screen_y]; 
 }
 
-// TODO: remove
-/* const coord1 = calculateWorldToScreenCoords([2, 0, 0]);
-const coord2 = calculateWorldToScreenCoords([3, 0, 0]);
-console.log(coord1);
-console.log(coord2);
-
-const axis1_dir = vec2.normalize([], vec2.subtract([], coord2, coord1));
-console.log(axis1_dir);
-const axis2_dir = [-axis1_dir[1], axis1_dir[0]];
-console.log(axis2_dir); */
-
 
 function isIntersectingGizmo(mouse_x, mouse_y) {
     const mouse_pos = [mouse_x, HEIGHT - mouse_y];
@@ -767,8 +758,8 @@ function isIntersectingGizmo(mouse_x, mouse_y) {
     return false;
 }
 
+//
 // HTML interactactions
-
 
 // input event listeners
 
@@ -867,9 +858,6 @@ FILE_INPUT.addEventListener("change", (e) => {
 });
 
 
-// TODO: clean ALL of this up after done with mini project
-let copied_object = null;
-
 // keyboard shortcuts
 document.addEventListener("keydown", (e) => {
     if (e.ctrlKey && e.key === "c" && cur_selection) {
@@ -888,12 +876,6 @@ document.addEventListener("keydown", (e) => {
         objects.push(object);
         object.generateAABB();
         
-        // TODO: add a boolean flag for whether or not the
-        // AABB should be drawn. Most objects will NEED an
-        // AABB in order to interact with them, but we might not
-        // want the AABB to be rendered for some.
-        
-        // if (object.renderAABB) do the below 
         object.aabb.setAABBColor([0.4, 1.0, 0.2]);
         object.aabb.assignVao(copied_object.aabb.vao);
         
