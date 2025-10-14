@@ -5,17 +5,8 @@ const mat4 = glm.mat4;
 
 import AxisAlignedBoundingBox from "./AxisAlignedBoundingBox.js";
 
+// TODO: make all properties that can be on a SceneObject null in the constructor
 export default class SceneObject {
-    /* constructor(name = "object",
-              pos = [0, 0, 0],
-              scale = [1, 1, 1],
-              rotation_angles = [0,0,0]) {
-
-        this.name = name;
-        this.is_interactable = true;
-        this.transform(pos, scale, rotation_angles);
-    } */
-
     constructor(name = "object",
               pos = [0, 0, 0],
               scale = [1, 1, 1],
@@ -30,11 +21,13 @@ export default class SceneObject {
             console.error("Please provide the constructor with a mesh, vao, and an aabb vao");
         }
 
-        // TODO: test whether or not this breaks everything
         this.assignMesh(mesh);
         this.assignVao(vao);
         this.generateAABB();
         this.aabb.assignVao(aabb_vao);
+
+        this.last_static_transform = null;
+        this.setLastStaticTransform();
     }
 
     assignMesh(mesh) {
@@ -58,6 +51,13 @@ export default class SceneObject {
         mat4.rotateY(this.model_matrix, this.model_matrix, glm.glMatrix.toRadian(rotation_angles[1]));
         mat4.rotateZ(this.model_matrix, this.model_matrix, glm.glMatrix.toRadian(rotation_angles[2]));
         mat4.scale(this.model_matrix, this.model_matrix, scale);
+    }
+
+    setLastStaticTransform() {
+        this.last_static_transform = {
+            pos: this.pos, 
+            scale: this.scale,
+            rotation: this.rotation_angles};
     }
 
     updatePos(pos) {

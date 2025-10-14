@@ -105,9 +105,6 @@ let start_pos;
 
 let cur_selection = null;
 let copied_object = null;
-let cur_selection_prev_pos;
-let cur_selection_prev_rot;
-let cur_selection_prev_scale;
 
 
 let cur_x;
@@ -342,9 +339,7 @@ canvas.addEventListener("mousedown", (e) => {
                     }
                 }
 
-                cur_selection_prev_pos = cur_selection.pos;
-                cur_selection_prev_rot = cur_selection.rotation_angles;
-                cur_selection_prev_scale = cur_selection.scale;
+                cur_selection.setLastStaticTransform();
                 return;
             }
         });
@@ -428,7 +423,7 @@ canvas.addEventListener("mousemove", (e) => {
         const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
 
         cur_selection.updatePos([
-            cur_selection_prev_pos[0] + new_pos[0] - start_pos[0],
+            cur_selection.last_static_transform.pos[0] + new_pos[0] - start_pos[0],
             cur_selection.pos[1],
             cur_selection.pos[2]]);
         gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
@@ -449,7 +444,7 @@ canvas.addEventListener("mousemove", (e) => {
 
         cur_selection.updatePos([
             cur_selection.pos[0], 
-            cur_selection_prev_pos[1] + new_pos[1] - start_pos[1], 
+            cur_selection.last_static_transform.pos[1] + new_pos[1] - start_pos[1], 
             cur_selection.pos[2]]);
         gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
         transform_gizmos.objects.forEach(object => {
@@ -471,7 +466,7 @@ canvas.addEventListener("mousemove", (e) => {
         cur_selection.updatePos([
             cur_selection.pos[0], 
             cur_selection.pos[1],
-            cur_selection_prev_pos[2] + new_pos[2] - start_pos[2]]);
+            cur_selection.last_static_transform.pos[2] + new_pos[2] - start_pos[2]]);
         gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
         transform_gizmos.objects.forEach(object => {
             object.updatePos(cur_selection.pos);
@@ -502,7 +497,7 @@ canvas.addEventListener("mousemove", (e) => {
         const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
 
         cur_selection.updateScale([
-            cur_selection_prev_scale[0] + new_pos[0] - start_pos[0],
+            cur_selection.last_static_transform.scale[0] + new_pos[0] - start_pos[0],
             cur_selection.scale[1],
             cur_selection.scale[2]]);
 
@@ -516,7 +511,7 @@ canvas.addEventListener("mousemove", (e) => {
 
         cur_selection.updateScale([
             cur_selection.scale[0],
-            cur_selection_prev_scale[1] + new_pos[1] - start_pos[1],
+            cur_selection.last_static_transform.scale[1] + new_pos[1] - start_pos[1],
             cur_selection.scale[2]]);
 
         // update the ui
@@ -530,7 +525,7 @@ canvas.addEventListener("mousemove", (e) => {
         cur_selection.updateScale([
             cur_selection.scale[0],
             cur_selection.scale[1],
-            cur_selection_prev_scale[2] + new_pos[2] - start_pos[2]]);
+            cur_selection.last_static_transform.scale[2] + new_pos[2] - start_pos[2]]);
 
         // update the ui
         OBJECT_INFO_UI.scl[0].value = Math.round(cur_selection.scale[0] * 100) / 100;
@@ -556,7 +551,7 @@ canvas.addEventListener("mousemove", (e) => {
         console.log(angle);
 
         cur_selection.updateRot([
-            cur_selection_prev_rot[0] + angle,
+            cur_selection.last_static_transform.rotation[0] + angle,
             cur_selection.rotation_angles[1],
             cur_selection.rotation_angles[2]]);
 
@@ -576,7 +571,7 @@ canvas.addEventListener("mousemove", (e) => {
 
         cur_selection.updateRot([
             cur_selection.rotation_angles[0],
-            cur_selection_prev_rot[1] + angle,
+            cur_selection.last_static_transform.rotation[1] + angle,
             cur_selection.rotation_angles[2]]);
 
         // update the ui
@@ -596,7 +591,7 @@ canvas.addEventListener("mousemove", (e) => {
         cur_selection.updateRot([
             cur_selection.rotation_angles[0],
             cur_selection.rotation_angles[1],
-            cur_selection_prev_rot[2] + angle]);
+            cur_selection.last_static_transform.rotation[2] + angle]);
 
         // update the ui
         OBJECT_INFO_UI.rot[0].value = cur_selection.rotation_angles[0];

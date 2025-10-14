@@ -106,4 +106,8 @@ export default class TransformGizmos {
                           x_rotate, y_rotate, z_rotate,
                           x_scale, y_scale, z_scale);
     }
+
+    transformSelectedObject(transform_type, transform_vector, selected_object) {
+
+    }
 }
