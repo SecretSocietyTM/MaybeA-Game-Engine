@@ -128,7 +128,6 @@ let current_ray = {
 }
 
 let objects = [];
-let gizmo_objects = [];
 
 let view = mat4.create();
 let proj = mat4.create();
@@ -136,99 +135,36 @@ mat4.lookAt(view, camera.pos, vec3.subtract([], camera.pos, camera.dir), camera.
 mat4.perspective(proj, glm.glMatrix.toRadian(45), WIDTH / HEIGHT, 0.1, 1000);
 
 const renderer = new Renderer(canvas);
+renderer.createProgram(vs_src, fs_src);
+renderer.createUIPassProgram(ui_pass_vs_src, ui_pass_fs_src);
+renderer.getShaderVariables();
+renderer.getUIPassShaderVariables();
+renderer.setupRender(WIDTH, HEIGHT, [0.3, 0.3, 0.3, 1.0]/* [0.45, 0.55, 0.5, 1.0] */);
+
+// reusable VAOs
+// need a variable to model mesh VAOs and aabb mesh VAO
+const axis_translate_VAO = renderer.addObjectVAO(arrow_mesh);
+const axis_rotate_VAO = renderer.addObjectVAO(half_torus_mesh);
+const axis_scale_VAO = renderer.addObjectVAO(scale_gizmo_mesh);
+const aabb_wireframe_VAO = renderer.addObjectVAO(aabb_wireframe_mesh);
+
+const gizmo_meshes = {
+    translate_mesh: arrow_mesh,
+    rotate_mesh: half_torus_mesh,
+    scale_mesh: scale_gizmo_mesh
+}
+const gizmo_vaos = {
+    translate_vao: axis_translate_VAO,
+    rotate_vao: axis_rotate_VAO,
+    scale_vao: axis_scale_VAO,
+    aabb_wireframe: aabb_wireframe_VAO
+}
+
+const transform_gizmos = new TransformGizmos();
+transform_gizmos.setReferenceScale(reference_scale);
+transform_gizmos.initGizmoObjects(gizmo_meshes, gizmo_vaos);
 
 function main() {
-    // programs MUST BE "3D" and "UI"
-    renderer.createProgram(vs_src, fs_src);
-    renderer.createUIPassProgram(ui_pass_vs_src, ui_pass_fs_src);
-    renderer.getShaderVariables();
-    renderer.getUIPassShaderVariables();
-    renderer.setupRender(WIDTH, HEIGHT, [0.3, 0.3, 0.3, 1.0]/* [0.45, 0.55, 0.5, 1.0] */);
-
-    // reusable VAOs
-    // need a variable to model mesh VAOs and aabb mesh VAO
-    const arrow_VAO = renderer.addObjectVAO(arrow_mesh);
-    const half_torus_VAO = renderer.addObjectVAO(half_torus_mesh);
-    const scale_gizmo_VAO = renderer.addObjectVAO(scale_gizmo_mesh);
-
-    const aabb_wireframe_VAO = renderer.addObjectVAO(aabb_wireframe_mesh);
-
-    //
-    // gizmo objects
-    const dir_arrow_x = new SceneObject("arrow_x", [0,0,0], [reference_scale, reference_scale, reference_scale], [0,0,-90]);
-    dir_arrow_x.assignMesh(arrow_mesh);
-    dir_arrow_x.assignVao(arrow_VAO);
-    gizmo_objects.push(dir_arrow_x);
-    dir_arrow_x.generateAABB();
-    dir_arrow_x.aabb.setAABBColor([1.0, 0.65, 0.0]);
-    dir_arrow_x.aabb.assignVao(aabb_wireframe_VAO);
-
-    const dir_arrow_y = new SceneObject("arrow_y", [0,0,0], [reference_scale, reference_scale, reference_scale], [0,0,0]);
-    dir_arrow_y.assignMesh(arrow_mesh);
-    dir_arrow_y.assignVao(arrow_VAO);
-    gizmo_objects.push(dir_arrow_y);
-    dir_arrow_y.generateAABB();
-    dir_arrow_y.aabb.setAABBColor([1.0, 0.65, 0.0]);
-    dir_arrow_y.aabb.assignVao(aabb_wireframe_VAO);
-
-    const dir_arrow_z = new SceneObject("arrow_z", [0,0,0], [reference_scale, reference_scale, reference_scale], [90,0,0]);
-    dir_arrow_z.assignMesh(arrow_mesh);
-    dir_arrow_z.assignVao(arrow_VAO);
-    gizmo_objects.push(dir_arrow_z);
-    dir_arrow_z.generateAABB();
-    dir_arrow_z.aabb.setAABBColor([1.0, 0.65, 0.0]);
-    dir_arrow_z.aabb.assignVao(aabb_wireframe_VAO);
-
-    const half_torus_x = new SceneObject("half_torus_x", [0,0,0], [0.1, 0.1, 0.1], [90,0,90]);
-    half_torus_x.assignMesh(half_torus_mesh);
-    half_torus_x.assignVao(half_torus_VAO);
-    gizmo_objects.push(half_torus_x);
-    half_torus_x.generateAABB();
-    half_torus_x.aabb.setAABBColor([0.50, 0.65, 0.8]);
-    half_torus_x.aabb.assignVao(aabb_wireframe_VAO);
-
-    const half_torus_y = new SceneObject("half_torus_y", [0,0,0], [0.1, 0.1, 0.1], [0,-45,0]);
-    half_torus_y.assignMesh(half_torus_mesh);
-    half_torus_y.assignVao(half_torus_VAO);
-    gizmo_objects.push(half_torus_y);
-    half_torus_y.generateAABB();
-    half_torus_y.aabb.setAABBColor([0.50, 0.65, 0.8]);
-    half_torus_y.aabb.assignVao(aabb_wireframe_VAO);
-
-    const half_torus_z = new SceneObject("half_torus_z", [0,0,0], [0.1, 0.1, 0.1], [90,0,0]);
-    half_torus_z.assignMesh(half_torus_mesh);
-    half_torus_z.assignVao(half_torus_VAO);
-    gizmo_objects.push(half_torus_z);
-    half_torus_z.generateAABB();
-    half_torus_z.aabb.setAABBColor([0.50, 0.65, 0.8]);
-    half_torus_z.aabb.assignVao(aabb_wireframe_VAO);
-
-    const scale_gizmo_x = new SceneObject("scale_x", [0,0,0], [reference_scale, reference_scale, reference_scale], [0, 90, 0]);
-    scale_gizmo_x.assignMesh(scale_gizmo_mesh);
-    scale_gizmo_x.assignVao(scale_gizmo_VAO);
-    gizmo_objects.push(scale_gizmo_x);
-    scale_gizmo_x.generateAABB();
-    scale_gizmo_x.aabb.setAABBColor([1.0, 0.5, 0.25]);
-    scale_gizmo_x.aabb.assignVao(aabb_wireframe_VAO);
-
-    const scale_gizmo_y = new SceneObject("scale_y", [0,0,0], [reference_scale, reference_scale, reference_scale], [-90,0,0]);
-    scale_gizmo_y.assignMesh(scale_gizmo_mesh);
-    scale_gizmo_y.assignVao(scale_gizmo_VAO);
-    gizmo_objects.push(scale_gizmo_y);
-    scale_gizmo_y.generateAABB();
-    scale_gizmo_y.aabb.setAABBColor([1.0, 0.5, 0.25]);
-    scale_gizmo_y.aabb.assignVao(aabb_wireframe_VAO);
-
-    const scale_gizmo_z = new SceneObject("scale_z", [0,0,0], [reference_scale, reference_scale, reference_scale], [0,0,0]);
-    scale_gizmo_z.assignMesh(scale_gizmo_mesh);
-    scale_gizmo_z.assignVao(scale_gizmo_VAO);
-    gizmo_objects.push(scale_gizmo_z);
-    scale_gizmo_z.generateAABB();
-    scale_gizmo_z.aabb.setAABBColor([1.0, 0.5, 0.25]);
-    scale_gizmo_z.aabb.assignVao(aabb_wireframe_VAO);
-
-
-
 
     //
     // scene objects
@@ -239,9 +175,6 @@ function main() {
     cube1.generateAABB();
     cube1.aabb.setAABBColor([0.4, 1.0, 0.2]);
     cube1.aabb.assignVao(aabb_wireframe_VAO);
-
-    console.log(cube1);
-
 
     const apple1 = new SceneObject("apple", [0,0,-5], [9,9,9], [0,0,0]);
     apple1.assignMesh(apple_mesh);
@@ -266,7 +199,7 @@ function main() {
     });
 
     function frame() {
-        renderer.renderFrame(view, proj, objects, gizmo_objects, gizmo_center, gizmo_indices);
+        renderer.renderFrame(view, proj, objects, transform_gizmos.objects, gizmo_center, gizmo_indices);
         requestAnimationFrame(frame);
     }
 
@@ -317,10 +250,14 @@ canvas.addEventListener("click", (e) => {
 
             gizmo_exists = true;
             gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
-            gizmo_objects.forEach(object => {
+
+            transform_gizmos.objects.forEach(object => {
                 object.updatePos(cur_selection.pos);
             });
 
+
+
+            // TODO: make a function for setting UI.
             // update the UI
             OBJECT_INFO_UI.name.textContent = cur_selection.name;
             OBJECT_INFO_UI.pos[0].value = Math.round(cur_selection.pos[0] * 100) / 100;
@@ -362,48 +299,48 @@ canvas.addEventListener("mousedown", (e) => {
     if (e.button === 0 && gizmo_exists) {
         current_ray.dir = generateRayDir(cur_x, cur_y);
 
-        gizmo_objects.forEach(object => {
+        transform_gizmos.objects.forEach(object => {
             if (object.aabb.isIntersecting(current_ray)) {
                 current_ray.dir = generateRayDir(cur_x, cur_y);
 
                 if (cur_mode === "translate") {
-                    if (object.name === "arrow_x") {
+                    if (object.name === "x_trans") {
                         gizmo_interact_x = true;
                         start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
                     }
-                    else if (object.name === "arrow_y") {
+                    else if (object.name === "y_trans") {
                         gizmo_interact_y = true;
                         start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
                     }
-                    else if (object.name === "arrow_z") {
+                    else if (object.name === "z_trans") {
                         gizmo_interact_z = true;
                         start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
                     }
                 } else if (cur_mode === "scale") {
-                    if (object.name === "scale_x") {
+                    if (object.name === "x_scale") {
                     gizmo_interact_x_scale = true;
                     start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
                     }
-                    else if (object.name === "scale_y") {
+                    else if (object.name === "y_scale") {
                         gizmo_interact_y_scale = true;
                         start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
                     }
-                    else if (object.name === "scale_z") {
+                    else if (object.name === "z_scale") {
                         gizmo_interact_z_scale = true;
                         start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
                     }
                 } else if (cur_mode === "rotate") {
-                    if (object.name === "half_torus_x") {
+                    if (object.name === "x_rotate") {
                     gizmo_interact_x_rotate = true;
                     cur_rotation_axis = [1,0,0];
                     start_pos = calculatePlaneIntersectionPoint2(cur_rotation_axis, cur_selection.pos, current_ray.dir);
                     }
-                    else if (object.name === "half_torus_y") {
+                    else if (object.name === "y_rotate") {
                         gizmo_interact_y_rotate = true;
                         cur_rotation_axis = [0,1,0];
                         start_pos = calculatePlaneIntersectionPoint2(cur_rotation_axis, cur_selection.pos, current_ray.dir);
                     }
-                    else if (object.name === "half_torus_z") {
+                    else if (object.name === "z_rotate") {
                         gizmo_interact_z_rotate = true;
                         cur_rotation_axis = [0,0,1];
                         start_pos = calculatePlaneIntersectionPoint2(cur_rotation_axis, cur_selection.pos, current_ray.dir);
@@ -472,9 +409,9 @@ canvas.addEventListener("mousemove", (e) => {
         const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
         cur_selection.updatePos(new_pos);
         gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
-        gizmo_objects.forEach(object => {
-                object.updatePos(cur_selection.pos);
-            });
+        transform_gizmos.objects.forEach(object => {
+            object.updatePos(cur_selection.pos);
+        })
 
         // update the ui
         OBJECT_INFO_UI.pos[0].value = Math.round(cur_selection.pos[0] * 100) / 100;
@@ -492,9 +429,9 @@ canvas.addEventListener("mousemove", (e) => {
             cur_selection.pos[1],
             cur_selection.pos[2]]);
         gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
-        gizmo_objects.forEach(object => {
-                object.updatePos(cur_selection.pos);
-            });
+        transform_gizmos.objects.forEach(object => {
+            object.updatePos(cur_selection.pos);
+        })
 
         // update the ui
         OBJECT_INFO_UI.pos[0].value = Math.round(cur_selection.pos[0] * 100) / 100;
@@ -512,9 +449,9 @@ canvas.addEventListener("mousemove", (e) => {
             cur_selection_prev_pos[1] + new_pos[1] - start_pos[1], 
             cur_selection.pos[2]]);
         gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
-        gizmo_objects.forEach(object => {
-                object.updatePos(cur_selection.pos);
-            });
+        transform_gizmos.objects.forEach(object => {
+            object.updatePos(cur_selection.pos);
+        })
 
         // update the ui
         OBJECT_INFO_UI.pos[0].value = Math.round(cur_selection.pos[0] * 100) / 100;
@@ -533,9 +470,9 @@ canvas.addEventListener("mousemove", (e) => {
             cur_selection.pos[1],
             cur_selection_prev_pos[2] + new_pos[2] - start_pos[2]]);
         gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
-        gizmo_objects.forEach(object => {
-                object.updatePos(cur_selection.pos);
-            });
+        transform_gizmos.objects.forEach(object => {
+            object.updatePos(cur_selection.pos);
+        })
 
         // update the ui
         OBJECT_INFO_UI.pos[0].value = Math.round(cur_selection.pos[0] * 100) / 100;
@@ -653,9 +590,9 @@ canvas.addEventListener("wheel", (e) => {
     // update arrows scale factor when zooming 
     const distance = vec3.distance(camera.pos, cur_selection.pos);
     const scale = (distance / reference_distance) * reference_scale;
-    gizmo_objects.forEach(object => {
-        object.updateScale([scale, scale, scale]);
-    });
+    transform_gizmos.objects.forEach(object => {
+            object.updatePos(cur_selection.pos);
+        })
 });
 
 function calculateAngleBetweenVectors(v, w) {
