@@ -67,6 +67,7 @@ export default class Renderer {
         this.ui_pass_pos_attrib = this.gl.getAttribLocation(this.ui_program, "a_pos");
 
         this.ui_pass_circle_center_uniform = this.gl.getUniformLocation(this.ui_program, "u_cntr");
+        this.ui_pass_circle_radius = this.gl.getUniformLocation(this.ui_program, "u_radius");
         this.ui_pass_clr_uniform = this.gl.getUniformLocation(this.ui_program, "u_clr");
 
         return true;
@@ -118,7 +119,7 @@ export default class Renderer {
         this.gl.enable(this.gl.DEPTH_TEST);
     }
 
-    renderFrame(view, proj, objects, gizmo_objects, gizmo_center) {
+    renderFrame(view, proj, objects, transform_gizmos) {
         this.gl.useProgram(this.program);
         this.gl.enable(this.gl.DEPTH_TEST);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
@@ -142,10 +143,10 @@ export default class Renderer {
             }
         });
 
-        if (gizmo_center) {
+        if (transform_gizmos.main_gizmo.center) {
             this.gl.disable(this.gl.DEPTH_TEST);
 
-            gizmo_objects.forEach(object => {
+            transform_gizmos.active_objects.forEach(object => {
                 this.gl.uniformMatrix4fv(this.model_uniform, this.gl.FALSE, object.model_matrix);
                 this.gl.bindVertexArray(object.vao);
                 this.gl.drawElements(this.gl.TRIANGLES, object.mesh.indices.length, this.gl.UNSIGNED_SHORT, 0);
@@ -160,17 +161,12 @@ export default class Renderer {
                     this.gl.bindVertexArray(null);
                 }
             });
-            this.renderUIPass(gizmo_center);
+            this.renderUIPass(transform_gizmos.main_gizmo);
         }
     }
 
 
-
-
-
-
-
-    renderUIPass(gizmo_center) {
+    renderUIPass(main_gizmo) {
         this.gl.useProgram(this.ui_program);
 
         // fullscreen quad vertices
@@ -187,8 +183,8 @@ export default class Renderer {
         this.gl.enableVertexAttribArray(this.ui_pass_pos_attrib);
         this.gl.vertexAttribPointer(this.ui_pass_pos_attrib, 2, this.gl.FLOAT, this.gl.FALSE, 0, 0);
 
-        this.gl.uniform2fv(this.ui_pass_circle_center_uniform, gizmo_center);
-        // this.gl.uniform1f(this.ui_pass_circle_radius, gizmo_radius);
+        this.gl.uniform2fv(this.ui_pass_circle_center_uniform, main_gizmo.center);
+        this.gl.uniform1f(this.ui_pass_circle_radius, main_gizmo.radius);
         this.gl.uniform3fv(this.ui_pass_clr_uniform, [1.0, 1.0, 1.0])
 
         this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);

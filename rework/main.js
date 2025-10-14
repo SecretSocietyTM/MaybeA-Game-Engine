@@ -13,6 +13,8 @@ const vec3 = glm.vec3;
 const vec4 = glm.vec4;
 const mat4 = glm.mat4;
 
+import * as interactions from "../util/interactions.js";
+
 import Renderer from "../util/Renderer.js";
 import SceneObject from "../util/SceneObject.js";
 import Camera from "../util/Camera.js";
@@ -73,8 +75,6 @@ const rect = canvas.getBoundingClientRect();
 
 //
 // state variables?
-let gizmo_radius = 10;
-let gizmo_center = null;
 let gizmo_exists = false;
 let gizmo_interact = false;
 
@@ -145,15 +145,12 @@ function main() {
 
     //
     // scene objects
-
     const unit_cube = new SceneObject("unit_cube", [0,0,0], [1,1,1], [0,0,0], 
         unit_cube_mesh, renderer.addObjectVAO(unit_cube_mesh), aabb_wireframe_VAO);
     objects.push(unit_cube);
 
     const apple = new SceneObject("apple", [0,0,-5], [9,9,9], [0,0,0], 
         apple_mesh, renderer.addObjectVAO(apple_mesh), aabb_wireframe_VAO);
-
-    console.log(apple);
 
     const weird_cube = new SceneObject("weird cube", [0,0,0], [1,1,1], [0,0,0],
         cube_mesh, renderer.addObjectVAO(cube_mesh), aabb_wireframe_VAO);
@@ -167,7 +164,7 @@ function main() {
     });
 
     function frame() {
-        renderer.renderFrame(view, proj, objects, transform_gizmos.active_objects, gizmo_center);
+        renderer.renderFrame(view, proj, objects, transform_gizmos);
         requestAnimationFrame(frame);
     }
 
@@ -189,7 +186,7 @@ canvas.addEventListener("click", (e) => {
         return;
     };
 
-    current_ray.dir = generateRayDir(mouse_x, mouse_y);
+    current_ray.dir = interactions.generateRayDir(WIDTH, HEIGHT, mouse_x, mouse_y, proj, view);
 
     let ray_hit = false;
 
@@ -200,7 +197,7 @@ canvas.addEventListener("click", (e) => {
             cur_selection = objects[i];
 
             gizmo_exists = true;
-            gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
+            transform_gizmos.main_gizmo.center = interactions.calculateObjectCenterScreenCoord(WIDTH, HEIGHT, cur_selection, proj, view);
             transform_gizmos.objects.forEach(object => {
                 object.updatePos(cur_selection.pos);
             });
@@ -208,9 +205,7 @@ canvas.addEventListener("click", (e) => {
             setPositionUI(cur_selection);
             setRotationUI(cur_selection);
             setScaleUi(cur_selection);
-
-            gizmo_ui.textContent = `(${Math.round(gizmo_center[0] * 100) / 100}, 
-                                    ${Math.round(gizmo_center[1] * 100) / 100})`;
+            setMainGizmoUI(transform_gizmos.main_gizmo);
             return;
         }
     }
@@ -219,7 +214,7 @@ canvas.addEventListener("click", (e) => {
         cur_selection = null;
 
         gizmo_exists = false;
-        gizmo_center = null;
+        transform_gizmos.main_gizmo.center = null;
         return;
     }
 });
@@ -229,24 +224,24 @@ canvas.addEventListener("mousedown", (e) => {
     cur_y = e.clientY - rect.top;
 
     if (e.button === 0 && gizmo_exists &&
-        isIntersectingGizmo(cur_x, cur_y)) {
+        transform_gizmos.isIntersectingGizmo([cur_x, HEIGHT - cur_y])) {
         gizmo_interact = true;
         return;
     }
     if (e.button === 0 && gizmo_exists) {
-        current_ray.dir = generateRayDir(cur_x, cur_y);
+        current_ray.dir = interactions.generateRayDir(WIDTH, HEIGHT, cur_x, cur_y, proj, view);
 
         transform_gizmos.active_objects.forEach(object => {
             if (object.aabb.isIntersecting(current_ray)) {
                 const target_name = object.name;
                 transform_gizmos.setIsInteracting(true);
-                current_ray.dir = generateRayDir(cur_x, cur_y);
 
                 if(transform_gizmos.mode === "translate" ||
                    transform_gizmos.mode === "scale") {
-                    start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
+                    start_pos = interactions.calculatePlaneIntersectionPoint(
+                        current_ray, camera.dir, cur_selection.pos);
                 } 
-                else if (transform_gizmos.mode === "rotate") {
+                else {
                     let rotation_axis = null;
 
                     if (target_name === "x_rotate") rotation_axis = [1,0,0];
@@ -254,8 +249,8 @@ canvas.addEventListener("mousedown", (e) => {
                     else if (target_name === "z_rotate") rotation_axis = [0,0,1];
                     transform_gizmos.setActiveRotationAxis(rotation_axis);
 
-                    start_pos = calculatePlaneIntersectionPoint2(
-                        transform_gizmos.active_rotation_axis, cur_selection.pos, current_ray.dir);
+                    start_pos = interactions.calculatePlaneIntersectionPoint(
+                        current_ray, transform_gizmos.active_rotation_axis, cur_selection.pos);
                 }
                 transform_gizmos.setInteractionWith(target_name);
                 return;
@@ -305,38 +300,34 @@ canvas.addEventListener("mousemove", (e) => {
         current_ray.origin = camera.pos;
         mat4.lookAt(view, camera.pos, vec3.subtract([], camera.pos, camera.dir), camera.up);
         if (cur_selection) {
-            gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
+            transform_gizmos.main_gizmo.center = interactions.calculateObjectCenterScreenCoord(WIDTH, HEIGHT, cur_selection, proj, view);
 
             //update ui
-            gizmo_ui.textContent = `(${Math.round(gizmo_center[0] * 100) / 100}, 
-                                 ${Math.round(gizmo_center[1] * 100) / 100})`;
+            setMainGizmoUI(transform_gizmos.main_gizmo);
         }
 
     } else if (gizmo_interact) {
-        current_ray.dir = generateRayDir(mouse_x, mouse_y);
-        const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
+        current_ray.dir = interactions.generateRayDir(WIDTH, HEIGHT, mouse_x, mouse_y, proj, view);
+        const new_pos = interactions.calculatePlaneIntersectionPoint(
+                        current_ray, camera.dir, cur_selection.pos);
         cur_selection.updatePos(new_pos);
-        gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
+        transform_gizmos.main_gizmo.center = interactions.calculateObjectCenterScreenCoord(WIDTH, HEIGHT, cur_selection, proj, view);
         transform_gizmos.objects.forEach(object => {
             object.updatePos(cur_selection.pos);
         })
 
         // update the ui
-        OBJECT_INFO_UI.pos[0].value = Math.round(cur_selection.pos[0] * 100) / 100;
-        OBJECT_INFO_UI.pos[1].value = Math.round(cur_selection.pos[1] * 100) / 100;
-        OBJECT_INFO_UI.pos[2].value = Math.round(cur_selection.pos[2] * 100) / 100;
-
-        gizmo_ui.textContent = `(${Math.round(gizmo_center[0] * 100) / 100}, 
-                                 ${Math.round(gizmo_center[1] * 100) / 100})`;
-
+        setPositionUI(cur_selection);
+        setMainGizmoUI(transform_gizmos.main_gizmo);
 
     } else if (transform_gizmos.is_interacting && 
                transform_gizmos.mode === "translate") {
 
         const interaction_with = transform_gizmos.interaction_with;
         
-        current_ray.dir = generateRayDir(mouse_x, mouse_y);
-        const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
+        current_ray.dir = interactions.generateRayDir(WIDTH, HEIGHT, mouse_x, mouse_y, proj, view);
+        const new_pos = interactions.calculatePlaneIntersectionPoint(
+                        current_ray, camera.dir, cur_selection.pos);
         let translate_vector = null;
 
         if (interaction_with === "x_trans") {
@@ -360,7 +351,7 @@ canvas.addEventListener("mousemove", (e) => {
         }
 
         transform_gizmos.translateSelectedObject(translate_vector, cur_selection);
-        gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
+        transform_gizmos.main_gizmo.center = interactions.calculateObjectCenterScreenCoord(WIDTH, HEIGHT, cur_selection, proj, view);
         // update UI
         setPositionUI(cur_selection);
     } else if (transform_gizmos.is_interacting && 
@@ -368,8 +359,9 @@ canvas.addEventListener("mousemove", (e) => {
 
         const interaction_with = transform_gizmos.interaction_with;
 
-        current_ray.dir = generateRayDir(mouse_x, mouse_y);
-        const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
+        current_ray.dir = interactions.generateRayDir(WIDTH, HEIGHT, mouse_x, mouse_y, proj, view);
+        const new_pos = interactions.calculatePlaneIntersectionPoint(
+                        current_ray, camera.dir, cur_selection.pos);
         let scale_vector = null;
 
         if (interaction_with === "x_scale") {
@@ -401,9 +393,9 @@ canvas.addEventListener("mousemove", (e) => {
 
         const interaction_with = transform_gizmos.interaction_with;
 
-        current_ray.dir = generateRayDir(mouse_x, mouse_y);
-        const cur_pos = calculatePlaneIntersectionPoint2(
-            transform_gizmos.active_rotation_axis, cur_selection.pos, current_ray.dir);
+        current_ray.dir = interactions.generateRayDir(WIDTH, HEIGHT, mouse_x, mouse_y, proj, view);
+        const cur_pos = interactions.calculatePlaneIntersectionPoint(
+                        current_ray, transform_gizmos.active_rotation_axis, cur_selection.pos);
 
         const v = vec3.normalize([], vec3.subtract([], start_pos, cur_selection.pos));
         const w = vec3.normalize([], vec3.subtract([], cur_pos, cur_selection.pos));
@@ -432,7 +424,7 @@ canvas.addEventListener("mousemove", (e) => {
             ];
         }
 
-        transform_gizmos.rotateselectedObject(rotate_vector, cur_selection);
+        transform_gizmos.rotateSelectedObject(rotate_vector, cur_selection);
         // update UI
         setRotationUI(cur_selection);
     }
@@ -443,7 +435,7 @@ canvas.addEventListener("wheel", (e) => {
     camera.zoom(e.deltaY);
     current_ray.origin = camera.pos;
     mat4.lookAt(view, camera.pos, vec3.subtract([], camera.pos, camera.dir), camera.up);
-    gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
+    transform_gizmos.main_gizmo.center = interactions.calculateObjectCenterScreenCoord(WIDTH, HEIGHT, cur_selection, proj, view);
 
     // update arrows scale factor when zooming 
     const distance = vec3.distance(camera.pos, cur_selection.pos);
@@ -453,118 +445,6 @@ canvas.addEventListener("wheel", (e) => {
     });
 });
 
-
-//
-// Functions
-function calculateAngleBetweenVectors(v, w) {
-
-    // equation: theta = acos((v dot w / len(v) * len(w)));
-    const numerator = vec2.dot(v, w);
-    const denominator = vec2.length(v) * vec2.length(w);
-    const angle = Math.acos(numerator / denominator) * 180 / Math.PI;
-
-    return angle;
-}
-
-function generateRayDir(x, y) {
-    const x_ndc = (2 * x) / WIDTH - 1;
-    const y_ndc = 1 - (2 * y) / HEIGHT;
-
-    const ray_clip = [x_ndc, y_ndc, -1.0, 1.0];
-
-    const ray_eye = vec4.transformMat4([], ray_clip, mat4.invert([], proj));
-    ray_eye[2] = -1,
-    ray_eye[3] = 0;
-
-    let ray_world = vec4.transformMat4([], ray_eye, mat4.invert([], view));
-    ray_world = [ray_world[0], ray_world[1], ray_world[2]];
-    vec3.normalize(ray_world, ray_world);
-
-    return ray_world;
-}
-
-// equation is t = - (dot(ray_origin, plane_normal) + d) / (dot(ray_dir, plane_normal)) 
-function calculatePlaneIntersectionPoint2(plane_normal, plane_p0, dir) {
-    let d = -vec3.dot(plane_normal, plane_p0);
-
-    let numerator = vec3.dot(camera.pos, plane_normal) + d;
-    let denominator = vec3.dot(dir, plane_normal);
-    if (denominator === 0) {
-        console.log("ray missed plane with normal = ", plane_normal);
-        return;
-    }
-
-    let t = -(numerator / denominator);
-
-    let p = vec3.scaleAndAdd([], camera.pos, dir, t);
-
-    return p;
-}
-
-function calculatePlaneIntersectionPoint(dir) {
-    let n = camera.dir;
-    let p0 = cur_selection.pos;
-    let d = -vec3.dot(n, p0);
-
-    let numerator = vec3.dot(camera.pos, n) + d;
-    let denominator = vec3.dot(dir, n);
-    if (denominator === 0) { // ray missed plane
-        console.log("ray missed plane");
-        return;
-    }
-    let t = -(numerator / denominator);
-    
-    // point on plane given our vector
-    let p = vec3.scaleAndAdd([], camera.pos, dir, t);
-
-    return p;
-}
-
-// v and b are connected, a is part of w
-function calculateLineIntersectionPoint(v, a, b) {
-    let numerator = vec2.dot((vec2.subtract([], a, b)), v);
-    let denominator = vec2.length(v)**2;
-    let t = numerator / denominator;
-
-    let p = vec2.scaleAndAdd([], b, v, t);
-    return p;
-}
-
-function calculateObjectCenterScreenCoord(object) {
-    const cntr = vec4.fromValues(object.pos[0], object.pos[1], object.pos[2], 1);
-    vec4.transformMat4(cntr, cntr, view); // world space --> view space
-    vec4.transformMat4(cntr, cntr, proj); // view space  --> clip space
-    vec4.scale(cntr, cntr, 1 / cntr[3]);   // clip space  --> NDC coords
-    const cntr_ndc = [cntr[0], cntr[1]];
-
-    const screen_x = (cntr_ndc[0] * 0.5 + 0.5) * WIDTH;
-    const screen_y = (cntr_ndc[1] * 0.5 + 0.5) * HEIGHT;
-    return [screen_x, screen_y];
-}
-
-function calculateWorldToScreenCoords(coords) {
-    const p = vec4.fromValues(coords[0], coords[1], coords[2], 1);
-    vec4.transformMat4(p, p, view); // world space --> view space
-    vec4.transformMat4(p, p, proj); // view space  --> clip space
-    vec4.scale(p, p, 1 / p[3]);   // clip space  --> NDC coords
-    const p_ndc = [p[0], p[1]];
-
-    const screen_x = (p_ndc[0] * 0.5 + 0.5) * WIDTH;
-    const screen_y = (p_ndc[1] * 0.5 + 0.5) * HEIGHT;
-    return [screen_x, screen_y]; 
-}
-
-
-function isIntersectingGizmo(mouse_x, mouse_y) {
-    const mouse_pos = [mouse_x, HEIGHT - mouse_y];
-
-    const dist = vec2.length(vec2.subtract([], mouse_pos, gizmo_center));
-
-    if (dist <= gizmo_radius) {
-        return true;
-    }
-    return false;
-}
 
 
 //
@@ -705,8 +585,7 @@ function setPositionUI(selected_object) {
     OBJECT_INFO_UI.pos[1].value = Math.round(selected_object.pos[1] * 100) / 100;
     OBJECT_INFO_UI.pos[2].value = Math.round(selected_object.pos[2] * 100) / 100;
 
-    gizmo_ui.textContent = `(${Math.round(gizmo_center[0] * 100) / 100}, 
-                                ${Math.round(gizmo_center[1] * 100) / 100})`;
+    setMainGizmoUI(transform_gizmos.main_gizmo);
 }
 
 function setScaleUi(selected_object) {
@@ -719,4 +598,9 @@ function setRotationUI(selected_object) {
     OBJECT_INFO_UI.rot[0].value = selected_object.rotation_angles[0];
     OBJECT_INFO_UI.rot[1].value = selected_object.rotation_angles[1];
     OBJECT_INFO_UI.rot[2].value = selected_object.rotation_angles[2];
+}
+
+function setMainGizmoUI(main_gizmo) {
+    gizmo_ui.textContent = `(${Math.round(main_gizmo.center[0] * 100) / 100}, 
+                        ${Math.round(main_gizmo.center[1] * 100) / 100})`;
 }

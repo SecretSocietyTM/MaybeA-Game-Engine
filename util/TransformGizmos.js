@@ -1,3 +1,9 @@
+const glm = glMatrix; // shorten math library name,
+const vec2 = glm.vec2;
+const vec3 = glm.vec3;
+const vec4 = glm.vec4;
+const mat4 = glm.mat4;
+
 import SceneObject from "./SceneObject.js";
 
 export default class TransformGizmos {
@@ -16,15 +22,25 @@ export default class TransformGizmos {
         // s = scale
         this.mode = "translate";
         this.active_objects = this.translate_objects;
+        this.main_gizmo = {
+            center: null,
+            radius: 12,
+        }
 
         this.interaction_with = null;
         this.is_interacting = false;
+        this.display_gizmos = false;
 
         this.active_rotation_axis = null;
+
     }
 
     setIsInteracting(bool) {
         this.is_interacting = bool;
+    }
+
+    setDisplayGizmos(bool) {
+        this.display_gizmos = bool;
     }
 
     setInteractionWith(gizmo_name) {
@@ -40,15 +56,18 @@ export default class TransformGizmos {
         switch(mode) {
             case "translate":
                 this.active_objects = this.translate_objects;
+                this.main_gizmo.radius = 12;
                 break;
             case "rotate":
                 this.active_objects = this.rotate_objects;
+                this.main_gizmo.radius = 90;
                 break;
             case "scale":
                 this.active_objects = this.scale_objects;
+                this.main_gizmo.radius = 90;
                 break;
             default:
-                this.mode = null;
+                this.mode = "translate";
                 console.error("No valid mode provided");
                 return;
         }
@@ -132,7 +151,20 @@ export default class TransformGizmos {
         selected_object.updateScale(scale_vector);
     }
 
-    rotateselectedObject(rotate_vector, selected_object) {
+    rotateSelectedObject(rotate_vector, selected_object) {
         selected_object.updateRot(rotate_vector);
+    }
+
+    isIntersectingGizmo(mouse_pos) {
+        const dist = vec2.length(vec2.subtract([], mouse_pos, this.main_gizmo.center));
+
+        if (this.mode === "translate") {
+            if (dist <= this.main_gizmo.radius) return true;
+            return false;
+        } else {
+            if (dist >= this.main_gizmo.radius - 4 - 2 && 
+                dist <= this.main_gizmo.radius + 4 ) return true;
+            return false
+        }
     }
 }

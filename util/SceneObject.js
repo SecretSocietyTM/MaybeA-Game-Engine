@@ -1,4 +1,5 @@
 const glm = glMatrix; // shorten math library name,
+const vec2 = glm.vec2;
 const vec3 = glm.vec3;
 const vec4 = glm.vec4;
 const mat4 = glm.mat4;
