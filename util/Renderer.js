@@ -118,7 +118,7 @@ export default class Renderer {
         this.gl.enable(this.gl.DEPTH_TEST);
     }
 
-    renderFrame(view, proj, objects, gizmo_objects, gizmo_center, gizmo_indices) {
+    renderFrame(view, proj, objects, gizmo_objects, gizmo_center) {
         this.gl.useProgram(this.program);
         this.gl.enable(this.gl.DEPTH_TEST);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);

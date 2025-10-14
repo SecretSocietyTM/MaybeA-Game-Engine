@@ -17,11 +17,22 @@ export default class TransformGizmos {
         this.mode = "translate";
         this.active_objects = this.translate_objects;
 
+        this.interaction_with = null;
         this.is_interacting = false;
+
+        this.active_rotation_axis = null;
     }
 
     setIsInteracting(bool) {
         this.is_interacting = bool;
+    }
+
+    setInteractionWith(gizmo_name) {
+        this.interaction_with = gizmo_name;
+    }
+
+    setActiveRotationAxis(rotation_axis) {
+        this.active_rotation_axis = rotation_axis;
     }
 
     setMode(mode = "translate") {
@@ -107,7 +118,21 @@ export default class TransformGizmos {
                           x_scale, y_scale, z_scale);
     }
 
-    transformSelectedObject(transform_type, transform_vector, selected_object) {
+    translateSelectedObject(translate_vector, selected_object) {
+        selected_object.updatePos(translate_vector);
 
+        // also update gizmos positions
+        // update gizmo_center.
+        this.objects.forEach(object => {
+            object.updatePos(selected_object.pos);
+        });
+    }
+
+    scaleSelectedObject(scale_vector, selected_object) {
+        selected_object.updateScale(scale_vector);
+    }
+
+    rotateselectedObject(rotate_vector, selected_object) {
+        selected_object.updateRot(rotate_vector);
     }
 }

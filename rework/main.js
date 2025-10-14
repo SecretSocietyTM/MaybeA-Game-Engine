@@ -37,7 +37,6 @@ import scale_gizmo_ply from "../mimp/models/js_ply_files/scale_gizmo_ply.js";
 import aabb_wireframe_mesh from "../util/aabb_wireframe_mesh.js";
 
 
-
 // meshes
 const unit_cube_mesh = parsePLY(unit_cube_ply);
 const apple_mesh = parsePLY(apple_ply);
@@ -47,22 +46,19 @@ const half_torus_mesh = parsePLY(half_torus_ply);
 const scale_gizmo_mesh = parsePLY(scale_gizmo_ply);
 
 
-
 //
 // ui elements
-// TODO: SceneObject.freeze({}) normally goes here but SceneObject conflicts with SceneObject
-// need to change my class Name.
 const gizmo_ui = document.getElementById("gizmo_pos");
 const cur_mode_ui = document.getElementById("cur_mode");
 const pos_ui = document.getElementById("position");
 const rot_ui = document.getElementById("rotation");
 const scl_ui = document.getElementById("scale");
-const OBJECT_INFO_UI = {
+const OBJECT_INFO_UI = Object.freeze({
     name:  document.getElementById("name"),
     pos: [pos_ui.querySelector(".x"), pos_ui.querySelector(".y"), pos_ui.querySelector(".z")],
     rot: [rot_ui.querySelector(".x"), rot_ui.querySelector(".y"), rot_ui.querySelector(".z")],
     scl: [scl_ui.querySelector(".x"), scl_ui.querySelector(".y"), scl_ui.querySelector(".z")]
-};
+});
 const SCENE_OBJECT_LIST_UI = document.getElementById("scene_objects_list");
 const FILE_INPUT = document.getElementById("file_input");
 
@@ -82,31 +78,13 @@ let gizmo_center = null;
 let gizmo_exists = false;
 let gizmo_interact = false;
 
-let gizmo_interact_x = false;
-let gizmo_interact_y = false;
-let gizmo_interact_z = false;
-
-let cur_rotation_axis;
-let gizmo_interact_x_rotate = false;
-let gizmo_interact_y_rotate = false;
-let gizmo_interact_z_rotate = false;
-
-let gizmo_interact_x_scale = false;
-let gizmo_interact_y_scale = false;
-let gizmo_interact_z_scale = false;
-
-let cur_mode = "translate";
-cur_mode_ui.textContent = cur_mode;
-let gizmo_indices = [0,1,2];
-
 // variables for mouse controlled gizmos
 let start_pos;
-
 
 let cur_selection = null;
 let copied_object = null;
 
-
+// variables for mouse controlled camera movement
 let cur_x;
 let prev_x;
 let cur_y;
@@ -161,6 +139,7 @@ const transform_gizmos = new TransformGizmos();
 transform_gizmos.setReferenceScale(reference_scale);
 transform_gizmos.initGizmoObjects(gizmo_meshes, gizmo_vaos);
 transform_gizmos.setMode();
+cur_mode_ui.textContent = transform_gizmos.mode;
 
 function main() {
 
@@ -188,7 +167,7 @@ function main() {
     });
 
     function frame() {
-        renderer.renderFrame(view, proj, objects, transform_gizmos.active_objects, gizmo_center, gizmo_indices);
+        renderer.renderFrame(view, proj, objects, transform_gizmos.active_objects, gizmo_center);
         requestAnimationFrame(frame);
     }
 
@@ -202,29 +181,10 @@ canvas.addEventListener("click", (e) => {
     const mouse_x = e.clientX - rect.left;
     const mouse_y = e.clientY - rect.top;
 
-    if (gizmo_interact || 
-        gizmo_interact_x || 
-        gizmo_interact_y || 
-        gizmo_interact_z ||
-        gizmo_interact_x_rotate ||
-        gizmo_interact_y_rotate ||
-        gizmo_interact_z_rotate || 
-        gizmo_interact_x_scale || 
-        gizmo_interact_y_scale ||
-        gizmo_interact_z_scale) {
+    if (gizmo_interact || transform_gizmos.is_interacting) {
         gizmo_interact = false;
-
-        gizmo_interact_x = false;
-        gizmo_interact_y = false;
-        gizmo_interact_z = false;
-
-        gizmo_interact_x_rotate = false;
-        gizmo_interact_y_rotate = false;
-        gizmo_interact_z_rotate = false;
-
-        gizmo_interact_x_scale = false;
-        gizmo_interact_y_scale = false;
-        gizmo_interact_z_scale = false;
+        transform_gizmos.setIsInteracting(false);
+        cur_selection.setLastStaticTransform();
 
         return;
     };
@@ -241,27 +201,13 @@ canvas.addEventListener("click", (e) => {
 
             gizmo_exists = true;
             gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
-
             transform_gizmos.objects.forEach(object => {
                 object.updatePos(cur_selection.pos);
             });
 
-
-
-            // TODO: make a function for setting UI.
-            // update the UI
-            OBJECT_INFO_UI.name.textContent = cur_selection.name;
-            OBJECT_INFO_UI.pos[0].value = Math.round(cur_selection.pos[0] * 100) / 100;
-            OBJECT_INFO_UI.pos[1].value = Math.round(cur_selection.pos[1] * 100) / 100;
-            OBJECT_INFO_UI.pos[2].value = Math.round(cur_selection.pos[2] * 100) / 100;
-
-            OBJECT_INFO_UI.rot[0].value = cur_selection.rotation_angles[0];
-            OBJECT_INFO_UI.rot[1].value = cur_selection.rotation_angles[1];
-            OBJECT_INFO_UI.rot[2].value = cur_selection.rotation_angles[2];
-
-            OBJECT_INFO_UI.scl[0].value = cur_selection.scale[0];
-            OBJECT_INFO_UI.scl[1].value = cur_selection.scale[1];
-            OBJECT_INFO_UI.scl[2].value = cur_selection.scale[2];
+            setPositionUI(cur_selection);
+            setRotationUI(cur_selection);
+            setScaleUi(cur_selection);
 
             gizmo_ui.textContent = `(${Math.round(gizmo_center[0] * 100) / 100}, 
                                     ${Math.round(gizmo_center[1] * 100) / 100})`;
@@ -290,56 +236,28 @@ canvas.addEventListener("mousedown", (e) => {
     if (e.button === 0 && gizmo_exists) {
         current_ray.dir = generateRayDir(cur_x, cur_y);
 
-        transform_gizmos.objects.forEach(object => {
+        transform_gizmos.active_objects.forEach(object => {
             if (object.aabb.isIntersecting(current_ray)) {
-
+                const target_name = object.name;
+                transform_gizmos.setIsInteracting(true);
                 current_ray.dir = generateRayDir(cur_x, cur_y);
 
-                if (transform_gizmos.mode === "translate") {
-                    if (object.name === "x_trans") {
-                        gizmo_interact_x = true;
-                        start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
-                    }
-                    else if (object.name === "y_trans") {
-                        gizmo_interact_y = true;
-                        start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
-                    }
-                    else if (object.name === "z_trans") {
-                        gizmo_interact_z = true;
-                        start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
-                    }
-                } else if (transform_gizmos.mode === "scale") {
-                    if (object.name === "x_scale") {
-                    gizmo_interact_x_scale = true;
+                if(transform_gizmos.mode === "translate" ||
+                   transform_gizmos.mode === "scale") {
                     start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
-                    }
-                    else if (object.name === "y_scale") {
-                        gizmo_interact_y_scale = true;
-                        start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
-                    }
-                    else if (object.name === "z_scale") {
-                        gizmo_interact_z_scale = true;
-                        start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
-                    }
-                } else if (transform_gizmos.mode === "rotate") {
-                    if (object.name === "x_rotate") {
-                    gizmo_interact_x_rotate = true;
-                    cur_rotation_axis = [1,0,0];
-                    start_pos = calculatePlaneIntersectionPoint2(cur_rotation_axis, cur_selection.pos, current_ray.dir);
-                    }
-                    else if (object.name === "y_rotate") {
-                        gizmo_interact_y_rotate = true;
-                        cur_rotation_axis = [0,1,0];
-                        start_pos = calculatePlaneIntersectionPoint2(cur_rotation_axis, cur_selection.pos, current_ray.dir);
-                    }
-                    else if (object.name === "z_rotate") {
-                        gizmo_interact_z_rotate = true;
-                        cur_rotation_axis = [0,0,1];
-                        start_pos = calculatePlaneIntersectionPoint2(cur_rotation_axis, cur_selection.pos, current_ray.dir);
-                    }
-                }
+                } 
+                else if (transform_gizmos.mode === "rotate") {
+                    let rotation_axis = null;
 
-                cur_selection.setLastStaticTransform();
+                    if (target_name === "x_rotate") rotation_axis = [1,0,0];
+                    else if (target_name === "y_rotate") rotation_axis = [0,1,0];
+                    else if (target_name === "z_rotate") rotation_axis = [0,0,1];
+                    transform_gizmos.setActiveRotationAxis(rotation_axis);
+
+                    start_pos = calculatePlaneIntersectionPoint2(
+                        transform_gizmos.active_rotation_axis, cur_selection.pos, current_ray.dir);
+                }
+                transform_gizmos.setInteractionWith(target_name);
                 return;
             }
         });
@@ -412,192 +330,113 @@ canvas.addEventListener("mousemove", (e) => {
                                  ${Math.round(gizmo_center[1] * 100) / 100})`;
 
 
+    } else if (transform_gizmos.is_interacting && 
+               transform_gizmos.mode === "translate") {
 
-
-
-
-
-
-    } else if (gizmo_interact_x) {
+        const interaction_with = transform_gizmos.interaction_with;
+        
         current_ray.dir = generateRayDir(mouse_x, mouse_y);
         const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
+        let translate_vector = null;
 
-        cur_selection.updatePos([
-            cur_selection.last_static_transform.pos[0] + new_pos[0] - start_pos[0],
-            cur_selection.pos[1],
-            cur_selection.pos[2]]);
+        if (interaction_with === "x_trans") {
+            translate_vector = [
+                cur_selection.last_static_transform.pos[0] + new_pos[0] - start_pos[0],
+                cur_selection.pos[1],
+                cur_selection.pos[2]
+            ];
+        } else if (interaction_with === "y_trans") {
+            translate_vector = [
+                cur_selection.pos[0],
+                cur_selection.last_static_transform.pos[1] + new_pos[1] - start_pos[1],
+                cur_selection.pos[2]
+            ];
+        } else if (interaction_with === "z_trans") {
+            translate_vector = [
+                cur_selection.pos[0],
+                cur_selection.pos[1],
+                cur_selection.last_static_transform.pos[2] + new_pos[2] - start_pos[2]
+            ];
+        }
+
+        transform_gizmos.translateSelectedObject(translate_vector, cur_selection);
         gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
-        transform_gizmos.objects.forEach(object => {
-            object.updatePos(cur_selection.pos);
-        })
+        // update UI
+        setPositionUI(cur_selection);
+    } else if (transform_gizmos.is_interacting && 
+               transform_gizmos.mode === "scale") {
 
-        // update the ui
-        OBJECT_INFO_UI.pos[0].value = Math.round(cur_selection.pos[0] * 100) / 100;
-        OBJECT_INFO_UI.pos[1].value = Math.round(cur_selection.pos[1] * 100) / 100;
-        OBJECT_INFO_UI.pos[2].value = Math.round(cur_selection.pos[2] * 100) / 100;
+        const interaction_with = transform_gizmos.interaction_with;
 
-        gizmo_ui.textContent = `(${Math.round(gizmo_center[0] * 100) / 100}, 
-                                 ${Math.round(gizmo_center[1] * 100) / 100})`;
-    } else if (gizmo_interact_y) {
         current_ray.dir = generateRayDir(mouse_x, mouse_y);
         const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
+        let scale_vector = null;
 
-        cur_selection.updatePos([
-            cur_selection.pos[0], 
-            cur_selection.last_static_transform.pos[1] + new_pos[1] - start_pos[1], 
-            cur_selection.pos[2]]);
-        gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
-        transform_gizmos.objects.forEach(object => {
-            object.updatePos(cur_selection.pos);
-        })
+        if (interaction_with === "x_scale") {
+            scale_vector = [
+                cur_selection.last_static_transform.scale[0] + new_pos[0] - start_pos[0],
+                cur_selection.scale[1],
+                cur_selection.scale[2]
+            ];
+        } else if (interaction_with === "y_scale") {
+            scale_vector = [
+                cur_selection.scale[0],
+                cur_selection.last_static_transform.scale[1] + new_pos[1] - start_pos[1],
+                cur_selection.scale[2]
+            ];
+        } else if (interaction_with === "z_scale") {
+            scale_vector = [
+                cur_selection.scale[0],
+                cur_selection.scale[1],
+                cur_selection.last_static_transform.scale[2] + new_pos[2] - start_pos[2]
+            ];
+        }
 
-        // update the ui
-        OBJECT_INFO_UI.pos[0].value = Math.round(cur_selection.pos[0] * 100) / 100;
-        OBJECT_INFO_UI.pos[1].value = Math.round(cur_selection.pos[1] * 100) / 100;
-        OBJECT_INFO_UI.pos[2].value = Math.round(cur_selection.pos[2] * 100) / 100;
+        transform_gizmos.scaleSelectedObject(scale_vector, cur_selection);
+        // update UI
+        setScaleUi(cur_selection);
 
-        gizmo_ui.textContent = `(${Math.round(gizmo_center[0] * 100) / 100}, 
-                                 ${Math.round(gizmo_center[1] * 100) / 100})`;
+    } else if (transform_gizmos.is_interacting && 
+               transform_gizmos.mode === "rotate") {
 
-    } else if (gizmo_interact_z) {
+        const interaction_with = transform_gizmos.interaction_with;
+
         current_ray.dir = generateRayDir(mouse_x, mouse_y);
-        const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
-
-        cur_selection.updatePos([
-            cur_selection.pos[0], 
-            cur_selection.pos[1],
-            cur_selection.last_static_transform.pos[2] + new_pos[2] - start_pos[2]]);
-        gizmo_center = calculateObjectCenterScreenCoord(cur_selection);
-        transform_gizmos.objects.forEach(object => {
-            object.updatePos(cur_selection.pos);
-        })
-
-        // update the ui
-        OBJECT_INFO_UI.pos[0].value = Math.round(cur_selection.pos[0] * 100) / 100;
-        OBJECT_INFO_UI.pos[1].value = Math.round(cur_selection.pos[1] * 100) / 100;
-        OBJECT_INFO_UI.pos[2].value = Math.round(cur_selection.pos[2] * 100) / 100;
-
-        gizmo_ui.textContent = `(${Math.round(gizmo_center[0] * 100) / 100}, 
-                                 ${Math.round(gizmo_center[1] * 100) / 100})`;
-
-    } 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    else if (gizmo_interact_x_scale) {
-        current_ray.dir = generateRayDir(mouse_x, mouse_y);
-        const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
-
-        cur_selection.updateScale([
-            cur_selection.last_static_transform.scale[0] + new_pos[0] - start_pos[0],
-            cur_selection.scale[1],
-            cur_selection.scale[2]]);
-
-        // update the ui
-        OBJECT_INFO_UI.scl[0].value = Math.round(cur_selection.scale[0] * 100) / 100;
-        OBJECT_INFO_UI.scl[1].value = Math.round(cur_selection.scale[1] * 100) / 100;
-        OBJECT_INFO_UI.scl[2].value = Math.round(cur_selection.scale[2] * 100) / 100;
-    } else if (gizmo_interact_y_scale) {
-        current_ray.dir = generateRayDir(mouse_x, mouse_y);
-        const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
-
-        cur_selection.updateScale([
-            cur_selection.scale[0],
-            cur_selection.last_static_transform.scale[1] + new_pos[1] - start_pos[1],
-            cur_selection.scale[2]]);
-
-        // update the ui
-        OBJECT_INFO_UI.scl[0].value = Math.round(cur_selection.scale[0] * 100) / 100;
-        OBJECT_INFO_UI.scl[1].value = Math.round(cur_selection.scale[1] * 100) / 100;
-        OBJECT_INFO_UI.scl[2].value = Math.round(cur_selection.scale[2] * 100) / 100;
-    } else if (gizmo_interact_z_scale) {
-        current_ray.dir = generateRayDir(mouse_x, mouse_y);
-        const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
-
-        cur_selection.updateScale([
-            cur_selection.scale[0],
-            cur_selection.scale[1],
-            cur_selection.last_static_transform.scale[2] + new_pos[2] - start_pos[2]]);
-
-        // update the ui
-        OBJECT_INFO_UI.scl[0].value = Math.round(cur_selection.scale[0] * 100) / 100;
-        OBJECT_INFO_UI.scl[1].value = Math.round(cur_selection.scale[1] * 100) / 100;
-        OBJECT_INFO_UI.scl[2].value = Math.round(cur_selection.scale[2] * 100) / 100;
-    } 
-    
-    
-    
-    
-    
-    
-    
-    
-    else if (gizmo_interact_x_rotate) {
-        current_ray.dir = generateRayDir(mouse_x, mouse_y);
-        const cur_pos = calculatePlaneIntersectionPoint2(cur_rotation_axis, cur_selection.pos, current_ray.dir);
+        const cur_pos = calculatePlaneIntersectionPoint2(
+            transform_gizmos.active_rotation_axis, cur_selection.pos, current_ray.dir);
 
         const v = vec3.normalize([], vec3.subtract([], start_pos, cur_selection.pos));
         const w = vec3.normalize([], vec3.subtract([], cur_pos, cur_selection.pos));
+        const angle = Math.atan2(vec3.dot(transform_gizmos.active_rotation_axis, 
+            vec3.cross([], v, w)), vec3.dot(v, w)) * 180 / Math.PI;    
+    
+        let rotate_vector = null;
 
-        const angle = Math.atan2(vec3.dot(cur_rotation_axis, vec3.cross([], v, w)), vec3.dot(v, w)) * 180 / Math.PI;
-        console.log(angle);
+        if (interaction_with === "x_rotate") {
+            rotate_vector = [
+                cur_selection.last_static_transform.rotation[0] + angle,
+                cur_selection.rotation_angles[1],
+                cur_selection.rotation_angles[2]
+            ];
+        } else if (interaction_with === "y_rotate") {
+            rotate_vector = [
+                cur_selection.rotation_angles[0],
+                cur_selection.last_static_transform.rotation[1] + angle,
+                cur_selection.rotation_angles[2]
+            ];
+        } else if (interaction_with === "z_rotate") {
+            rotate_vector = [
+                cur_selection.rotation_angles[0],
+                cur_selection.rotation_angles[1],
+                cur_selection.last_static_transform.rotation[2] + angle
+            ];
+        }
 
-        cur_selection.updateRot([
-            cur_selection.last_static_transform.rotation[0] + angle,
-            cur_selection.rotation_angles[1],
-            cur_selection.rotation_angles[2]]);
-
-        // update the ui
-        OBJECT_INFO_UI.rot[0].value = cur_selection.rotation_angles[0];
-        OBJECT_INFO_UI.rot[1].value = cur_selection.rotation_angles[1];
-        OBJECT_INFO_UI.rot[2].value = cur_selection.rotation_angles[2];
-    } else if (gizmo_interact_y_rotate) {
-        current_ray.dir = generateRayDir(mouse_x, mouse_y);
-        const cur_pos = calculatePlaneIntersectionPoint2(cur_rotation_axis, cur_selection.pos, current_ray.dir);
-
-        const v = vec3.normalize([], vec3.subtract([], start_pos, cur_selection.pos));
-        const w = vec3.normalize([], vec3.subtract([], cur_pos, cur_selection.pos));
-
-        const angle = Math.atan2(vec3.dot(cur_rotation_axis, vec3.cross([], v, w)), vec3.dot(v, w)) * 180 / Math.PI;
-        console.log(angle);
-
-        cur_selection.updateRot([
-            cur_selection.rotation_angles[0],
-            cur_selection.last_static_transform.rotation[1] + angle,
-            cur_selection.rotation_angles[2]]);
-
-        // update the ui
-        OBJECT_INFO_UI.rot[0].value = cur_selection.rotation_angles[0];
-        OBJECT_INFO_UI.rot[1].value = cur_selection.rotation_angles[1];
-        OBJECT_INFO_UI.rot[2].value = cur_selection.rotation_angles[2];
-    } else if (gizmo_interact_z_rotate) {
-        current_ray.dir = generateRayDir(mouse_x, mouse_y);
-        const cur_pos = calculatePlaneIntersectionPoint2(cur_rotation_axis, cur_selection.pos, current_ray.dir);
-
-        const v = vec3.normalize([], vec3.subtract([], start_pos, cur_selection.pos));
-        const w = vec3.normalize([], vec3.subtract([], cur_pos, cur_selection.pos));
-
-        const angle = Math.atan2(vec3.dot(cur_rotation_axis, vec3.cross([], v, w)), vec3.dot(v, w)) * 180 / Math.PI;
-        console.log(angle);
-
-        cur_selection.updateRot([
-            cur_selection.rotation_angles[0],
-            cur_selection.rotation_angles[1],
-            cur_selection.last_static_transform.rotation[2] + angle]);
-
-        // update the ui
-        OBJECT_INFO_UI.rot[0].value = cur_selection.rotation_angles[0];
-        OBJECT_INFO_UI.rot[1].value = cur_selection.rotation_angles[1];
-        OBJECT_INFO_UI.rot[2].value = cur_selection.rotation_angles[2];
+        transform_gizmos.rotateselectedObject(rotate_vector, cur_selection);
+        // update UI
+        setRotationUI(cur_selection);
     }
+
 });
 
 canvas.addEventListener("wheel", (e) => {
@@ -857,3 +696,27 @@ document.addEventListener("keydown", (e) => {
         cur_mode_ui.textContent = transform_gizmos.mode;
     }
 });
+
+
+
+function setPositionUI(selected_object) {
+    // update the ui
+    OBJECT_INFO_UI.pos[0].value = Math.round(selected_object.pos[0] * 100) / 100;
+    OBJECT_INFO_UI.pos[1].value = Math.round(selected_object.pos[1] * 100) / 100;
+    OBJECT_INFO_UI.pos[2].value = Math.round(selected_object.pos[2] * 100) / 100;
+
+    gizmo_ui.textContent = `(${Math.round(gizmo_center[0] * 100) / 100}, 
+                                ${Math.round(gizmo_center[1] * 100) / 100})`;
+}
+
+function setScaleUi(selected_object) {
+    OBJECT_INFO_UI.scl[0].value = Math.round(selected_object.scale[0] * 100) / 100;
+    OBJECT_INFO_UI.scl[1].value = Math.round(selected_object.scale[1] * 100) / 100;
+    OBJECT_INFO_UI.scl[2].value = Math.round(selected_object.scale[2] * 100) / 100;
+}
+
+function setRotationUI(selected_object) {
+    OBJECT_INFO_UI.rot[0].value = selected_object.rotation_angles[0];
+    OBJECT_INFO_UI.rot[1].value = selected_object.rotation_angles[1];
+    OBJECT_INFO_UI.rot[2].value = selected_object.rotation_angles[2];
+}
