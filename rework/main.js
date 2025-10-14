@@ -41,7 +41,7 @@ import aabb_wireframe_mesh from "../util/aabb_wireframe_mesh.js";
 // meshes
 const unit_cube_mesh = parsePLY(unit_cube_ply);
 const apple_mesh = parsePLY(apple_ply);
-const cube_mesh2 = parsePLY(cube_ply);
+const cube_mesh = parsePLY(cube_ply);
 const arrow_mesh = parsePLY(arrow_ply);
 const half_torus_mesh = parsePLY(half_torus_ply);
 const scale_gizmo_mesh = parsePLY(scale_gizmo_ply);
@@ -163,34 +163,26 @@ const gizmo_vaos = {
 const transform_gizmos = new TransformGizmos();
 transform_gizmos.setReferenceScale(reference_scale);
 transform_gizmos.initGizmoObjects(gizmo_meshes, gizmo_vaos);
+transform_gizmos.setMode();
 
 function main() {
 
     //
     // scene objects
-    const cube1 = new SceneObject("cube", [0,0,0], [1,1,1], [0,0,0]);
-    cube1.assignMesh(unit_cube_mesh);
-    cube1.assignVao(renderer.addObjectVAO(unit_cube_mesh));
-    objects.push(cube1);
-    cube1.generateAABB();
-    cube1.aabb.setAABBColor([0.4, 1.0, 0.2]);
-    cube1.aabb.assignVao(aabb_wireframe_VAO);
 
-    const apple1 = new SceneObject("apple", [0,0,-5], [9,9,9], [0,0,0]);
-    apple1.assignMesh(apple_mesh);
-    apple1.assignVao(renderer.addObjectVAO(apple_mesh));
-    objects.push(apple1);
-    apple1.generateAABB();
-    apple1.aabb.setAABBColor([0.4, 1.0, 0.2]);
-    apple1.aabb.assignVao(aabb_wireframe_VAO);
+    const unit_cube = new SceneObject("unit_cube", [0,0,0], [1,1,1], [0,0,0], 
+        unit_cube_mesh, renderer.addObjectVAO(unit_cube_mesh), aabb_wireframe_VAO);
+    objects.push(unit_cube);
 
-    const cube2 = new SceneObject("weird cube", [0,0,0], [1,1,1], [0,0,0]);
-    cube2.assignMesh(cube_mesh2);
-    cube2.assignVao(renderer.addObjectVAO(cube_mesh2));
-    objects.push(cube2);
-    cube2.generateAABB();
-    cube2.aabb.setAABBColor([0.4, 1.0, 0.2]); // Nice orange color: [1.0, 0.65, 0.0]
-    cube2.aabb.assignVao(aabb_wireframe_VAO);
+    const apple = new SceneObject("apple", [0,0,-5], [9,9,9], [0,0,0], 
+        apple_mesh, renderer.addObjectVAO(apple_mesh), aabb_wireframe_VAO);
+
+    console.log(apple);
+
+    const weird_cube = new SceneObject("weird cube", [0,0,0], [1,1,1], [0,0,0],
+        cube_mesh, renderer.addObjectVAO(cube_mesh), aabb_wireframe_VAO);
+
+    objects.push(unit_cube, apple, weird_cube);
 
     objects.forEach(object => {
         const list_item = document.createElement("p");
@@ -199,7 +191,7 @@ function main() {
     });
 
     function frame() {
-        renderer.renderFrame(view, proj, objects, transform_gizmos.objects, gizmo_center, gizmo_indices);
+        renderer.renderFrame(view, proj, objects, transform_gizmos.active_objects, gizmo_center, gizmo_indices);
         requestAnimationFrame(frame);
     }
 
@@ -213,8 +205,10 @@ canvas.addEventListener("click", (e) => {
     const mouse_x = e.clientX - rect.left;
     const mouse_y = e.clientY - rect.top;
 
-    if (gizmo_interact || gizmo_interact_x || 
-        gizmo_interact_y || gizmo_interact_z ||
+    if (gizmo_interact || 
+        gizmo_interact_x || 
+        gizmo_interact_y || 
+        gizmo_interact_z ||
         gizmo_interact_x_rotate ||
         gizmo_interact_y_rotate ||
         gizmo_interact_z_rotate || 
@@ -301,9 +295,10 @@ canvas.addEventListener("mousedown", (e) => {
 
         transform_gizmos.objects.forEach(object => {
             if (object.aabb.isIntersecting(current_ray)) {
+
                 current_ray.dir = generateRayDir(cur_x, cur_y);
 
-                if (cur_mode === "translate") {
+                if (transform_gizmos.mode === "translate") {
                     if (object.name === "x_trans") {
                         gizmo_interact_x = true;
                         start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
@@ -316,7 +311,7 @@ canvas.addEventListener("mousedown", (e) => {
                         gizmo_interact_z = true;
                         start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
                     }
-                } else if (cur_mode === "scale") {
+                } else if (transform_gizmos.mode === "scale") {
                     if (object.name === "x_scale") {
                     gizmo_interact_x_scale = true;
                     start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
@@ -329,7 +324,7 @@ canvas.addEventListener("mousedown", (e) => {
                         gizmo_interact_z_scale = true;
                         start_pos = calculatePlaneIntersectionPoint(current_ray.dir);
                     }
-                } else if (cur_mode === "rotate") {
+                } else if (transform_gizmos.mode === "rotate") {
                     if (object.name === "x_rotate") {
                     gizmo_interact_x_rotate = true;
                     cur_rotation_axis = [1,0,0];
@@ -420,6 +415,14 @@ canvas.addEventListener("mousemove", (e) => {
 
         gizmo_ui.textContent = `(${Math.round(gizmo_center[0] * 100) / 100}, 
                                  ${Math.round(gizmo_center[1] * 100) / 100})`;
+
+
+
+
+
+
+
+
     } else if (gizmo_interact_x) {
         current_ray.dir = generateRayDir(mouse_x, mouse_y);
         const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
@@ -482,7 +485,19 @@ canvas.addEventListener("mousemove", (e) => {
         gizmo_ui.textContent = `(${Math.round(gizmo_center[0] * 100) / 100}, 
                                  ${Math.round(gizmo_center[1] * 100) / 100})`;
 
-    } else if (gizmo_interact_x_scale) {
+    } 
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    else if (gizmo_interact_x_scale) {
         current_ray.dir = generateRayDir(mouse_x, mouse_y);
         const new_pos = calculatePlaneIntersectionPoint(current_ray.dir);
 
@@ -521,7 +536,16 @@ canvas.addEventListener("mousemove", (e) => {
         OBJECT_INFO_UI.scl[0].value = Math.round(cur_selection.scale[0] * 100) / 100;
         OBJECT_INFO_UI.scl[1].value = Math.round(cur_selection.scale[1] * 100) / 100;
         OBJECT_INFO_UI.scl[2].value = Math.round(cur_selection.scale[2] * 100) / 100;
-    } else if (gizmo_interact_x_rotate) {
+    } 
+    
+    
+    
+    
+    
+    
+    
+    
+    else if (gizmo_interact_x_rotate) {
         current_ray.dir = generateRayDir(mouse_x, mouse_y);
         const cur_pos = calculatePlaneIntersectionPoint2(cur_rotation_axis, cur_selection.pos, current_ray.dir);
 
@@ -591,10 +615,13 @@ canvas.addEventListener("wheel", (e) => {
     const distance = vec3.distance(camera.pos, cur_selection.pos);
     const scale = (distance / reference_distance) * reference_scale;
     transform_gizmos.objects.forEach(object => {
-            object.updatePos(cur_selection.pos);
-        })
+            object.updateScale([scale, scale, scale]);
+    });
 });
 
+
+//
+// Functions
 function calculateAngleBetweenVectors(v, w) {
 
     // equation: theta = acos((v dot w / len(v) * len(w)));
@@ -604,7 +631,6 @@ function calculateAngleBetweenVectors(v, w) {
 
     return angle;
 }
-
 
 function generateRayDir(x, y) {
     const x_ndc = (2 * x) / WIDTH - 1;
@@ -666,14 +692,9 @@ function calculateLineIntersectionPoint(v, a, b) {
     let denominator = vec2.length(v)**2;
     let t = numerator / denominator;
 
-    /* console.log(numerator);
-    console.log(denominator);
-    console.log(t); */
-
     let p = vec2.scaleAndAdd([], b, v, t);
     return p;
 }
-
 
 function calculateObjectCenterScreenCoord(object) {
     const cntr = vec4.fromValues(object.pos[0], object.pos[1], object.pos[2], 1);
@@ -711,11 +732,10 @@ function isIntersectingGizmo(mouse_x, mouse_y) {
     return false;
 }
 
+
 //
 // HTML interactactions
-
 // input event listeners
-
 // position inputs
 OBJECT_INFO_UI.pos[0].addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
@@ -776,7 +796,6 @@ OBJECT_INFO_UI.scl[2].addEventListener("keydown", (e) => {
 // file input
 FILE_INPUT.addEventListener("change", (e) => {
     const file = FILE_INPUT.files[0];
-
     if (!file) {
         alert("No file selected.");
         return;
@@ -792,13 +811,10 @@ FILE_INPUT.addEventListener("change", (e) => {
         const name = file.name.split(".")[0];
 
         // create the object with the mesh
-        const object = new SceneObject(name, [0,0,0], [1,1,1], [0,0,0]);
-        object.assignMesh(mesh);
-        object.assignVao(renderer.addObjectVAO(mesh));
+        const object = new SceneObject(name, [0,0,0], [1,1,1], [0,0,0],
+            mesh, renderer.addObjectVAO(mesh), aabb_wireframe_VAO);
+
         objects.push(object);
-        object.generateAABB();
-        object.aabb.setAABBColor([0.4, 1.0, 0.2]);
-        object.aabb.assignVao(renderer.addObjectVAO(object.aabb.mesh));
         
         const list_item = document.createElement("p");
         list_item.textContent = object.name;
@@ -822,15 +838,13 @@ document.addEventListener("keydown", (e) => {
             copied_object.name, 
             copied_object.pos, 
             copied_object.scale, 
-            copied_object.rotation_angles
+            copied_object.rotation_angles,
+            copied_object.mesh,
+            copied_object.vao,
+            copied_object.aabb.vao
         );
-        object.assignMesh(copied_object.mesh);
-        object.assignVao(copied_object.vao);
+
         objects.push(object);
-        object.generateAABB();
-        
-        object.aabb.setAABBColor([0.4, 1.0, 0.2]);
-        object.aabb.assignVao(copied_object.aabb.vao);
         
         const list_item = document.createElement("p");
         list_item.textContent = object.name;
@@ -838,16 +852,13 @@ document.addEventListener("keydown", (e) => {
         return;
     }
     if (e.key === "t") {
-        cur_mode = "translate";
-        gizmo_indices = [0,1,2];
-        cur_mode_ui.textContent = cur_mode;
+        transform_gizmos.setMode("translate");
+        cur_mode_ui.textContent = transform_gizmos.mode;
     } else if (e.key === "r") {
-        cur_mode = "rotate";
-        gizmo_indices = [3,4,5];
-        cur_mode_ui.textContent = cur_mode;
+        transform_gizmos.setMode("rotate");
+        cur_mode_ui.textContent = transform_gizmos.mode;
     } else if (e.key === "s") {
-        cur_mode = "scale";
-        gizmo_indices = [6,7,8];
-        cur_mode_ui.textContent = cur_mode;
+        transform_gizmos.setMode("scale");
+        cur_mode_ui.textContent = transform_gizmos.mode;
     }
 });

@@ -6,7 +6,7 @@ const mat4 = glm.mat4;
 import AxisAlignedBoundingBox from "./AxisAlignedBoundingBox.js";
 
 export default class SceneObject {
-    constructor(name = "object",
+    /* constructor(name = "object",
               pos = [0, 0, 0],
               scale = [1, 1, 1],
               rotation_angles = [0,0,0]) {
@@ -14,6 +14,27 @@ export default class SceneObject {
         this.name = name;
         this.is_interactable = true;
         this.transform(pos, scale, rotation_angles);
+    } */
+
+    constructor(name = "object",
+              pos = [0, 0, 0],
+              scale = [1, 1, 1],
+              rotation_angles = [0,0,0],
+              mesh, vao, aabb_vao) {
+
+        this.name = name;
+        this.is_interactable = true;
+        this.transform(pos, scale, rotation_angles);
+
+        if(!mesh || !vao || !aabb_vao) {
+            console.error("Please provide the constructor with a mesh, vao, and an aabb vao");
+        }
+
+        // TODO: test whether or not this breaks everything
+        this.assignMesh(mesh);
+        this.assignVao(vao);
+        this.generateAABB();
+        this.aabb.assignVao(aabb_vao);
     }
 
     assignMesh(mesh) {
