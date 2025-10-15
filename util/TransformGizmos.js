@@ -6,6 +6,11 @@ const mat4 = glm.mat4;
 
 import SceneObject from "./SceneObject.js";
 
+const RED_COLOR = [1.0, 0.3, 0.2];
+const GREEN_COLOR = [0.35, 0.8, 0.46];
+const BLUE_COLOR = [0.2, 0.56, 0.85];
+
+
 export default class TransformGizmos {
     constructor() {
         this.objects = null;
@@ -127,7 +132,6 @@ export default class TransformGizmos {
             Array(3).fill(this.reference_scale), [0,0,0],
             meshes.scale_mesh, vaos.scale_vao, vaos.aabb_wireframe);
 
-
         this.translate_objects.push(x_trans, y_trans, z_trans);
         this.rotate_objects.push(x_rotate, y_rotate, z_rotate);
         this.scale_objects.push(x_scale, y_scale, z_scale);
@@ -135,6 +139,24 @@ export default class TransformGizmos {
         this.objects.push(x_trans, y_trans, z_trans,
                           x_rotate, y_rotate, z_rotate,
                           x_scale, y_scale, z_scale);
+
+        x_trans.assignColor(RED_COLOR);
+        x_rotate.assignColor(RED_COLOR);
+        x_scale.assignColor(RED_COLOR);
+
+        y_trans.assignColor(GREEN_COLOR);
+        y_rotate.assignColor(GREEN_COLOR);
+        y_scale.assignColor(GREEN_COLOR);
+
+        z_trans.assignColor(BLUE_COLOR);
+        z_rotate.assignColor(BLUE_COLOR);
+        z_scale.assignColor(BLUE_COLOR);
+
+        this.objects.forEach(object => {
+            object.useColor(true);
+        });
+
+        console.log(this.objects);
     }
 
     translateSelectedObject(translate_vector, selected_object) {

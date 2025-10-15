@@ -60,6 +60,10 @@ export default class Renderer {
         this.view_uniform = this.gl.getUniformLocation(this.program, "u_view");
         this.proj_uniform = this.gl.getUniformLocation(this.program, "u_proj");
 
+        // fragment uniforms
+        this.use_color_uniform = this.gl.getUniformLocation(this.program, "u_useClr");
+        this.clr_uniform = this.gl.getUniformLocation(this.program, "u_clr");
+
         return true;
     }
 
@@ -129,6 +133,8 @@ export default class Renderer {
 
         objects.forEach(object => {
             this.gl.uniformMatrix4fv(this.model_uniform, this.gl.FALSE, object.model_matrix);
+            this.gl.uniform1i(this.use_color_uniform, object.use_color);
+            this.gl.uniform1f(this.clr_uniform, object.color);
             this.gl.bindVertexArray(object.vao);
             this.gl.drawElements(this.gl.TRIANGLES, object.mesh.indices.length, this.gl.UNSIGNED_SHORT, 0);
             this.gl.bindVertexArray(null);
@@ -148,6 +154,8 @@ export default class Renderer {
 
             transform_gizmos.active_objects.forEach(object => {
                 this.gl.uniformMatrix4fv(this.model_uniform, this.gl.FALSE, object.model_matrix);
+                this.gl.uniform1i(this.use_color_uniform, object.use_color);
+                this.gl.uniform3fv(this.clr_uniform, object.color);
                 this.gl.bindVertexArray(object.vao);
                 this.gl.drawElements(this.gl.TRIANGLES, object.mesh.indices.length, this.gl.UNSIGNED_SHORT, 0);
                 this.gl.bindVertexArray(null);

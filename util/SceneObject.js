@@ -29,6 +29,17 @@ export default class SceneObject {
 
         this.last_static_transform = null;
         this.setLastStaticTransform();
+
+        this.color = [0.0, 0.0, 0.0];
+        this.use_color = false;
+    }
+
+    useColor(bool) {
+        this.use_color = bool;
+    }
+
+    assignColor(color) {
+        this.color = color;
     }
 
     assignMesh(mesh) {

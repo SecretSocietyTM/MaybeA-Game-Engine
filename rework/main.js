@@ -435,14 +435,14 @@ canvas.addEventListener("wheel", (e) => {
     camera.zoom(e.deltaY);
     current_ray.origin = camera.pos;
     mat4.lookAt(view, camera.pos, vec3.subtract([], camera.pos, camera.dir), camera.up);
-    transform_gizmos.main_gizmo.center = interactions.calculateObjectCenterScreenCoord(WIDTH, HEIGHT, cur_selection, proj, view);
-
-    // update arrows scale factor when zooming 
-    const distance = vec3.distance(camera.pos, cur_selection.pos);
-    const scale = (distance / reference_distance) * reference_scale;
-    transform_gizmos.objects.forEach(object => {
-            object.updateScale([scale, scale, scale]);
-    });
+    if (cur_selection) { 
+        transform_gizmos.main_gizmo.center = interactions.calculateObjectCenterScreenCoord(WIDTH, HEIGHT, cur_selection, proj, view);
+        const distance = vec3.distance(camera.pos, cur_selection.pos);
+        const scale = (distance / reference_distance) * reference_scale;
+        transform_gizmos.objects.forEach(object => {
+                object.updateScale([scale, scale, scale]);
+        });
+    }
 });
 
 
