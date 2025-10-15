@@ -1,10 +1,3 @@
-// TODO: WHY DID THIS HAPPEN:
-// index.html:1  WebGL: CONTEXT_LOST_WEBGL: loseContext: context lost
-/* 
-    Was importing various ply files
-    Imported teapot and was scaling it down to fit in my viewport when the screen went blank. 
-*/
-
 const glm = glMatrix;
 const vec2 = glm.vec2;
 const vec3 = glm.vec3;
@@ -292,43 +285,7 @@ canvas.addEventListener("mousemove", (e) => {
             setMainGizmoUI(transform_gizmos.main_gizmo);
         }
         return;
-    } 
-    // TODO: attempting to reduce code, but really only saves like 5 lines, not worth
-    // unless I can figure out how to get rid of _transform_vector = [...]
-    /* else if (transform_gizmos.is_interacting && false) {
-        const interaction_with = transform_gizmos.interaction_with;
-        current_ray.dir = interactions.generateRayDir(WIDTH, HEIGHT, mouse_x, mouse_y, proj, view);
-        
-        if (transform_gizmos.mode === "translate") {
-            const cur_pos = interactions.calculatePlaneIntersectionPoint(
-                current_ray, camera.dir, cur_selection.pos);
-            let translate_vector;
-
-            if (interaction_with === "x_trans") {
-                translate_vector = [
-                    cur_selection.last_static_transform.pos[0] + new_pos[0] - start_pos[0],
-                    cur_selection.pos[1],
-                    cur_selection.pos[2]
-                ];
-            } else if (interaction_with === "y_trans") {
-                translate_vector = [
-                    cur_selection.pos[0],
-                    cur_selection.last_static_transform.pos[1] + new_pos[1] - start_pos[1],
-                    cur_selection.pos[2]
-                ];
-            } else if (interaction_with === "z_trans") {
-                translate_vector = [
-                    cur_selection.pos[0],
-                    cur_selection.pos[1],
-                    cur_selection.last_static_transform.pos[2] + new_pos[2] - start_pos[2]
-                ];
-            } else if (interaction_with === "2d_gizmo") {
-                translate_vector = new_pos;
-            }
-        }
-    } */
-
-    else if (transform_gizmos.is_interacting && 
+    } else if (transform_gizmos.is_interacting && 
                transform_gizmos.mode === "translate") {
 
         const interaction_with = transform_gizmos.interaction_with;
@@ -450,6 +407,7 @@ canvas.addEventListener("mousemove", (e) => {
                 cur_selection.last_static_transform.rotation[2] + angle
             ];
         } else if (interaction_with === "2d_gizmo") {
+            // TODO: fix
             return;
         }
 
