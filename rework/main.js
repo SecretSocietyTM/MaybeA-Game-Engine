@@ -145,7 +145,7 @@ function main() {
         unit_cube_mesh, renderer.addObjectVAO(unit_cube_mesh), aabb_wireframe_VAO);
     objects.push(unit_cube);
 
-    const apple = new SceneObject("apple", [0,0,-5], [9,9,9], [0,0,0], 
+    const apple = new SceneObject("apple", [-10,0,-10], [9,9,9], [0,0,0], 
         apple_mesh, renderer.addObjectVAO(apple_mesh), aabb_wireframe_VAO);
 
     const weird_cube = new SceneObject("weird cube", [0,0,0], [1,1,1], [0,0,0],
@@ -170,104 +170,88 @@ function main() {
 
 main();
 
+/**
+ * Handles initial collisions, mainly trying to find which, if any, of the objects
+ * was selected. If no objects
+ */
 canvas.addEventListener("click", (e) => {
-    const mouse_x = e.clientX - rect.left;
-    const mouse_y = e.clientY - rect.top;
-
     if (transform_gizmos.is_interacting) {
         transform_gizmos.setIsInteracting(false);
         cur_selection.setLastStaticTransform();
-
         return;
     };
 
+    const mouse_x = e.clientX - rect.left;
+    const mouse_y = e.clientY - rect.top;
     current_ray.dir = interactions.generateRayDir(WIDTH, HEIGHT, mouse_x, mouse_y, proj, view);
-
-    let ray_hit = false;
 
     for (let i = 0; i < objects.length; i++) {
         if (objects[i].aabb.isIntersecting(current_ray)) {
-            ray_hit = true;
             if (cur_selection === objects[i]) return;
             cur_selection = objects[i];
 
             transform_gizmos.setDisplayGizmos(true);
-
             transform_gizmos.main_gizmo.center = interactions.calculateObjectCenterScreenCoord(WIDTH, HEIGHT, cur_selection, proj, view);
             transform_gizmos.objects.forEach(object => {
                 object.updatePos(cur_selection.pos);
             });
 
-            setPositionUI(cur_selection);
-            setRotationUI(cur_selection);
-            setScaleUi(cur_selection);
-            setMainGizmoUI(transform_gizmos.main_gizmo);
+            setAllUI(cur_selection, transform_gizmos.main_gizmo);
             return;
         }
     }
 
-    if (!ray_hit) {
-        cur_selection = null;
-
-        transform_gizmos.setDisplayGizmos(false);
-
-        transform_gizmos.main_gizmo.center = null;
-        return;
-    }
+    // if no scene objects were hit
+    cur_selection = null;
+    transform_gizmos.setDisplayGizmos(false);
 });
 
 canvas.addEventListener("mousedown", (e) => {
     cur_x = e.clientX - rect.left;
     cur_y = e.clientY - rect.top;
 
-    if (e.button === 0 && 
-        transform_gizmos.display_gizmos &&
-        transform_gizmos.isIntersectingGizmo([cur_x, HEIGHT - cur_y])
-    ) {
-        transform_gizmos.setIsInteracting(true);
-        start_pos = interactions.calculatePlaneIntersectionPoint(
-                        current_ray, camera.dir, cur_selection.pos);
-        transform_gizmos.setInteractionWith("2d_gizmo");
-        return;
-    }
-    if (e.button === 0 && 
-        transform_gizmos.display_gizmos
-    ) {
-        current_ray.dir = interactions.generateRayDir(WIDTH, HEIGHT, cur_x, cur_y, proj, view);
-
-        transform_gizmos.active_objects.forEach(object => {
-            if (object.aabb.isIntersecting(current_ray)) {
-                const target_name = object.name;
-                transform_gizmos.setIsInteracting(true);
-
-                if(transform_gizmos.mode === "translate" ||
-                   transform_gizmos.mode === "scale") {
-                    start_pos = interactions.calculatePlaneIntersectionPoint(
-                        current_ray, camera.dir, cur_selection.pos);
-                } 
-                else {
-                    let rotation_axis = null;
-
-                    if (target_name === "x_rotate") rotation_axis = [1,0,0];
-                    else if (target_name === "y_rotate") rotation_axis = [0,1,0];
-                    else if (target_name === "z_rotate") rotation_axis = [0,0,1];
-                    else if (target_name === "2d_gizmo") rotation_axis = camera.dir;
-                    transform_gizmos.setActiveRotationAxis(rotation_axis);
-
-                    start_pos = interactions.calculatePlaneIntersectionPoint(
-                        current_ray, transform_gizmos.active_rotation_axis, cur_selection.pos);
-                }
-                transform_gizmos.setInteractionWith(target_name);
-                return;
-            }
-        });
-    }
     if (e.button === 1 && e.shiftKey) {
         pan_camera = true;
         return;
     } 
     if (e.button === 1) {
         orbit_camera = true;
+        return;
+    }
+    if (e.button === 0 && 
+        transform_gizmos.display_gizmos) {
+
+        if (transform_gizmos.isIntersectingGizmo([cur_x, HEIGHT - cur_y])) {
+            transform_gizmos.setIsInteracting(true);
+            start_pos = interactions.calculatePlaneIntersectionPoint(
+                current_ray, camera.dir, cur_selection.pos);
+            transform_gizmos.setInteractionWith("2d_gizmo");
+            return;
+        }
+
+        current_ray.dir = interactions.generateRayDir(WIDTH, HEIGHT, cur_x, cur_y, proj, view);
+        transform_gizmos.active_objects.forEach(object => {
+            if (object.aabb.isIntersecting(current_ray)) {
+                transform_gizmos.setIsInteracting(true);
+                const target_name = object.name;
+                let plane_normal;
+
+                if (transform_gizmos.mode === "rotate") {
+                    if (target_name === "x_rotate") plane_normal = [1,0,0];
+                    else if (target_name === "y_rotate") plane_normal = [0,1,0];
+                    else if (target_name === "z_rotate") plane_normal = [0,0,1];
+                    else if (target_name === "2d_gizmo") plane_normal = camera.dir;
+                    transform_gizmos.setActiveRotationAxis(plane_normal);
+                } else {
+                    plane_normal = camera.dir;
+                }
+
+                start_pos = interactions.calculatePlaneIntersectionPoint(
+                    current_ray, plane_normal, cur_selection.pos);
+                transform_gizmos.setInteractionWith(target_name);
+                return;
+            }
+        });
     }
 });
 
@@ -613,4 +597,11 @@ function setRotationUI(selected_object) {
 function setMainGizmoUI(main_gizmo) {
     gizmo_ui.textContent = `(${Math.round(main_gizmo.center[0] * 100) / 100}, 
                         ${Math.round(main_gizmo.center[1] * 100) / 100})`;
+}
+
+function setAllUI(selected_object, main_gizmo) {
+    setPositionUI(selected_object);
+    setRotationUI(selected_object);
+    setScaleUi(selected_object);
+    setMainGizmoUI(main_gizmo);
 }
