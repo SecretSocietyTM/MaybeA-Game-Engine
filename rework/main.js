@@ -57,12 +57,17 @@ const FILE_INPUT = document.getElementById("file_input");
 
 //
 // canvas variables
+const canvas = document.getElementById("scene_canvas");
+const debug_canvas = document.getElementById("debug_canvas");
+
 const WIDTH = 800;
 const HEIGHT = 600;
-const canvas = document.getElementById("canvas");
 canvas.width = WIDTH;
 canvas.height = HEIGHT;
+debug_canvas.width = WIDTH;
+debug_canvas.height = HEIGHT;
 const rect = canvas.getBoundingClientRect();
+const debug_rect = canvas.getBoundingClientRect();
 
 
 // variables for mouse controlled gizmos

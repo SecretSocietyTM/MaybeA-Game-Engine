@@ -9,61 +9,72 @@
     <script type="module" src="./main.js" defer></script>
 </head>
 <body>
-    <div id="scene_info">
-        <p>Current Mode: <span id="cur_mode"></span></p>
-        <p>Gizmo Information</p>
-        <p id="gizmo_pos"></p>
-        <input id="file_input" type="file" accept=".ply">
-        <p>Scene Info</p>
-        <ul id="scene_objects_list"></ul>
+    <div id="viewport_section" class="viewport_section">
+        <div class="debug_view">
+            <p>Debug View</p>
+            <canvas id="debug_canvas"></canvas>
+        </div>
+        <div class="scene_view">
+            <p>Scene Editor</p>
+            <canvas id="scene_canvas"></canvas>
+        </div>
     </div>
-    <canvas id="canvas"></canvas>
-    <div id="object_info">
-        <p id="name">Item Name</p>
-        <p>Transform Section</p>
-        <p>Position</p>
-        <div class="info_div" id="position">
-            <div class="num_div">
-                <p>x:</p>
-                <input class="x" type="number">
-            </div>
-            <div class="num_div">
-                <p>y:</p>
-                <input class="y" type="number">
-            </div>
-            <div class="num_div">
-                <p>z:</p>
-                <input class="z" type="number">
-            </div>
+    <div id="info_section" class="info_section">
+        <div id="scene_info">
+            <p>Current Mode: <span id="cur_mode"></span></p>
+            <p>Gizmo Information</p>
+            <p id="gizmo_pos"></p>
+            <input id="file_input" type="file" accept=".ply">
+            <p>Scene Info</p>
+            <ul id="scene_objects_list"></ul>
         </div>
-        <p>Rotation</p>
-        <div class="info_div" id="rotation">
-            <div class="num_div">
-                <p>x:</p>
-                <input class="x" type="number">
+        <div id="object_info">
+            <p id="name">Item Name</p>
+            <p>Transform</p>
+            <p>Position</p>
+            <div class="info_div" id="position">
+                <div class="num_div">
+                    <p>x:</p>
+                    <input class="x" type="number">
+                </div>
+                <div class="num_div">
+                    <p>y:</p>
+                    <input class="y" type="number">
+                </div>
+                <div class="num_div">
+                    <p>z:</p>
+                    <input class="z" type="number">
+                </div>
             </div>
-            <div class="num_div">
-                <p>y:</p>
-                <input class="y" type="number">
+            <p>Rotation</p>
+            <div class="info_div" id="rotation">
+                <div class="num_div">
+                    <p>x:</p>
+                    <input class="x" type="number">
+                </div>
+                <div class="num_div">
+                    <p>y:</p>
+                    <input class="y" type="number">
+                </div>
+                <div class="num_div">
+                    <p>z:</p>
+                    <input class="z" type="number">
+                </div>
             </div>
-            <div class="num_div">
-                <p>z:</p>
-                <input class="z" type="number">
-            </div>
-        </div>
-        <p>Scale</p>
-        <div class="info_div" id="scale">
-            <div class="num_div">
-                <p>x:</p>
-                <input class="x" type="number">
-            </div>
-            <div class="num_div">
-                <p>y:</p>
-                <input class="y" type="number">
-            </div>
-            <div class="num_div">
-                <p>z:</p>
-                <input class="z" type="number">
+            <p>Scale</p>
+            <div class="info_div" id="scale">
+                <div class="num_div">
+                    <p>x:</p>
+                    <input class="x" type="number">
+                </div>
+                <div class="num_div">
+                    <p>y:</p>
+                    <input class="y" type="number">
+                </div>
+                <div class="num_div">
+                    <p>z:</p>
+                    <input class="z" type="number">
+                </div>
             </div>
         </div>
     </div>
