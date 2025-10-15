@@ -73,10 +73,6 @@ canvas.width = WIDTH;
 canvas.height = HEIGHT;
 const rect = canvas.getBoundingClientRect();
 
-//
-// state variables?
-let gizmo_exists = false;
-let gizmo_interact = false;
 
 // variables for mouse controlled gizmos
 let start_pos;
@@ -178,8 +174,7 @@ canvas.addEventListener("click", (e) => {
     const mouse_x = e.clientX - rect.left;
     const mouse_y = e.clientY - rect.top;
 
-    if (gizmo_interact || transform_gizmos.is_interacting) {
-        gizmo_interact = false;
+    if (transform_gizmos.is_interacting) {
         transform_gizmos.setIsInteracting(false);
         cur_selection.setLastStaticTransform();
 
@@ -196,7 +191,8 @@ canvas.addEventListener("click", (e) => {
             if (cur_selection === objects[i]) return;
             cur_selection = objects[i];
 
-            gizmo_exists = true;
+            transform_gizmos.setDisplayGizmos(true);
+
             transform_gizmos.main_gizmo.center = interactions.calculateObjectCenterScreenCoord(WIDTH, HEIGHT, cur_selection, proj, view);
             transform_gizmos.objects.forEach(object => {
                 object.updatePos(cur_selection.pos);
@@ -213,7 +209,8 @@ canvas.addEventListener("click", (e) => {
     if (!ray_hit) {
         cur_selection = null;
 
-        gizmo_exists = false;
+        transform_gizmos.setDisplayGizmos(false);
+
         transform_gizmos.main_gizmo.center = null;
         return;
     }
@@ -223,12 +220,19 @@ canvas.addEventListener("mousedown", (e) => {
     cur_x = e.clientX - rect.left;
     cur_y = e.clientY - rect.top;
 
-    if (e.button === 0 && gizmo_exists &&
-        transform_gizmos.isIntersectingGizmo([cur_x, HEIGHT - cur_y])) {
-        gizmo_interact = true;
+    if (e.button === 0 && 
+        transform_gizmos.display_gizmos &&
+        transform_gizmos.isIntersectingGizmo([cur_x, HEIGHT - cur_y])
+    ) {
+        transform_gizmos.setIsInteracting(true);
+        start_pos = interactions.calculatePlaneIntersectionPoint(
+                        current_ray, camera.dir, cur_selection.pos);
+        transform_gizmos.setInteractionWith("2d_gizmo");
         return;
     }
-    if (e.button === 0 && gizmo_exists) {
+    if (e.button === 0 && 
+        transform_gizmos.display_gizmos
+    ) {
         current_ray.dir = interactions.generateRayDir(WIDTH, HEIGHT, cur_x, cur_y, proj, view);
 
         transform_gizmos.active_objects.forEach(object => {
@@ -301,25 +305,10 @@ canvas.addEventListener("mousemove", (e) => {
         mat4.lookAt(view, camera.pos, vec3.subtract([], camera.pos, camera.dir), camera.up);
         if (cur_selection) {
             transform_gizmos.main_gizmo.center = interactions.calculateObjectCenterScreenCoord(WIDTH, HEIGHT, cur_selection, proj, view);
-
             //update ui
             setMainGizmoUI(transform_gizmos.main_gizmo);
         }
-
-    } else if (gizmo_interact) {
-        current_ray.dir = interactions.generateRayDir(WIDTH, HEIGHT, mouse_x, mouse_y, proj, view);
-        const new_pos = interactions.calculatePlaneIntersectionPoint(
-                        current_ray, camera.dir, cur_selection.pos);
-        cur_selection.updatePos(new_pos);
-        transform_gizmos.main_gizmo.center = interactions.calculateObjectCenterScreenCoord(WIDTH, HEIGHT, cur_selection, proj, view);
-        transform_gizmos.objects.forEach(object => {
-            object.updatePos(cur_selection.pos);
-        })
-
-        // update the ui
-        setPositionUI(cur_selection);
-        setMainGizmoUI(transform_gizmos.main_gizmo);
-
+        return;
     } else if (transform_gizmos.is_interacting && 
                transform_gizmos.mode === "translate") {
 
@@ -348,12 +337,15 @@ canvas.addEventListener("mousemove", (e) => {
                 cur_selection.pos[1],
                 cur_selection.last_static_transform.pos[2] + new_pos[2] - start_pos[2]
             ];
+        } else if (interaction_with === "2d_gizmo") {
+            translate_vector = new_pos;
         }
 
         transform_gizmos.translateSelectedObject(translate_vector, cur_selection);
         transform_gizmos.main_gizmo.center = interactions.calculateObjectCenterScreenCoord(WIDTH, HEIGHT, cur_selection, proj, view);
         // update UI
         setPositionUI(cur_selection);
+        setMainGizmoUI(transform_gizmos.main_gizmo);
     } else if (transform_gizmos.is_interacting && 
                transform_gizmos.mode === "scale") {
 
@@ -382,6 +374,10 @@ canvas.addEventListener("mousemove", (e) => {
                 cur_selection.scale[1],
                 cur_selection.last_static_transform.scale[2] + new_pos[2] - start_pos[2]
             ];
+        } else if (interaction_with === "2d_gizmo") {
+            // get distance between new_pos and start_pos
+            const scaling_factor = vec3.distance(new_pos, start_pos);
+            scale_vector = Array(3).fill(scaling_factor);
         }
 
         transform_gizmos.scaleSelectedObject(scale_vector, cur_selection);
@@ -422,6 +418,10 @@ canvas.addEventListener("mousemove", (e) => {
                 cur_selection.rotation_angles[1],
                 cur_selection.last_static_transform.rotation[2] + angle
             ];
+        } else if (interaction_with === "2d_gizmo") {
+            // get distance between new_pos and start_pos
+            // rotation here is a bit odd, need to figure it out.
+            rotate_vector = [0,0,0];
         }
 
         transform_gizmos.rotateSelectedObject(rotate_vector, cur_selection);

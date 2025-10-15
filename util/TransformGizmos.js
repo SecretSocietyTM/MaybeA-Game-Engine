@@ -31,7 +31,7 @@ export default class TransformGizmos {
         this.is_interacting = false;
         this.display_gizmos = false;
 
-        this.active_rotation_axis = null;
+        this.active_rotation_axis = [0,1,0];
 
     }
 
@@ -140,8 +140,6 @@ export default class TransformGizmos {
     translateSelectedObject(translate_vector, selected_object) {
         selected_object.updatePos(translate_vector);
 
-        // also update gizmos positions
-        // update gizmo_center.
         this.objects.forEach(object => {
             object.updatePos(selected_object.pos);
         });
