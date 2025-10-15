@@ -9,10 +9,10 @@ import AxisAlignedBoundingBox from "./AxisAlignedBoundingBox.js";
 // TODO: make all properties that can be on a SceneObject null in the constructor
 export default class SceneObject {
     constructor(name = "object",
-              pos = [0, 0, 0],
-              scale = [1, 1, 1],
-              rotation_angles = [0,0,0],
-              mesh, vao, aabb_vao) {
+                pos = [0, 0, 0],
+                scale = [1, 1, 1],
+                rotation_angles = [0,0,0],
+                mesh, vao, aabb_vao) {
 
         this.name = name;
         this.is_interactable = true;
@@ -63,6 +63,15 @@ export default class SceneObject {
         mat4.rotateY(this.model_matrix, this.model_matrix, glm.glMatrix.toRadian(rotation_angles[1]));
         mat4.rotateZ(this.model_matrix, this.model_matrix, glm.glMatrix.toRadian(rotation_angles[2]));
         mat4.scale(this.model_matrix, this.model_matrix, scale);
+    }
+
+    transformWithAxis(rotation_axis = [0,1,0],
+                      rotation_angle = 0) {
+
+        this.model_matrix = mat4.create();
+        mat4.translate(this.model_matrix, this.model_matrix, this.pos);
+        mat4.rotate(this.model_matrix, this.model_matrix, glm.glMatrix.toRadian(rotation_angle), rotation_axis);
+        mat4.scale(this.model_matrix, this.model_matrix, this.scale);
     }
 
     setLastStaticTransform() {

@@ -134,7 +134,7 @@ export default class Renderer {
         objects.forEach(object => {
             this.gl.uniformMatrix4fv(this.model_uniform, this.gl.FALSE, object.model_matrix);
             this.gl.uniform1i(this.use_color_uniform, object.use_color);
-            this.gl.uniform1f(this.clr_uniform, object.color);
+            this.gl.uniform3fv(this.clr_uniform, object.color);
             this.gl.bindVertexArray(object.vao);
             this.gl.drawElements(this.gl.TRIANGLES, object.mesh.indices.length, this.gl.UNSIGNED_SHORT, 0);
             this.gl.bindVertexArray(null);
@@ -149,7 +149,7 @@ export default class Renderer {
             }
         });
 
-        if (transform_gizmos.main_gizmo.center) {
+        if (transform_gizmos.display_gizmos) {
             this.gl.disable(this.gl.DEPTH_TEST);
 
             transform_gizmos.active_objects.forEach(object => {

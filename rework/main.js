@@ -251,6 +251,7 @@ canvas.addEventListener("mousedown", (e) => {
                     if (target_name === "x_rotate") rotation_axis = [1,0,0];
                     else if (target_name === "y_rotate") rotation_axis = [0,1,0];
                     else if (target_name === "z_rotate") rotation_axis = [0,0,1];
+                    else if (target_name === "2d_gizmo") rotation_axis = camera.dir;
                     transform_gizmos.setActiveRotationAxis(rotation_axis);
 
                     start_pos = interactions.calculatePlaneIntersectionPoint(
@@ -343,6 +344,14 @@ canvas.addEventListener("mousemove", (e) => {
 
         transform_gizmos.translateSelectedObject(translate_vector, cur_selection);
         transform_gizmos.main_gizmo.center = interactions.calculateObjectCenterScreenCoord(WIDTH, HEIGHT, cur_selection, proj, view);
+        if (cur_selection) { 
+            transform_gizmos.main_gizmo.center = interactions.calculateObjectCenterScreenCoord(WIDTH, HEIGHT, cur_selection, proj, view);
+            const distance = vec3.distance(camera.pos, cur_selection.pos);
+            const scale = (distance / reference_distance) * reference_scale;
+            transform_gizmos.objects.forEach(object => {
+                    object.updateScale([scale, scale, scale]);
+            });
+        }
         // update UI
         setPositionUI(cur_selection);
         setMainGizmoUI(transform_gizmos.main_gizmo);
@@ -358,26 +367,27 @@ canvas.addEventListener("mousemove", (e) => {
 
         if (interaction_with === "x_scale") {
             scale_vector = [
-                cur_selection.last_static_transform.scale[0] + new_pos[0] - start_pos[0],
+                cur_selection.last_static_transform.scale[0] + (new_pos[0] - start_pos[0]) * cur_selection.last_static_transform.scale[0],
                 cur_selection.scale[1],
                 cur_selection.scale[2]
             ];
         } else if (interaction_with === "y_scale") {
             scale_vector = [
                 cur_selection.scale[0],
-                cur_selection.last_static_transform.scale[1] + new_pos[1] - start_pos[1],
+                cur_selection.last_static_transform.scale[1] + (new_pos[1] - start_pos[1]) * cur_selection.last_static_transform.scale[1],
                 cur_selection.scale[2]
             ];
         } else if (interaction_with === "z_scale") {
             scale_vector = [
                 cur_selection.scale[0],
                 cur_selection.scale[1],
-                cur_selection.last_static_transform.scale[2] + new_pos[2] - start_pos[2]
+                cur_selection.last_static_transform.scale[2] + (new_pos[2] - start_pos[2]) * cur_selection.last_static_transform.scale[2]
             ];
         } else if (interaction_with === "2d_gizmo") {
-            // get distance between new_pos and start_pos
-            const scaling_factor = vec3.distance(new_pos, start_pos);
+            // TODO: fix
+            const scaling_factor = vec3.distance(start_pos, new_pos);
             scale_vector = Array(3).fill(scaling_factor);
+            scale_vector = vec3.add([], cur_selection.last_static_transform.scale, scale_vector);
         }
 
         transform_gizmos.scaleSelectedObject(scale_vector, cur_selection);
@@ -419,9 +429,9 @@ canvas.addEventListener("mousemove", (e) => {
                 cur_selection.last_static_transform.rotation[2] + angle
             ];
         } else if (interaction_with === "2d_gizmo") {
-            // get distance between new_pos and start_pos
-            // rotation here is a bit odd, need to figure it out.
-            rotate_vector = [0,0,0];
+            // TODO: fix
+            cur_selection.transformWithAxis(transform_gizmos.active_rotation_axis, angle);
+            return;
         }
 
         transform_gizmos.rotateSelectedObject(rotate_vector, cur_selection);

@@ -7,8 +7,11 @@ const mat4 = glm.mat4;
 import SceneObject from "./SceneObject.js";
 
 const RED_COLOR = [1.0, 0.3, 0.2];
+const SELECT_RED_COLOR = [0.99, 0.4, 0.32];
 const GREEN_COLOR = [0.35, 0.8, 0.46];
+const SELECT_GREEN_COLOR = [0.44, 0.9, 0.55];
 const BLUE_COLOR = [0.2, 0.56, 0.85];
+const SELECT_BLUE_COLOR = [0.42, 0.71, 0.94];
 
 
 export default class TransformGizmos {
@@ -21,10 +24,6 @@ export default class TransformGizmos {
         this.reference_scale = null;
         this.reference_distance = null;
 
-        // modes are:
-        // t = translate
-        // r = rotate
-        // s = scale
         this.mode = "translate";
         this.active_objects = this.translate_objects;
         this.main_gizmo = {
@@ -155,8 +154,6 @@ export default class TransformGizmos {
         this.objects.forEach(object => {
             object.useColor(true);
         });
-
-        console.log(this.objects);
     }
 
     translateSelectedObject(translate_vector, selected_object) {
