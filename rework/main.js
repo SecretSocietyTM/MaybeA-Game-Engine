@@ -5,8 +5,6 @@
     Imported teapot and was scaling it down to fit in my viewport when the screen went blank. 
 */
 
-
-
 const glm = glMatrix;
 const vec2 = glm.vec2;
 const vec3 = glm.vec3;
@@ -90,8 +88,6 @@ let orbit_camera = false;
 
 
 const camera = new Camera([0, 0, 10], [0,0,0], [0,1,0]);
-const reference_distance = vec3.distance(camera.pos, [0,0,0]);
-const reference_scale = 0.3;
 
 let current_ray = {
     origin: camera.pos,
@@ -132,7 +128,8 @@ const gizmo_vaos = {
 }
 
 const transform_gizmos = new TransformGizmos();
-transform_gizmos.setReferenceScale(reference_scale);
+transform_gizmos.reference_scale = 0.4;
+transform_gizmos.reference_distance = vec3.distance(camera.pos, [0,0,0]);
 transform_gizmos.initGizmoObjects(gizmo_meshes, gizmo_vaos);
 transform_gizmos.setMode();
 cur_mode_ui.textContent = transform_gizmos.mode;
@@ -176,7 +173,7 @@ main();
  */
 canvas.addEventListener("click", (e) => {
     if (transform_gizmos.is_interacting) {
-        transform_gizmos.setIsInteracting(false);
+        transform_gizmos.is_interacting = false;
         cur_selection.setLastStaticTransform();
         return;
     };
@@ -190,7 +187,7 @@ canvas.addEventListener("click", (e) => {
             if (cur_selection === objects[i]) return;
             cur_selection = objects[i];
 
-            transform_gizmos.setDisplayGizmos(true);
+            transform_gizmos.display_gizmos = true;
             transform_gizmos.main_gizmo.center = interactions.calculateObjectCenterScreenCoord(WIDTH, HEIGHT, cur_selection, proj, view);
             transform_gizmos.objects.forEach(object => {
                 object.updatePos(cur_selection.pos);
@@ -203,7 +200,7 @@ canvas.addEventListener("click", (e) => {
 
     // if no scene objects were hit
     cur_selection = null;
-    transform_gizmos.setDisplayGizmos(false);
+    transform_gizmos.display_gizmos = false;
 });
 
 canvas.addEventListener("mousedown", (e) => {
@@ -222,17 +219,17 @@ canvas.addEventListener("mousedown", (e) => {
         transform_gizmos.display_gizmos) {
 
         if (transform_gizmos.isIntersectingGizmo([cur_x, HEIGHT - cur_y])) {
-            transform_gizmos.setIsInteracting(true);
+            transform_gizmos.is_interacting = true;
             start_pos = interactions.calculatePlaneIntersectionPoint(
                 current_ray, camera.dir, cur_selection.pos);
-            transform_gizmos.setInteractionWith("2d_gizmo");
+            transform_gizmos.interaction_with = "2d_gizmo";
             return;
         }
 
         current_ray.dir = interactions.generateRayDir(WIDTH, HEIGHT, cur_x, cur_y, proj, view);
         transform_gizmos.active_objects.forEach(object => {
             if (object.aabb.isIntersecting(current_ray)) {
-                transform_gizmos.setIsInteracting(true);
+                transform_gizmos.is_interacting = true;
                 const target_name = object.name;
                 let plane_normal;
 
@@ -241,14 +238,14 @@ canvas.addEventListener("mousedown", (e) => {
                     else if (target_name === "y_rotate") plane_normal = [0,1,0];
                     else if (target_name === "z_rotate") plane_normal = [0,0,1];
                     else if (target_name === "2d_gizmo") plane_normal = camera.dir;
-                    transform_gizmos.setActiveRotationAxis(plane_normal);
+                    transform_gizmos.active_rotation_axis = plane_normal;
                 } else {
                     plane_normal = camera.dir;
                 }
 
                 start_pos = interactions.calculatePlaneIntersectionPoint(
                     current_ray, plane_normal, cur_selection.pos);
-                transform_gizmos.setInteractionWith(target_name);
+                transform_gizmos.interaction_with = target_name;
                 return;
             }
         });
@@ -288,13 +285,50 @@ canvas.addEventListener("mousemove", (e) => {
         if (orbit_camera) camera.orbit(1 * x_sign, 1 * y_sign);
         current_ray.origin = camera.pos;
         mat4.lookAt(view, camera.pos, vec3.subtract([], camera.pos, camera.dir), camera.up);
-        if (cur_selection) {
+
+        if (transform_gizmos.display_gizmos) {
             transform_gizmos.main_gizmo.center = interactions.calculateObjectCenterScreenCoord(WIDTH, HEIGHT, cur_selection, proj, view);
             //update ui
             setMainGizmoUI(transform_gizmos.main_gizmo);
         }
         return;
-    } else if (transform_gizmos.is_interacting && 
+    } 
+    // TODO: attempting to reduce code, but really only saves like 5 lines, not worth
+    // unless I can figure out how to get rid of _transform_vector = [...]
+    /* else if (transform_gizmos.is_interacting && false) {
+        const interaction_with = transform_gizmos.interaction_with;
+        current_ray.dir = interactions.generateRayDir(WIDTH, HEIGHT, mouse_x, mouse_y, proj, view);
+        
+        if (transform_gizmos.mode === "translate") {
+            const cur_pos = interactions.calculatePlaneIntersectionPoint(
+                current_ray, camera.dir, cur_selection.pos);
+            let translate_vector;
+
+            if (interaction_with === "x_trans") {
+                translate_vector = [
+                    cur_selection.last_static_transform.pos[0] + new_pos[0] - start_pos[0],
+                    cur_selection.pos[1],
+                    cur_selection.pos[2]
+                ];
+            } else if (interaction_with === "y_trans") {
+                translate_vector = [
+                    cur_selection.pos[0],
+                    cur_selection.last_static_transform.pos[1] + new_pos[1] - start_pos[1],
+                    cur_selection.pos[2]
+                ];
+            } else if (interaction_with === "z_trans") {
+                translate_vector = [
+                    cur_selection.pos[0],
+                    cur_selection.pos[1],
+                    cur_selection.last_static_transform.pos[2] + new_pos[2] - start_pos[2]
+                ];
+            } else if (interaction_with === "2d_gizmo") {
+                translate_vector = new_pos;
+            }
+        }
+    } */
+
+    else if (transform_gizmos.is_interacting && 
                transform_gizmos.mode === "translate") {
 
         const interaction_with = transform_gizmos.interaction_with;
@@ -326,12 +360,15 @@ canvas.addEventListener("mousemove", (e) => {
             translate_vector = new_pos;
         }
 
-        transform_gizmos.translateSelectedObject(translate_vector, cur_selection);
+        cur_selection.updatePos(translate_vector);
+        transform_gizmos.updateGizmosPos(cur_selection);
         transform_gizmos.main_gizmo.center = interactions.calculateObjectCenterScreenCoord(WIDTH, HEIGHT, cur_selection, proj, view);
+       
+       // TODO: not too sure why i put this here.
         if (cur_selection) { 
             transform_gizmos.main_gizmo.center = interactions.calculateObjectCenterScreenCoord(WIDTH, HEIGHT, cur_selection, proj, view);
             const distance = vec3.distance(camera.pos, cur_selection.pos);
-            const scale = (distance / reference_distance) * reference_scale;
+            const scale = (distance / transform_gizmos.reference_distance) * transform_gizmos.reference_scale;
             transform_gizmos.objects.forEach(object => {
                     object.updateScale([scale, scale, scale]);
             });
@@ -374,7 +411,7 @@ canvas.addEventListener("mousemove", (e) => {
             scale_vector = vec3.add([], cur_selection.last_static_transform.scale, scale_vector);
         }
 
-        transform_gizmos.scaleSelectedObject(scale_vector, cur_selection);
+        cur_selection.updateScale(scale_vector);
         // update UI
         setScaleUi(cur_selection);
 
@@ -413,12 +450,10 @@ canvas.addEventListener("mousemove", (e) => {
                 cur_selection.last_static_transform.rotation[2] + angle
             ];
         } else if (interaction_with === "2d_gizmo") {
-            // TODO: fix
-            cur_selection.transformWithAxis(transform_gizmos.active_rotation_axis, angle);
             return;
         }
 
-        transform_gizmos.rotateSelectedObject(rotate_vector, cur_selection);
+        cur_selection.updateRot(rotate_vector);
         // update UI
         setRotationUI(cur_selection);
     }
@@ -432,7 +467,7 @@ canvas.addEventListener("wheel", (e) => {
     if (cur_selection) { 
         transform_gizmos.main_gizmo.center = interactions.calculateObjectCenterScreenCoord(WIDTH, HEIGHT, cur_selection, proj, view);
         const distance = vec3.distance(camera.pos, cur_selection.pos);
-        const scale = (distance / reference_distance) * reference_scale;
+        const scale = (distance / transform_gizmos.reference_distance) * transform_gizmos.reference_scale;
         transform_gizmos.objects.forEach(object => {
                 object.updateScale([scale, scale, scale]);
         });

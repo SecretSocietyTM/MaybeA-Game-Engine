@@ -4,86 +4,61 @@ const vec4 = glm.vec4;
 const mat4 = glm.mat4;
 
 
-const UNIT_CUBE_VERTICES = [
-     0.5,  0.5,  0.5,
-     0.5, -0.5,  0.5,
-    -0.5,  0.5,  0.5,
-    -0.5, -0.5,  0.5,
-
-     0.5,  0.5, -0.5,
-     0.5, -0.5, -0.5,
-    -0.5,  0.5, -0.5,
-    -0.5, -0.5, -0.5,
-];
-
-const AABB_INDICES = [
-    0,1,  0,2,  3,2,  3,1, // front
-    2,6,  3,7,  0,4,  1,5, // left | right
-    4,5,  4,6,  7,6,  7,5  // back
-];
-
-const DEFAULT_AABB_VERTEX_COLORS = [
-    
-];
-
 export default class AxisAlignedBoundingBox {
-    constructor(mesh_vertices, model_matrix, object_pos) {
-        this.mesh = {};
-        this.mesh.vertices = UNIT_CUBE_VERTICES;
-        this.mesh.indices = AABB_INDICES;
-        this.local_vertices = mesh_vertices;
+    constructor(parent_vertices, parent_model_matrix, vao) {
+        this.parent_vertices = parent_vertices;
+        this.parent_model_matrix = parent_model_matrix;
 
-
-        this.model_matrix = model_matrix;
-        this.object_pos = object_pos;
-
-        this.convertVerticesLocalToWorld();
-        this.getWorldAABB();
-        this.getAABBModelMatrixForRendering();
-    }
-
-    assignVao(vao) {
         this.vao = vao;
+
+        this.extrema = null;
+        this.model_matrix = null;
+
+        this.getAABBExtrema(); // assigns extrema
+        this.getABBModelMatrix(); // assigns model_matrix
     }
 
-    updateModelMatrix(model_matrix) {
-        this.model_matrix = model_matrix;
+    updateAABB(parent_model_matrix) {
+        this.parent_model_matrix = parent_model_matrix;
+        this.getAABBExtrema();
+        this.getABBModelMatrix();
+    }
+
+
+    /**
+     * Converts the parent's vertices to world space.
+     */
+    convertVerticesLocalToWorld() {
+        let world_vertices = [];
+        if (mat4.exactEquals(this.parent_model_matrix, mat4.create())) {
+            world_vertices = this.parent_vertices;
+        } else {
+            for (let i = 0; i < this.parent_vertices.length; i+=3) {
+                let world_vertex = vec3.transformMat4(
+                    [], 
+                    [this.parent_vertices[i], 
+                    this.parent_vertices[i+1], 
+                    this.parent_vertices[i+2]], 
+                    this.parent_model_matrix);
+                world_vertices.push(...world_vertex);
+            }
+        }
+        return world_vertices
     }
 
     /**
-     * if there aren't then the mesh's local vertices are also
-     * the world vertices
-     * otherwise, each vertex needs to be transformed to world space
-     * checks if there are any transformations
+     * Computes the extrema from the world space vertices
      */
-    convertVerticesLocalToWorld() {
-        if (mat4.exactEquals(this.model_matrix, mat4.create())) {
-            this.world_vertices = this.local_vertices;
-        }
-        
-        const world_vertices = [];
-        for (let i = 0; i < this.local_vertices.length; i+=3) {
-            let world_vertex = vec3.transformMat4(
-                [], 
-                [this.local_vertices[i], 
-                 this.local_vertices[i+1], 
-                 this.local_vertices[i+2]], 
-                 this.model_matrix);
-            world_vertices.push(...world_vertex);
-        }
-        this.world_vertices = world_vertices;
-    }
+    getAABBExtrema() {
+        const world_vertices = this.convertVerticesLocalToWorld();
 
-    // computes the axis aligned bounding box values (min and max values
-    getWorldAABB() {
-        // find the min and max of the new corners
-        let x = [];
+        let x = []; // alterante syntax is const [x, y, z] = [[], [], []];
         let y = [];
         let z = [];
-        for (let i = 0;  i < this.local_vertices.length; i+=3) {
-            x.push(this.world_vertices[i]);
-            y.push(this.world_vertices[i+1]);
-            z.push(this.world_vertices[i+2]);
+        for (let i = 0;  i < world_vertices.length; i+=3) {
+            x.push(world_vertices[i]);
+            y.push(world_vertices[i+1]);
+            z.push(world_vertices[i+2]);
         }
 
         const max_x = Math.max(...x);
@@ -101,24 +76,16 @@ export default class AxisAlignedBoundingBox {
         this.extrema = extrema;
     }
 
-    getAABBModelMatrixForRendering() {
-        const center = (vec3.scale([], vec3.add([], this.extrema.min, this.extrema.max), 0.5));
+    /**
+     * Computes the model matrix to be applied onto the unit AABB during rendiring.
+     */
+    getABBModelMatrix() {
+        const center = (vec3.scale([], vec3.add([], this.extrema.min, this.extrema.max), 1/2));
         const scale_factor = vec3.subtract([], this.extrema.max, this.extrema.min);
 
-        this.aabb_model_matrix = mat4.create();
-        mat4.translate(this.aabb_model_matrix, this.aabb_model_matrix, center);
-        mat4.scale(this.aabb_model_matrix, this.aabb_model_matrix, scale_factor);
-    }
-
-    // TODO: this is deprecated. Ideally mesh colors can be adjusted on the fly
-    // this method requires reassigning VAOs. The better option is to change the
-    // color passed into the fragment shader
-    setAABBColor(color) {
-        let vertex_colors = new Float32Array(this.mesh.vertices.length * 3);
-        for (let i = 0; i < this.mesh.vertices.length; i++) {
-            vertex_colors.set(color, i * 3);
-        }
-        this.mesh.vertex_colors = vertex_colors;
+        this.model_matrix = mat4.create();
+        mat4.translate(this.model_matrix, this.model_matrix, center);
+        mat4.scale(this.model_matrix, this.model_matrix, scale_factor);
     }
 
     isIntersecting(ray) {
