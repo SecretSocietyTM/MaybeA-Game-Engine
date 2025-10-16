@@ -4,6 +4,11 @@ const vec3 = glm.vec3;
 const vec4 = glm.vec4;
 const mat4 = glm.mat4;
 
+import vs_src from "../shaders/3d_pass/vertexshader.js";
+import fs_src from "../shaders/3d_pass/fragmentshader.js";
+import ui_pass_vs_src from "../shaders/ui_pass/vertexshader.js";
+import ui_pass_fs_src from "../shaders/ui_pass/fragmentshader.js";
+
 export default class Renderer {
     constructor(canvas) {
         this.gl = canvas.getContext("webgl2");
@@ -14,15 +19,15 @@ export default class Renderer {
     // the function takes in another variable "pipeline_stage??" and an object of 
     // programs is created
     // for example this.programs = {3D: 3d program, UI: ui program}
-    createProgram(vertex_src, fragment_src) {
+    createProgram() {
         const vertex_shader = this.gl.createShader(this.gl.VERTEX_SHADER);
         const fragment_shader = this.gl.createShader(this.gl.FRAGMENT_SHADER);
         this.program = this.gl.createProgram();
 
-        this.gl.shaderSource(vertex_shader, vertex_src);
+        this.gl.shaderSource(vertex_shader, vs_src);
         this.gl.compileShader(vertex_shader);
 
-        this.gl.shaderSource(fragment_shader, fragment_src);
+        this.gl.shaderSource(fragment_shader, fs_src);
         this.gl.compileShader(fragment_shader);
 
         this.gl.attachShader(this.program, vertex_shader);
@@ -32,15 +37,15 @@ export default class Renderer {
         return true;
     }
 
-    createUIPassProgram(vertex_src, fragment_src) {
+    createUIPassProgram() {
         const vertex_shader = this.gl.createShader(this.gl.VERTEX_SHADER);
         const fragment_shader = this.gl.createShader(this.gl.FRAGMENT_SHADER);
         this.ui_program = this.gl.createProgram();
 
-        this.gl.shaderSource(vertex_shader, vertex_src);
+        this.gl.shaderSource(vertex_shader, ui_pass_vs_src);
         this.gl.compileShader(vertex_shader);
 
-        this.gl.shaderSource(fragment_shader, fragment_src);
+        this.gl.shaderSource(fragment_shader, ui_pass_fs_src);
         this.gl.compileShader(fragment_shader);
 
         this.gl.attachShader(this.ui_program, vertex_shader);
