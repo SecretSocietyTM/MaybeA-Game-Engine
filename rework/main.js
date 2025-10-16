@@ -10,33 +10,15 @@ import Renderer from "../util/Renderer.js";
 import SceneObject from "../util/SceneObject.js";
 import Camera from "../util/Camera.js";
 import TransformGizmos from "../util/TransformGizmos.js";
-
+import ViewWindow from "../util/ViewWindow.js";
 
 import vs_src from "../shaders/3d_pass/vertexshader.js";
 import fs_src from "../shaders/3d_pass/fragmentshader.js";
-
 import ui_pass_vs_src from "../shaders/ui_pass/vertexshader.js";
 import ui_pass_fs_src from "../shaders/ui_pass/fragmentshader.js";
 
-// mesh
 import { parsePLY } from "../mimp/parse_ply.js";
-import unit_cube_ply from "../mimp/models/js_ply_files/unit_cube.js";
-import apple_ply from "../mimp/models/js_ply_files/apple_ply.js";
-import cube_ply from "../mimp/models/js_ply_files/cube_ply.js";
-import arrow_ply from "../mimp/models/js_ply_files/arrow_ply.js";
-import half_torus_ply from "../mimp/models/js_ply_files/half_torus_ply.js";
-import scale_gizmo_ply from "../mimp/models/js_ply_files/scale_gizmo_ply.js";
-
-import aabb_wireframe_mesh from "../util/aabb_wireframe_mesh.js";
-
-
-// meshes
-const unit_cube_mesh = parsePLY(unit_cube_ply);
-const apple_mesh = parsePLY(apple_ply);
-const cube_mesh = parsePLY(cube_ply);
-const arrow_mesh = parsePLY(arrow_ply);
-const half_torus_mesh = parsePLY(half_torus_ply);
-const scale_gizmo_mesh = parsePLY(scale_gizmo_ply);
+import meshes from "../mimp/models/meshes_index.js";
 
 
 //
@@ -55,17 +37,21 @@ const OBJECT_INFO_UI = Object.freeze({
 const SCENE_OBJECT_LIST_UI = document.getElementById("scene_objects_list");
 const FILE_INPUT = document.getElementById("file_input");
 
+
 //
 // canvas variables
-const canvas = document.getElementById("scene_canvas");
-const debug_canvas = document.getElementById("debug_canvas");
-
 const WIDTH = 800;
 const HEIGHT = 600;
+
+
+const canvas = document.getElementById("scene_canvas");
 canvas.width = WIDTH;
 canvas.height = HEIGHT;
+
+const debug_canvas = document.getElementById("debug_canvas");
 debug_canvas.width = WIDTH;
 debug_canvas.height = HEIGHT;
+
 const rect = canvas.getBoundingClientRect();
 const debug_rect = canvas.getBoundingClientRect();
 
@@ -106,17 +92,18 @@ renderer.getShaderVariables();
 renderer.getUIPassShaderVariables();
 renderer.setupRender(WIDTH, HEIGHT, [0.3, 0.3, 0.3, 1.0]/* [0.45, 0.55, 0.5, 1.0] */);
 
+
 // reusable VAOs
 // need a variable to model mesh VAOs and aabb mesh VAO
-const axis_translate_VAO = renderer.addObjectVAO(arrow_mesh);
-const axis_rotate_VAO = renderer.addObjectVAO(half_torus_mesh);
-const axis_scale_VAO = renderer.addObjectVAO(scale_gizmo_mesh);
-const aabb_wireframe_VAO = renderer.addObjectVAO(aabb_wireframe_mesh);
+const axis_translate_VAO = renderer.addObjectVAO(meshes.translate_gizmo);
+const axis_rotate_VAO = renderer.addObjectVAO(meshes.rotate_gizmo);
+const axis_scale_VAO = renderer.addObjectVAO(meshes.scale_gizmo);
+const aabb_wireframe_VAO = renderer.addObjectVAO(meshes.aabb_wireframe);
 
 const gizmo_meshes = {
-    translate_mesh: arrow_mesh,
-    rotate_mesh: half_torus_mesh,
-    scale_mesh: scale_gizmo_mesh
+    translate_mesh: meshes.translate_gizmo,
+    rotate_mesh: meshes.rotate_gizmo,
+    scale_mesh: meshes.scale_gizmo
 }
 const gizmo_vaos = {
     translate_vao: axis_translate_VAO,
@@ -137,14 +124,14 @@ function main() {
     //
     // scene objects
     const unit_cube = new SceneObject("unit_cube", [0,0,0], [1,1,1], [0,0,0], 
-        unit_cube_mesh, renderer.addObjectVAO(unit_cube_mesh), aabb_wireframe_VAO);
+        meshes.unit_cube, renderer.addObjectVAO(meshes.unit_cube), aabb_wireframe_VAO);
     objects.push(unit_cube);
 
     const apple = new SceneObject("apple", [-10,0,-10], [9,9,9], [0,0,0], 
-        apple_mesh, renderer.addObjectVAO(apple_mesh), aabb_wireframe_VAO);
+        meshes.apple, renderer.addObjectVAO(meshes.apple), aabb_wireframe_VAO);
 
     const weird_cube = new SceneObject("weird cube", [0,0,0], [1,1,1], [0,0,0],
-        cube_mesh, renderer.addObjectVAO(cube_mesh), aabb_wireframe_VAO);
+        meshes.weird_cube, renderer.addObjectVAO(meshes.weird_cube), aabb_wireframe_VAO);
 
     objects.push(unit_cube, apple, weird_cube);
 

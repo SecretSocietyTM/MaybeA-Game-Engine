@@ -3,6 +3,9 @@ const vec3 = glm.vec3;
 const vec4 = glm.vec4;
 const mat4 = glm.mat4;
 
+// TODO: camera class should probably have the view matrix as a property
+// which is passed to things that need it.
+
 export default class Camera {
     constructor(pos, target, up) {
         this.pos = pos;
