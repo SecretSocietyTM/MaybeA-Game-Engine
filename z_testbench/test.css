@@ -1,0 +1,43 @@
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+}
+
+
+html {
+    width: 100vw;
+    height: 100vh;
+}
+
+body {
+    width: 100%;
+    height: 100%;
+}
+
+canvas {
+    display: block;
+    position: absolute;
+
+    width: 100%;
+    height: 100%;
+}
+
+.__body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+
+    padding: 10rem 5rem;
+    width: 100%;
+    height: 100%;
+
+    background-color: rgb(136, 255, 0);
+}
+
+#view_1, #view_2 {
+    outline: solid black 2px;
+}
