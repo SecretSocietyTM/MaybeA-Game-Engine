@@ -47,13 +47,7 @@ const HEIGHT = 600;
 const canvas = document.getElementById("scene_canvas");
 canvas.width = WIDTH;
 canvas.height = HEIGHT;
-
-const debug_canvas = document.getElementById("debug_canvas");
-debug_canvas.width = WIDTH;
-debug_canvas.height = HEIGHT;
-
 const rect = canvas.getBoundingClientRect();
-const debug_rect = canvas.getBoundingClientRect();
 
 
 // variables for mouse controlled gizmos
