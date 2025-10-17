@@ -39,7 +39,9 @@ const renderer = new Renderer2(canvas);
 const view1 = new ViewWindow("v1", document.getElementById("view1"), canvas);
 view1.moveCamera([-20,20,-20]);
 const view2 = new ViewWindow("v2", document.getElementById("view2"), canvas);
+view2.show_gizmos = true;
 const views = [view1, view2];
+console.log(views);
 
 /////////////////////////////////////////////////////////////////////////////////////
 ////////////////////   MORE UGLY CODE FROM REWORK/MAIN.JS   /////////////////////////
@@ -68,9 +70,6 @@ transform_gizmos.setMode();
 /////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////
 
-console.log(transform_gizmos);
-
-
 const objects = [];
 const unit_cube = new SceneObject("unit_cube", [0,0,0], [1,1,1], [0,0,0], 
     MeshesObj.unit_cube, renderer.addObjectVAO(MeshesObj.unit_cube), aabb_wireframe_VAO);
@@ -82,7 +81,7 @@ objects.push(unit_cube, apple, weird_cube);
 
 
 function renderFrame(loop = false) {
-    renderer.renderToViews(views, objects);
+    renderer.renderToViews(views, objects, transform_gizmos);
     if (loop) requestAnimationFrame(renderFrame);
 }
 
@@ -101,6 +100,7 @@ renderFrame(true);
 // event listeners
 
 
+// TODO: find a way to make event listeners universal and assignable to windows, might require an Events class XD
 view2.window.addEventListener("click", e => {
     if (transform_gizmos.is_interacting) {
         transform_gizmos.is_interacting = false;
@@ -119,6 +119,8 @@ view2.window.addEventListener("click", e => {
 
             transform_gizmos.display_gizmos = true;
             transform_gizmos.main_gizmo.center = Interactions.calculateObjectCenterScreenCoord(view2.width, view2.height, cur_selection, view2.proj_matrix, view2.camera.view_matrix);
+            transform_gizmos.main_gizmo.center = vec2.add([], transform_gizmos.main_gizmo.center, [view2.left, view2.bottom])
+            console.log(transform_gizmos.main_gizmo);
             transform_gizmos.objects.forEach(object => {
                 object.updatePos(cur_selection.pos);
             });

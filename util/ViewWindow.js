@@ -29,6 +29,8 @@ export default class ViewWindow {
             (this.width / this.height), 
             0.1, 1000
         );
+
+        this.show_gizmos = false;
     }
 
     // TODO: don't create a new camera, just update the pos of the existing one

@@ -10,6 +10,9 @@ export default class Renderer2 {
         this.createProgram();
         this.getShaderVariables();
         this.setupRenderer();
+
+        this.createUIPassProgram();
+        this.getUIPassShaderVariables();
     }
 
     createProgram() {
@@ -81,12 +84,16 @@ export default class Renderer2 {
     }
 
     // TODO: find a better way to deal with gizmos
-    renderToViews(views, objects) {
+    renderToViews(views, objects, transform_gizmos) {
         views.forEach(view => {
             this.gl.viewport(view.left, view.bottom, view.width, view.height);
             this.gl.scissor(view.left, view.bottom, view.width, view.height);
             this.gl.clearColor(0.3, 0.3, 0.3, 1.0);
             this.pass3D(view, objects)
+
+            if (view.show_gizmos && transform_gizmos.display_gizmos) {
+                this.passUI(transform_gizmos.main_gizmo);
+            }
         });
     }
 
@@ -116,5 +123,64 @@ export default class Renderer2 {
                 this.gl.bindVertexArray(null);
             }
         });
+    }
+
+
+
+
+
+
+
+
+    createUIPassProgram() {
+        const vertex_shader = this.gl.createShader(this.gl.VERTEX_SHADER);
+        const fragment_shader = this.gl.createShader(this.gl.FRAGMENT_SHADER);
+        this.ui_program = this.gl.createProgram();
+
+        this.gl.shaderSource(vertex_shader, ui_pass_vs_src);
+        this.gl.compileShader(vertex_shader);
+
+        this.gl.shaderSource(fragment_shader, ui_pass_fs_src);
+        this.gl.compileShader(fragment_shader);
+
+        this.gl.attachShader(this.ui_program, vertex_shader);
+        this.gl.attachShader(this.ui_program, fragment_shader);
+        this.gl.linkProgram(this.ui_program);
+
+        return true;    
+    }
+
+    getUIPassShaderVariables() {
+        this.ui_pass_pos_attrib = this.gl.getAttribLocation(this.ui_program, "a_pos");
+
+        this.ui_pass_circle_center_uniform = this.gl.getUniformLocation(this.ui_program, "u_cntr");
+        this.ui_pass_circle_radius = this.gl.getUniformLocation(this.ui_program, "u_radius");
+        this.ui_pass_clr_uniform = this.gl.getUniformLocation(this.ui_program, "u_clr");
+
+        return true;
+    }
+
+    passUI(main_gizmo) {
+        this.gl.useProgram(this.ui_program);
+
+        // fullscreen quad vertices
+        const vertices = new Float32Array([
+            -1, -1, // bot-left
+             1, -1, // bot-right
+            -1,  1, // top-left
+             1,  1  // top-right
+        ]);
+
+        const pos_buffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, pos_buffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices, this.gl.STATIC_DRAW);
+        this.gl.enableVertexAttribArray(this.ui_pass_pos_attrib);
+        this.gl.vertexAttribPointer(this.ui_pass_pos_attrib, 2, this.gl.FLOAT, this.gl.FALSE, 0, 0);
+
+        this.gl.uniform2fv(this.ui_pass_circle_center_uniform, main_gizmo.center);
+        this.gl.uniform1f(this.ui_pass_circle_radius, main_gizmo.radius);
+        this.gl.uniform3fv(this.ui_pass_clr_uniform, [1.0, 1.0, 1.0])
+
+        this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
     }
 }
