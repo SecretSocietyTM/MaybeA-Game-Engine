@@ -48,6 +48,34 @@ export default class Renderer2 {
         return true;
     }
 
+    createUIPassProgram() {
+        const vertex_shader = this.gl.createShader(this.gl.VERTEX_SHADER);
+        const fragment_shader = this.gl.createShader(this.gl.FRAGMENT_SHADER);
+        this.ui_program = this.gl.createProgram();
+
+        this.gl.shaderSource(vertex_shader, ui_pass_vs_src);
+        this.gl.compileShader(vertex_shader);
+
+        this.gl.shaderSource(fragment_shader, ui_pass_fs_src);
+        this.gl.compileShader(fragment_shader);
+
+        this.gl.attachShader(this.ui_program, vertex_shader);
+        this.gl.attachShader(this.ui_program, fragment_shader);
+        this.gl.linkProgram(this.ui_program);
+
+        return true;    
+    }
+
+    getUIPassShaderVariables() {
+        this.ui_pass_pos_attrib = this.gl.getAttribLocation(this.ui_program, "a_pos");
+
+        this.ui_pass_circle_center_uniform = this.gl.getUniformLocation(this.ui_program, "u_cntr");
+        this.ui_pass_circle_radius = this.gl.getUniformLocation(this.ui_program, "u_radius");
+        this.ui_pass_clr_uniform = this.gl.getUniformLocation(this.ui_program, "u_clr");
+
+        return true;
+    }
+
     addObjectVAO(mesh) {
         const vao = this.gl.createVertexArray();
         this.gl.bindVertexArray(vao);
@@ -154,40 +182,5 @@ export default class Renderer2 {
         this.gl.uniform3fv(this.ui_pass_clr_uniform, [1.0, 1.0, 1.0])
 
         this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
-    }
-
-
-
-
-
-
-
-
-    createUIPassProgram() {
-        const vertex_shader = this.gl.createShader(this.gl.VERTEX_SHADER);
-        const fragment_shader = this.gl.createShader(this.gl.FRAGMENT_SHADER);
-        this.ui_program = this.gl.createProgram();
-
-        this.gl.shaderSource(vertex_shader, ui_pass_vs_src);
-        this.gl.compileShader(vertex_shader);
-
-        this.gl.shaderSource(fragment_shader, ui_pass_fs_src);
-        this.gl.compileShader(fragment_shader);
-
-        this.gl.attachShader(this.ui_program, vertex_shader);
-        this.gl.attachShader(this.ui_program, fragment_shader);
-        this.gl.linkProgram(this.ui_program);
-
-        return true;    
-    }
-
-    getUIPassShaderVariables() {
-        this.ui_pass_pos_attrib = this.gl.getAttribLocation(this.ui_program, "a_pos");
-
-        this.ui_pass_circle_center_uniform = this.gl.getUniformLocation(this.ui_program, "u_cntr");
-        this.ui_pass_circle_radius = this.gl.getUniformLocation(this.ui_program, "u_radius");
-        this.ui_pass_clr_uniform = this.gl.getUniformLocation(this.ui_program, "u_clr");
-
-        return true;
     }
 }
