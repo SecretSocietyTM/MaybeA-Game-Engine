@@ -1,5 +1,7 @@
 import vs_src from "../shaders/3d_pass/vertexshader.js";
 import fs_src from "../shaders/3d_pass/fragmentshader.js";
+import ui_pass_vs_src from "../shaders/ui_pass/vertexshader.js";
+import ui_pass_fs_src from "../shaders/ui_pass/fragmentshader.js";
 
 // TODO: hopefully delete or make this the main renderer.
 export default class Renderer2 {
@@ -78,6 +80,7 @@ export default class Renderer2 {
         this.gl.enable(this.gl.SCISSOR_TEST);
     }
 
+    // TODO: find a better way to deal with gizmos
     renderToViews(views, objects) {
         views.forEach(view => {
             this.gl.viewport(view.left, view.bottom, view.width, view.height);
@@ -114,5 +117,4 @@ export default class Renderer2 {
             }
         });
     }
-
 }
