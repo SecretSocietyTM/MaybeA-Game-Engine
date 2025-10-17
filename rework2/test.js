@@ -150,7 +150,7 @@ view2.window.addEventListener("mousedown", (e) => {
     if (e.button === 0 && transform_gizmos.display_gizmos) {
 
         // TODO: need to figure this out, its not working, likely due to the views
-        if (transform_gizmos.isIntersectingGizmo([cur_x, view2.height - cur_y])) {
+        if (transform_gizmos.isIntersectingGizmo([cur_x, view2.height - cur_y], view2)) {
             transform_gizmos.is_interacting = true;
             start_pos = Interactions.calculatePlaneIntersectionPoint(
                 current_ray, view2.camera.dir, cur_selection.pos);

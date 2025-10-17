@@ -138,8 +138,10 @@ export default class TransformGizmos {
         }); 
     }
 
-    isIntersectingGizmo(mouse_pos) {
-        const dist = vec2.length(vec2.subtract([], mouse_pos, this.main_gizmo.center));
+    isIntersectingGizmo(mouse_pos, view) {
+        // TODO: find better name for this, or just store the real center within the THIS.
+        const real_center = vec2.subtract([], this.main_gizmo.center, [view.left, view.bottom]);
+        const dist = vec2.length(vec2.subtract([], mouse_pos, real_center));
 
         if (this.mode === "translate") {
             if (dist <= this.main_gizmo.radius) return true;
