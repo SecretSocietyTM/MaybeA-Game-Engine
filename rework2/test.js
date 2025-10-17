@@ -191,3 +191,16 @@ view2.window.addEventListener("wheel", e => {
     current_ray.origin = view2.camera.pos;
     view2.camera.recalculateViewMatrix();
 });
+
+document.addEventListener("keydown", (e) => {
+    if (e.key === "t") {
+        transform_gizmos.setMode("translate");
+        cur_mode_ui.textContent = transform_gizmos.mode;
+    } else if (e.key === "r") {
+        transform_gizmos.setMode("rotate");
+        cur_mode_ui.textContent = transform_gizmos.mode;
+    } else if (e.key === "s") {
+        transform_gizmos.setMode("scale");
+        cur_mode_ui.textContent = transform_gizmos.mode;
+    }
+});

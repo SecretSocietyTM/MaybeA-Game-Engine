@@ -84,26 +84,35 @@ export default class Renderer2 {
     }
 
     // TODO: find a better way to deal with gizmos
-    renderToViews(views, objects, transform_gizmos) {
+    renderToViews(views, objects, gizmos) {
         views.forEach(view => {
             this.gl.viewport(view.left, view.bottom, view.width, view.height);
             this.gl.scissor(view.left, view.bottom, view.width, view.height);
             this.gl.clearColor(0.3, 0.3, 0.3, 1.0);
-            this.pass3D(view, objects)
 
-            if (view.show_gizmos && transform_gizmos.display_gizmos) {
-                this.passUI(transform_gizmos.main_gizmo);
+            // constant uniforms
+            this.gl.useProgram(this.program);
+            this.gl.uniformMatrix4fv(this.u_proj_location, this.gl.FALSE, view.proj_matrix);
+            this.gl.uniformMatrix4fv(this.u_view_location, this.gl.FALSE, view.camera.view_matrix);
+        
+            this.pass3D(objects, false); // render scene objects
+
+            if (view.show_gizmos && gizmos.display_gizmos) {
+                this.pass3D(gizmos.active_objects, true); // render gizmos
+
+                this.gl.useProgram(this.ui_program);
+                this.passUI(gizmos.main_gizmo);
             }
         });
     }
 
-    pass3D(view, objects) {
-        this.gl.useProgram(this.program);
-        this.gl.enable(this.gl.DEPTH_TEST);
-        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-
-        this.gl.uniformMatrix4fv(this.u_proj_location, this.gl.FALSE, view.proj_matrix);
-        this.gl.uniformMatrix4fv(this.u_view_location, this.gl.FALSE, view.camera.view_matrix);
+    pass3D(objects, is_gizmo) {
+        if (is_gizmo) {
+            this.gl.disable(this.gl.DEPTH_TEST);
+        } else {
+            this.gl.enable(this.gl.DEPTH_TEST);
+            this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+        }
 
         objects.forEach(object => {
             this.gl.uniformMatrix4fv(this.u_model_location, this.gl.FALSE, object.model_matrix);
@@ -123,6 +132,28 @@ export default class Renderer2 {
                 this.gl.bindVertexArray(null);
             }
         });
+    }
+
+    passUI(main_gizmo) {
+        // fullscreen quad vertices
+        const vertices = new Float32Array([
+            -1, -1, // bot-left
+             1, -1, // bot-right
+            -1,  1, // top-left
+             1,  1  // top-right
+        ]);
+
+        const pos_buffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, pos_buffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices, this.gl.STATIC_DRAW);
+        this.gl.enableVertexAttribArray(this.ui_pass_pos_attrib);
+        this.gl.vertexAttribPointer(this.ui_pass_pos_attrib, 2, this.gl.FLOAT, this.gl.FALSE, 0, 0);
+
+        this.gl.uniform2fv(this.ui_pass_circle_center_uniform, main_gizmo.center);
+        this.gl.uniform1f(this.ui_pass_circle_radius, main_gizmo.radius);
+        this.gl.uniform3fv(this.ui_pass_clr_uniform, [1.0, 1.0, 1.0])
+
+        this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
     }
 
 
@@ -158,29 +189,5 @@ export default class Renderer2 {
         this.ui_pass_clr_uniform = this.gl.getUniformLocation(this.ui_program, "u_clr");
 
         return true;
-    }
-
-    passUI(main_gizmo) {
-        this.gl.useProgram(this.ui_program);
-
-        // fullscreen quad vertices
-        const vertices = new Float32Array([
-            -1, -1, // bot-left
-             1, -1, // bot-right
-            -1,  1, // top-left
-             1,  1  // top-right
-        ]);
-
-        const pos_buffer = this.gl.createBuffer();
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, pos_buffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices, this.gl.STATIC_DRAW);
-        this.gl.enableVertexAttribArray(this.ui_pass_pos_attrib);
-        this.gl.vertexAttribPointer(this.ui_pass_pos_attrib, 2, this.gl.FLOAT, this.gl.FALSE, 0, 0);
-
-        this.gl.uniform2fv(this.ui_pass_circle_center_uniform, main_gizmo.center);
-        this.gl.uniform1f(this.ui_pass_circle_radius, main_gizmo.radius);
-        this.gl.uniform3fv(this.ui_pass_clr_uniform, [1.0, 1.0, 1.0])
-
-        this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
     }
 }
