@@ -57,4 +57,8 @@ export default class Camera {
             this.pos = vec3.subtract([], this.pos, vec3.normalize([], this.dir));
         }
     }
+
+    recalculateViewMatrix() {
+        mat4.lookAt(this.view_matrix, this.pos, vec3.subtract([], this.pos, this.dir), this.up);
+    }
 }

@@ -178,6 +178,7 @@ canvas.addEventListener("click", (e) => {
 });
 
 canvas.addEventListener("mousedown", (e) => {
+    // might be better to just use offset coordinates
     cur_x = e.clientX - rect.left;
     cur_y = e.clientY - rect.top;
 

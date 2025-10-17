@@ -29,20 +29,17 @@ body {
 
 .__body {
     /* If I want to be able to click on the view windows I need to assign
-    canvas a z-index of -1. Likewise I need to assign the __body div a z-index of -2
-    so that the background color is behind. */
+    canvas a z-index of -1 and remove the background color from the __body element */
 
     display: grid;
-    position: absolute; /* TODO: consider removing */
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
 
     padding: 10rem 5rem;
     width: 100%;
     height: 100%;
-    z-index: -2; /* TODO: consider removing */
 
-    background-color: rgb(136, 255, 0);
+    /* background-color: aquamarine; TODO: uncomment*/
 }
 
 #view_1, #view_2 {
