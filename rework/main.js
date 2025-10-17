@@ -80,11 +80,6 @@ mat4.lookAt(view, camera.pos, vec3.subtract([], camera.pos, camera.dir), camera.
 mat4.perspective(proj, glm.glMatrix.toRadian(45), WIDTH / HEIGHT, 0.1, 1000);
 
 const renderer = new Renderer(canvas);
-renderer.createProgram(vs_src, fs_src);
-renderer.createUIPassProgram(ui_pass_vs_src, ui_pass_fs_src);
-renderer.getShaderVariables();
-renderer.getUIPassShaderVariables();
-renderer.setupRender(WIDTH, HEIGHT, [0.3, 0.3, 0.3, 1.0]/* [0.45, 0.55, 0.5, 1.0] */);
 
 
 // reusable VAOs

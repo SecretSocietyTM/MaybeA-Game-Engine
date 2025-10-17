@@ -17,6 +17,9 @@ export default class Camera {
         this.yaw = 90;
         this.pitch = 0;
         this.zoom_val = 10;
+
+        this.view_matrix = mat4.create();
+        mat4.lookAt(this.view_matrix, this.pos, this.dir, this.up);
     }
 
     // TODO: because the CAM_UP vector is not modified in orbitCamera, panning "up" 

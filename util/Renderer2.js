@@ -1,0 +1,118 @@
+import vs_src from "../shaders/3d_pass/vertexshader.js";
+import fs_src from "../shaders/3d_pass/fragmentshader.js";
+
+// TODO: hopefully delete or make this the main renderer.
+export default class Renderer2 {
+    constructor(canvas) {
+        this.gl = canvas.getContext("webgl2");
+        this.createProgram();
+        this.getShaderVariables();
+        this.setupRenderer();
+    }
+
+    createProgram() {
+        const vertex_shader = this.gl.createShader(this.gl.VERTEX_SHADER);
+        const fragment_shader = this.gl.createShader(this.gl.FRAGMENT_SHADER);
+        this.program = this.gl.createProgram();
+
+        this.gl.shaderSource(vertex_shader, vs_src);
+        this.gl.compileShader(vertex_shader);
+
+        this.gl.shaderSource(fragment_shader, fs_src);
+        this.gl.compileShader(fragment_shader);
+
+        this.gl.attachShader(this.program, vertex_shader);
+        this.gl.attachShader(this.program, fragment_shader);
+        this.gl.linkProgram(this.program);
+
+        return true;
+    }
+
+    getShaderVariables() {
+        // vertex shader variables
+        this.a_pos_location = this.gl.getAttribLocation(this.program, "a_pos");
+        this.a_clr_location = this.gl.getAttribLocation(this.program, "a_clr");
+        this.u_model_location = this.gl.getUniformLocation(this.program, "u_model");
+        this.u_view_location = this.gl.getUniformLocation(this.program, "u_view");
+        this.u_proj_location = this.gl.getUniformLocation(this.program, "u_proj");
+
+        // fragment shader variables
+        this.u_useClr_location = this.gl.getUniformLocation(this.program, "u_useClr");
+        this.u_clr_location = this.gl.getUniformLocation(this.program, "u_clr");
+
+        return true;
+    }
+
+    addObjectVAO(mesh) {
+        const vao = this.gl.createVertexArray();
+        this.gl.bindVertexArray(vao);
+
+        // create position vbo
+        const position_buffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, position_buffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(mesh.vertices), this.gl.STATIC_DRAW);
+        this.gl.enableVertexAttribArray(this.a_pos_location);
+        this.gl.vertexAttribPointer(
+            this.a_pos_location, 3, this.gl.FLOAT, this.gl.FALSE, 0, 0);
+
+        // create color vbo
+        const color_buffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, color_buffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(mesh.vertex_colors), this.gl.STATIC_DRAW);
+        this.gl.enableVertexAttribArray(this.a_clr_location);
+        this.gl.vertexAttribPointer(
+            this.a_clr_location, 3, this.gl.FLOAT, this.gl.FALSE, 0, 0);
+
+        // create index ebo
+        const index_buffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, index_buffer);
+        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(mesh.indices), this.gl.STATIC_DRAW);
+
+        this.gl.bindVertexArray(null);
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
+
+        return vao;
+    }
+
+    setupRenderer() {
+        this.gl.enable(this.gl.SCISSOR_TEST);
+    }
+
+    renderToViews(views, objects) {
+        views.forEach(view => {
+            this.gl.viewport(view.left, view.bottom, view.width, view.height);
+            this.gl.scissor(view.left, view.bottom, view.width, view.height);
+            this.gl.clearColor(0.3, 0.3, 0.3, 1.0);
+            this.pass3D(view, objects)
+        });
+    }
+
+    pass3D(view, objects) {
+        this.gl.useProgram(this.program);
+        this.gl.enable(this.gl.DEPTH_TEST);
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+
+        this.gl.uniformMatrix4fv(this.u_proj_location, this.gl.FALSE, view.proj_matrix);
+        this.gl.uniformMatrix4fv(this.u_view_location, this.gl.FALSE, view.camera.view_matrix);
+
+        objects.forEach(object => {
+            this.gl.uniformMatrix4fv(this.u_model_location, this.gl.FALSE, object.model_matrix);
+            this.gl.uniform1i(this.u_useClr_location, object.use_color);
+            this.gl.uniform3fv(this.u_clr_location, object.color);
+
+            this.gl.bindVertexArray(object.vao);
+            this.gl.drawElements(this.gl.TRIANGLES, object.mesh.indices.length, this.gl.UNSIGNED_SHORT, 0);
+            this.gl.bindVertexArray(null);
+
+            if ("aabb" in object) {
+                const aabb = object.aabb;
+                this.gl.uniformMatrix4fv(this.u_model_location, this.gl.FALSE, aabb.model_matrix);
+
+                this.gl.bindVertexArray(aabb.vao);
+                this.gl.drawElements(this.gl.LINES, 24, this.gl.UNSIGNED_SHORT, 0);
+                this.gl.bindVertexArray(null);
+            }
+        });
+    }
+
+}

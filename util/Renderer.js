@@ -13,6 +13,12 @@ export default class Renderer {
     constructor(canvas) {
         this.gl = canvas.getContext("webgl2");
         this.object_vaos = [];
+
+        this.createProgram();
+        this.createUIPassProgram();
+        this.getShaderVariables();
+        this.getUIPassShaderVariables();
+        this.setupRender(canvas.width, canvas.height, [0.3, 0.3, 0.3, 1.0]);
     }
 
     // TODO: this code is redundant with the function below. Change it so that
@@ -126,6 +132,7 @@ export default class Renderer {
         this.gl.clearColor(color[0], color[1], color[2], color[3]);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
         this.gl.enable(this.gl.DEPTH_TEST);
+        this.gl.enable(this.gl.SCISSOR_TEST);
     }
 
     renderFrame(view, proj, objects, transform_gizmos) {
