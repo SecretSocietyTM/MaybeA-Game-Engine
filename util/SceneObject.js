@@ -59,6 +59,25 @@ export default class SceneObject {
         if ("aabb" in this) this.aabb.updateAABB(this.model_matrix);
     }
 
+    transformTargetTo(pos, target, up, scale = [1,1,1]) {
+        this.pos = pos;
+        this.scale = scale;
+
+        // Create the base orientation matrix that makes the object look at 'target'
+        this.model_matrix = mat4.create();
+        mat4.targetTo(this.model_matrix, pos, target, up);
+
+        // --- Apply a 180° rotation around Y to flip the model ---
+        const flip = mat4.create();
+        mat4.rotateY(flip, flip, Math.PI); // 180° in radians
+        mat4.multiply(this.model_matrix, this.model_matrix, flip);
+
+        // --- Apply scaling ---
+        mat4.scale(this.model_matrix, this.model_matrix, scale);
+
+        /* if ("aabb" in this) this.aabb.updateAABB(this.model_matrix); */
+    }
+
     setLastStaticTransform() {
         this.last_static_transform = {
             pos: this.pos, 

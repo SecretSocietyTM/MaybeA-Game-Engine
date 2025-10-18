@@ -151,7 +151,7 @@ export default class Renderer2 {
             this.gl.drawElements(this.gl.TRIANGLES, object.mesh.indices.length, this.gl.UNSIGNED_SHORT, 0);
             this.gl.bindVertexArray(null);
 
-            if ("aabb" in object) {
+            if (object.aabb !== null) {
                 const aabb = object.aabb;
                 this.gl.uniformMatrix4fv(this.u_model_location, this.gl.FALSE, aabb.model_matrix);
 

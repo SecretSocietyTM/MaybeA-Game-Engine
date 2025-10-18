@@ -9,5 +9,9 @@ export default {
     translate_gizmo: parsePLY(ply_files.translate_gizmo),
     rotate_gizmo: parsePLY(ply_files.rotate_gizmo),
     scale_gizmo: parsePLY(ply_files.scale_gizmo),
+    
+    camera: parsePLY(ply_files.camera),
+    camera_offcenter: parsePLY(ply_files.camera_offcenter),
+
     aabb_wireframe: aabb_wireframe_mesh
 }

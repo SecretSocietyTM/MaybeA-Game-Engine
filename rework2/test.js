@@ -37,16 +37,18 @@ let current_ray = { // TODO: probably want this as a class at some point, someth
 
 const renderer = new Renderer2(canvas);
 const view1 = new ViewWindow("v1", document.getElementById("view1"), canvas);
-view1.moveCamera([-20,20,-20]);
+view1.show_gizmos = true;
+view1.moveCamera([-30,30,-30]);
 const view2 = new ViewWindow("v2", document.getElementById("view2"), canvas);
 view2.show_gizmos = true;
 const views = [view1, view2];
-console.log(views);
 
 /////////////////////////////////////////////////////////////////////////////////////
 ////////////////////   MORE UGLY CODE FROM REWORK/MAIN.JS   /////////////////////////
 current_ray.origin = view2.camera.pos;
 // TODO: find a better way to do this
+// TODO: BUG: due to the oddity of the canvas being the entire screen, the UI pass for drawing the circle gizmo
+// will cause it to be drawn over all viewports if the coordinates are calculate to be at some point in another viewport.
 const axis_translate_VAO = renderer.addObjectVAO(MeshesObj.translate_gizmo);
 const axis_rotate_VAO = renderer.addObjectVAO(MeshesObj.rotate_gizmo);
 const axis_scale_VAO = renderer.addObjectVAO(MeshesObj.scale_gizmo);
@@ -73,12 +75,17 @@ transform_gizmos.setMode();
 const objects = [];
 const unit_cube = new SceneObject("unit_cube", [0,0,0], [1,1,1], [0,0,0], 
     MeshesObj.unit_cube, renderer.addObjectVAO(MeshesObj.unit_cube), aabb_wireframe_VAO);
-const apple = new SceneObject("apple", [-10,0,-10], [9,9,9], [0,0,0], 
+const apple = new SceneObject("apple", [-20,0,-10], [9,9,9], [0,0,0], 
     MeshesObj.apple, renderer.addObjectVAO(MeshesObj.apple), aabb_wireframe_VAO);
 const weird_cube = new SceneObject("weird cube", [0,0,0], [1,1,1], [0,0,0],
     MeshesObj.weird_cube, renderer.addObjectVAO(MeshesObj.weird_cube), aabb_wireframe_VAO);
-objects.push(unit_cube, apple, weird_cube);
+// TODO: this is so JANK!
+const camera = new SceneObject("camera", [0,0,0], [0.5, 0.5, 0.5], [0,0,0],
+    MeshesObj.camera_offcenter, renderer.addObjectVAO(MeshesObj.camera_offcenter), aabb_wireframe_VAO);
+camera.transformTargetTo(view2.camera.pos, view2.camera.target, view2.camera.up, [0.5,0.5,0.5]);
+camera.aabb = null;
 
+objects.push(unit_cube, apple, weird_cube, camera);
 
 function renderFrame(loop = false) {
     renderer.renderToViews(views, objects, transform_gizmos);
@@ -113,18 +120,31 @@ view2.window.addEventListener("click", e => {
     current_ray.dir = Interactions.generateRayDir(view2.width, view2.height, mouse_x, mouse_y, view2.proj_matrix, view2.camera.view_matrix);
 
     for (let i = 0; i < objects.length; i++) {
+        // TODO: temp solution
+        /* console.log(objects[i]); */
+        if (objects[i].aabb === null) continue;
         if (objects[i].aabb.isIntersecting(current_ray)) {
             if (cur_selection === objects[i]) return;
             cur_selection = objects[i];
 
             transform_gizmos.display_gizmos = true;
-            transform_gizmos.main_gizmo.center = Interactions.calculateObjectCenterScreenCoord(view2.width, view2.height, cur_selection, view2.proj_matrix, view2.camera.view_matrix);
+
+            // positoin 2d gizmo at object center
+            transform_gizmos.main_gizmo.center = Interactions.coordsWorldToScreen(cur_selection.pos, view2.width, view2.height, view2.proj_matrix, view2.camera.view_matrix)
             transform_gizmos.main_gizmo.center = vec2.add([], transform_gizmos.main_gizmo.center, [view2.left, view2.bottom]);
-            console.log(transform_gizmos.main_gizmo);
+
+            // position 3d gizmos at object center
             transform_gizmos.objects.forEach(object => {
                 object.updatePos(cur_selection.pos);
             });
-            console.log(cur_selection)
+
+            // rescales 3d gizmos
+            const distance = vec3.distance(view2.camera.pos, cur_selection.pos);
+            const scale = (distance / transform_gizmos.reference_distance) * transform_gizmos.reference_scale;
+            transform_gizmos.objects.forEach(object => {
+                    object.updateScale([scale, scale, scale]);
+            });
+
             return;
         }
     }
@@ -216,6 +236,22 @@ view2.window.addEventListener("mousemove", e => {
         if (orbit_camera) view2.camera.orbit(1 * x_sign, 1 * y_sign);
         current_ray.origin = view2.camera.pos;
         view2.camera.recalculateViewMatrix();
+
+        // TODO: really jank
+        camera.transformTargetTo(view2.camera.pos, view2.camera.target, view2.camera.up, [0.5,0.5,0.5]);
+
+        if (transform_gizmos.display_gizmos) {
+            // positoin 2d gizmo at object center
+            transform_gizmos.main_gizmo.center = Interactions.coordsWorldToScreen(cur_selection.pos, view2.width, view2.height, view2.proj_matrix, view2.camera.view_matrix);
+            transform_gizmos.main_gizmo.center = vec2.add([], transform_gizmos.main_gizmo.center, [view2.left, view2.bottom]);
+
+            // rescales 3d gizmos
+            const distance = vec3.distance(view2.camera.pos, cur_selection.pos);
+            const scale = (distance / transform_gizmos.reference_distance) * transform_gizmos.reference_scale;
+            transform_gizmos.objects.forEach(object => {
+                object.updateScale([scale, scale, scale]);
+            });
+        }
         return;
     } else if (transform_gizmos.is_interacting && transform_gizmos.mode === "translate") {
 
@@ -343,6 +379,21 @@ view2.window.addEventListener("wheel", e => {
     view2.camera.zoom(e.deltaY);
     current_ray.origin = view2.camera.pos;
     view2.camera.recalculateViewMatrix();
+
+    // TODO: really jank
+    camera.transformTargetTo(view2.camera.pos, view2.camera.target, view2.camera.up, [0.5,0.5,0.5]);
+    if (transform_gizmos.display_gizmos) {
+        // keeps main gizmo in correct place
+        transform_gizmos.main_gizmo.center = Interactions.coordsWorldToScreen(cur_selection.pos, view2.width, view2.height, view2.proj_matrix, view2.camera.view_matrix);
+        transform_gizmos.main_gizmo.center = vec2.add([], transform_gizmos.main_gizmo.center, [view2.left, view2.bottom]);
+
+        // rescales 3d gizmos
+        const distance = vec3.distance(view2.camera.pos, cur_selection.pos);
+        const scale = (distance / transform_gizmos.reference_distance) * transform_gizmos.reference_scale;
+        transform_gizmos.objects.forEach(object => {
+                object.updateScale([scale, scale, scale]);
+        });
+    }
 });
 
 document.addEventListener("keydown", (e) => {

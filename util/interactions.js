@@ -74,14 +74,14 @@ export function calculateObjectCenterScreenCoord(width, height, object, proj, vi
 }
 
 // TODO: this should probably replace the function above. For now it is not needed
-/* export function calculateWorldToScreenCoords(coords) {
+export function coordsWorldToScreen(coords, width, height, proj, view) {
     const p = vec4.fromValues(coords[0], coords[1], coords[2], 1);
     vec4.transformMat4(p, p, view); // world space --> view space
     vec4.transformMat4(p, p, proj); // view space  --> clip space
     vec4.scale(p, p, 1 / p[3]);   // clip space  --> NDC coords
     const p_ndc = [p[0], p[1]];
 
-    const screen_x = (p_ndc[0] * 0.5 + 0.5) * WIDTH;
-    const screen_y = (p_ndc[1] * 0.5 + 0.5) * HEIGHT;
+    const screen_x = (p_ndc[0] * 0.5 + 0.5) * width;
+    const screen_y = (p_ndc[1] * 0.5 + 0.5) * height;
     return [screen_x, screen_y]; 
-} */
+}
