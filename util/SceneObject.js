@@ -14,10 +14,10 @@ export default class SceneObject {
         pos = [0,0,0],
         scale = [1,1,1],
         rotation_angles = [0,0,0],
-        mesh, vao, aabb_vao
+        mesh, vao
     ) {         
-        if(!mesh || !vao || !aabb_vao) {
-            console.error("Please provide the constructor with a mesh, vao, and an aabb vao");
+        if(!mesh || !vao) {
+            throw new Error("Please provide the constructor with a mesh, vao");
         }
 
         this.name = name;
@@ -25,7 +25,7 @@ export default class SceneObject {
         this.vao = vao;
         this.transform(pos, scale, rotation_angles);
 
-        this.aabb = new AxisAlignedBoundingBox(this.mesh.vertices, this.model_matrix, aabb_vao);
+        this.aabb = new AxisAlignedBoundingBox(this.mesh.vertices, this.model_matrix);
 
         this.last_static_transform = null;
         this.setLastStaticTransform();

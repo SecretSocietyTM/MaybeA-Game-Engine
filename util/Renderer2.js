@@ -3,16 +3,37 @@ import fs_src from "../shaders/3d_pass/fragmentshader.js";
 import ui_pass_vs_src from "../shaders/ui_pass/vertexshader.js";
 import ui_pass_fs_src from "../shaders/ui_pass/fragmentshader.js";
 
+
 // TODO: hopefully delete or make this the main renderer.
 export default class Renderer2 {
     constructor(canvas) {
         this.gl = canvas.getContext("webgl2");
+
         this.createProgram();
         this.getShaderVariables();
         this.setupRenderer();
 
         this.createUIPassProgram();
         this.getUIPassShaderVariables();
+
+        //  TODO: improve or remove
+        this.vao_cache = new Map();
+        this.aabb_mesh = null;
+    }
+
+    addAABBMesh(aabb_mesh) {
+        this.aabb_mesh = aabb_mesh;
+        this.getVAO(aabb_mesh);
+    }
+
+    getVAO(mesh) {
+        if (this.vao_cache.has(mesh)) {
+            return this.vao_cache.get(mesh);
+        }
+
+        const vao = this.addObjectVAO(mesh);
+        this.vao_cache.set(mesh, vao);
+        return vao;
     }
 
     createProgram() {
@@ -147,15 +168,16 @@ export default class Renderer2 {
             this.gl.uniform1i(this.u_useClr_location, object.use_color);
             this.gl.uniform3fv(this.u_clr_location, object.color);
 
-            this.gl.bindVertexArray(object.vao);
+            this.gl.bindVertexArray(this.getVAO(object.mesh));
             this.gl.drawElements(this.gl.TRIANGLES, object.mesh.indices.length, this.gl.UNSIGNED_SHORT, 0);
             this.gl.bindVertexArray(null);
 
             if (object.aabb !== null) {
+                if (!this.aabb_mesh) throw new Error("AABB mesh not set!");
                 const aabb = object.aabb;
                 this.gl.uniformMatrix4fv(this.u_model_location, this.gl.FALSE, aabb.model_matrix);
 
-                this.gl.bindVertexArray(aabb.vao);
+                this.gl.bindVertexArray(this.getVAO(this.aabb_mesh));
                 this.gl.drawElements(this.gl.LINES, 24, this.gl.UNSIGNED_SHORT, 0);
                 this.gl.bindVertexArray(null);
             }

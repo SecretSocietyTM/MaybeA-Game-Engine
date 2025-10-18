@@ -5,11 +5,9 @@ const mat4 = glm.mat4;
 
 
 export default class AxisAlignedBoundingBox {
-    constructor(parent_vertices, parent_model_matrix, vao) {
+    constructor(parent_vertices, parent_model_matrix) {
         this.parent_vertices = parent_vertices;
         this.parent_model_matrix = parent_model_matrix;
-
-        this.vao = vao;
 
         this.extrema = null;
         this.model_matrix = null;
