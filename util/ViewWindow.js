@@ -30,6 +30,7 @@ export default class ViewWindow {
             0.1, 1000
         );
 
+        this.objects = [];
         this.show_gizmos = false;
     }
 

@@ -73,22 +73,29 @@ transform_gizmos.setMode();
 /////////////////////////////////////////////////////////////////////////////////////
 
 const objects = [];
+const debug_objects = [];
 const unit_cube = new SceneObject("unit_cube", [0,0,0], [1,1,1], [0,0,0], 
     MeshesObj.unit_cube, renderer.addObjectVAO(MeshesObj.unit_cube), aabb_wireframe_VAO);
 const apple = new SceneObject("apple", [-20,0,-10], [9,9,9], [0,0,0], 
     MeshesObj.apple, renderer.addObjectVAO(MeshesObj.apple), aabb_wireframe_VAO);
 const weird_cube = new SceneObject("weird cube", [0,0,0], [1,1,1], [0,0,0],
     MeshesObj.weird_cube, renderer.addObjectVAO(MeshesObj.weird_cube), aabb_wireframe_VAO);
+
 // TODO: this is so JANK!
 const camera = new SceneObject("camera", [0,0,0], [0.5, 0.5, 0.5], [0,0,0],
     MeshesObj.camera_offcenter, renderer.addObjectVAO(MeshesObj.camera_offcenter), aabb_wireframe_VAO);
 camera.transformTargetTo(view2.camera.pos, view2.camera.target, view2.camera.up, [0.5,0.5,0.5]);
 camera.aabb = null;
+////////////////////////
 
 objects.push(unit_cube, apple, weird_cube, camera);
+debug_objects.push(unit_cube, apple, weird_cube, camera);
+
+view1.objects = debug_objects;
+view2.objects = objects;
 
 function renderFrame(loop = false) {
-    renderer.renderToViews(views, objects, transform_gizmos);
+    renderer.renderToViews(views, transform_gizmos);
     if (loop) requestAnimationFrame(renderFrame);
 }
 

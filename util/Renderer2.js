@@ -112,7 +112,7 @@ export default class Renderer2 {
     }
 
     // TODO: find a better way to deal with gizmos
-    renderToViews(views, objects, gizmos) {
+    renderToViews(views, gizmos) {
         views.forEach(view => {
             this.gl.viewport(view.left, view.bottom, view.width, view.height);
             this.gl.scissor(view.left, view.bottom, view.width, view.height);
@@ -123,7 +123,7 @@ export default class Renderer2 {
             this.gl.uniformMatrix4fv(this.u_proj_location, this.gl.FALSE, view.proj_matrix);
             this.gl.uniformMatrix4fv(this.u_view_location, this.gl.FALSE, view.camera.view_matrix);
         
-            this.pass3D(objects, false); // render scene objects
+            this.pass3D(view.objects, false); // render scene objects
 
             if (view.show_gizmos && gizmos.display_gizmos) {
                 this.pass3D(gizmos.active_objects, true); // render gizmos

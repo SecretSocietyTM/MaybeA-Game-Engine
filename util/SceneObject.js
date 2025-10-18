@@ -75,7 +75,7 @@ export default class SceneObject {
         // --- Apply scaling ---
         mat4.scale(this.model_matrix, this.model_matrix, scale);
 
-        /* if ("aabb" in this) this.aabb.updateAABB(this.model_matrix); */
+        if (this.aabb !== null) this.aabb.updateAABB(this.model_matrix);
     }
 
     setLastStaticTransform() {
