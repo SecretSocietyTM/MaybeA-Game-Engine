@@ -11,18 +11,18 @@ export default class SceneObject {
 
     constructor(
         name = "object",
+        mesh,
         pos = [0,0,0],
         scale = [1,1,1],
         rotation_angles = [0,0,0],
-        mesh, vao
     ) {         
-        if(!mesh || !vao) {
-            throw new Error("Please provide the constructor with a mesh, vao");
+        if(!mesh) {
+            throw new Error("Please provide the constructor with a mesh");
         }
 
         this.name = name;
         this.mesh = mesh;
-        this.vao = vao;
+
         this.transform(pos, scale, rotation_angles);
 
         this.aabb = new AxisAlignedBoundingBox(this.mesh.vertices, this.model_matrix);

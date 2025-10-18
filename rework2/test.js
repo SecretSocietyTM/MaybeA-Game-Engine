@@ -36,6 +36,9 @@ let current_ray = { // TODO: probably want this as a class at some point, someth
 
 
 const renderer = new Renderer2(canvas);
+// preload the AABB wireframe mesh and VAO (adds mesh and calls getVAO(aabb_mesh))
+renderer.addAABBMesh(MeshesObj.aabb_wireframe);
+
 const view1 = new ViewWindow("v1", document.getElementById("view1"), canvas);
 view1.show_gizmos = true;
 view1.moveCamera([-30,30,-30]);
@@ -43,50 +46,27 @@ const view2 = new ViewWindow("v2", document.getElementById("view2"), canvas);
 view2.show_gizmos = true;
 const views = [view1, view2];
 
-// preload the AABB wireframe mesh and VAO (adds mesh and calls getVAO(aabb_mesh))
-renderer.addAABBMesh(MeshesObj.aabb_wireframe);
-
 /////////////////////////////////////////////////////////////////////////////////////
 ////////////////////   MORE UGLY CODE FROM REWORK/MAIN.JS   /////////////////////////
 current_ray.origin = view2.camera.pos;
 // TODO: find a better way to do this
-// TODO: BUG: due to the oddity of the canvas being the entire screen, the UI pass for drawing the circle gizmo
-// will cause it to be drawn over all viewports if the coordinates are calculate to be at some point in another viewport.
-const axis_translate_VAO = renderer.addObjectVAO(MeshesObj.translate_gizmo);
-const axis_rotate_VAO = renderer.addObjectVAO(MeshesObj.rotate_gizmo);
-const axis_scale_VAO = renderer.addObjectVAO(MeshesObj.scale_gizmo);
-const aabb_wireframe_VAO = renderer.addObjectVAO(MeshesObj.aabb_wireframe);
-const gizmo_meshes = {
-    translate_mesh: MeshesObj.translate_gizmo,
-    rotate_mesh: MeshesObj.rotate_gizmo,
-    scale_mesh: MeshesObj.scale_gizmo
-}
-const gizmo_vaos = {
-    translate_vao: axis_translate_VAO,
-    rotate_vao: axis_rotate_VAO,
-    scale_vao: axis_scale_VAO,
-    aabb_wireframe: aabb_wireframe_VAO
-}
 const transform_gizmos = new TransformGizmos();
 transform_gizmos.reference_scale = 0.4;
 transform_gizmos.reference_distance = vec3.distance(view2.camera.pos, [0,0,0]);
-transform_gizmos.initGizmoObjects(gizmo_meshes, gizmo_vaos);
+transform_gizmos.initGizmoObjects(MeshesObj);
 transform_gizmos.setMode();
 /////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////
 
 const objects = [];
 const debug_objects = [];
-const unit_cube = new SceneObject("unit_cube", [0,0,0], [1,1,1], [0,0,0], 
-    MeshesObj.unit_cube, renderer.addObjectVAO(MeshesObj.unit_cube));
-const apple = new SceneObject("apple", [-20,0,-10], [9,9,9], [0,0,0], 
-    MeshesObj.apple, renderer.addObjectVAO(MeshesObj.apple));
-const weird_cube = new SceneObject("weird cube", [0,0,0], [1,1,1], [0,0,0],
-    MeshesObj.weird_cube, renderer.addObjectVAO(MeshesObj.weird_cube));
+
+const unit_cube = new SceneObject("unit_cube", MeshesObj.unit_cube, [0,0,0], [1,1,1], [0,0,0]);
+const apple = new SceneObject("apple", MeshesObj.apple, [-20,0,-10], [9,9,9], [0,0,0]);
+const weird_cube = new SceneObject("weird cube", MeshesObj.weird_cube, [0,0,0], [1,1,1], [0,0,0]);
 
 // TODO: this is so JANK!
-const camera = new SceneObject("camera", [0,0,0], [0.5, 0.5, 0.5], [0,0,0],
-    MeshesObj.camera_offcenter, renderer.addObjectVAO(MeshesObj.camera_offcenter));
+const camera = new SceneObject("camera", MeshesObj.camera_offcenter, [0,0,0], [0.5,0.5,0.5], [0,0,0]);
 camera.transformTargetTo(view2.camera.pos, view2.camera.target, view2.camera.up, [0.5,0.5,0.5]);
 camera.aabb = null;
 ////////////////////////
