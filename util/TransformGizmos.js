@@ -7,28 +7,21 @@ const mat4 = glm.mat4;
 import SceneObject from "./SceneObject.js";
 
 const RED_COLOR = [1.0, 0.3, 0.2];
-const SELECT_RED_COLOR = [0.99, 0.4, 0.32];
 const GREEN_COLOR = [0.35, 0.8, 0.46];
-const SELECT_GREEN_COLOR = [0.44, 0.9, 0.55];
 const BLUE_COLOR = [0.2, 0.56, 0.85];
-const SELECT_BLUE_COLOR = [0.42, 0.71, 0.94];
 
 
 export default class TransformGizmos {
-    constructor() {
-        this.objects = null;
-        this.translate_objects = null;
-        this.rotate_objects = null;
-        this.scale_objects = null;
+    constructor(meshes, ref_scale, ref_distance) {
+        this.objects = [];
+        this.translate_objects = [];
+        this.rotate_objects = [];
+        this.scale_objects = [];
+        this.active_objects = [];
 
-        this.reference_scale = null;
-        this.reference_distance = null;
-
-        this.mode = "translate";
-        this.active_objects = this.translate_objects;
         this.main_gizmo = {
             center: null,
-            radius: 12,
+            radius: null,
         }
 
         this.interaction_with = null;
@@ -37,6 +30,11 @@ export default class TransformGizmos {
 
         this.active_rotation_axis = [0,1,0];
 
+        this.reference_scale = ref_scale;
+        this.reference_distance = ref_distance;
+
+        this.initGizmoObjects(meshes);
+        this.setMode();
     }
 
     setMode(mode = "translate") {
@@ -62,11 +60,6 @@ export default class TransformGizmos {
     }
 
     initGizmoObjects(meshes) {
-        this.objects = [];
-        this.translate_objects = [];
-        this.rotate_objects = [];
-        this.scale_objects = [];
-
         // translate
         const x_trans = new SceneObject("x_trans", meshes.translate_gizmo, [0,0,0],
             Array(3).fill(this.reference_scale), [0,0,-90]);
@@ -79,13 +72,13 @@ export default class TransformGizmos {
 
         // rotate
         const x_rotate = new SceneObject("x_rotate", meshes.rotate_gizmo, [0,0,0], 
-            [0.1, 0.1, 0.1], [90,0,90]);
+            Array(3).fill(this.reference_scale), [90,0,90]);
 
         const y_rotate = new SceneObject("y_rotate", meshes.rotate_gizmo, [0,0,0], 
-            [0.1, 0.1, 0.1], [0,-45,0]);
+            Array(3).fill(this.reference_scale), [0,-45,0]);
     
         const z_rotate = new SceneObject("z_rotate", meshes.rotate_gizmo, [0,0,0], 
-            [0.1, 0.1, 0.1], [90,0,0])
+            Array(3).fill(this.reference_scale), [90,0,0])
 
         // scale
         const x_scale = new SceneObject("x_scale", meshes.scale_gizmo, [0,0,0], 

@@ -46,17 +46,9 @@ const view2 = new ViewWindow("v2", document.getElementById("view2"), canvas);
 view2.show_gizmos = true;
 const views = [view1, view2];
 
-/////////////////////////////////////////////////////////////////////////////////////
-////////////////////   MORE UGLY CODE FROM REWORK/MAIN.JS   /////////////////////////
 current_ray.origin = view2.camera.pos;
 // TODO: find a better way to do this
-const transform_gizmos = new TransformGizmos();
-transform_gizmos.reference_scale = 0.4;
-transform_gizmos.reference_distance = vec3.distance(view2.camera.pos, [0,0,0]);
-transform_gizmos.initGizmoObjects(MeshesObj);
-transform_gizmos.setMode();
-/////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////
+const transform_gizmos = new TransformGizmos(MeshesObj, 0.4, vec3.distance(view2.camera.pos, view2.camera.target));
 
 const objects = [];
 const debug_objects = [];
@@ -389,12 +381,9 @@ view2.window.addEventListener("wheel", e => {
 document.addEventListener("keydown", (e) => {
     if (e.key === "t") {
         transform_gizmos.setMode("translate");
-        cur_mode_ui.textContent = transform_gizmos.mode;
     } else if (e.key === "r") {
         transform_gizmos.setMode("rotate");
-        cur_mode_ui.textContent = transform_gizmos.mode;
     } else if (e.key === "s") {
         transform_gizmos.setMode("scale");
-        cur_mode_ui.textContent = transform_gizmos.mode;
     }
 });
