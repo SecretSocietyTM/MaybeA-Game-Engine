@@ -32,6 +32,7 @@ export default class SceneObject {
 
         this.use_color = false;
         this.color = [0.8, 0.8, 0.8];
+        this.alpha = 1.0;
     }
 
     useColor(bool) {
@@ -40,6 +41,10 @@ export default class SceneObject {
 
     assignColor(color) {
         this.color = color;
+    }
+
+    assignAlpha(alpha) {
+        this.alpha = alpha;
     }
 
     transform(pos = [0, 0, 0], 

@@ -26,6 +26,11 @@ const line = {
     p1: [0,0]
 };
 
+const line3d = {
+    p0: [0,0,10],
+    p1: [0,0,0]
+};
+
 let start_pos;
 let cur_selection = null;
 let cur_x;
@@ -65,6 +70,9 @@ const weird_cube = new SceneObject("weird cube", MeshesObj.weird_cube, [0,0,0], 
 const plane = new SceneObject("unit_cube", MeshesObj.unit_cube, [0,0,0], [20,20,0.02], [0,0,0]);
 plane.transformTargetTo(plane.pos, view2.camera.pos, view2.camera.up, plane.scale);
 plane.aabb = null;
+plane.assignColor([0.7, 0.7, 0.7]);
+plane.assignAlpha(0.3);
+plane.useColor(true);
 
 // TODO: this is so JANK!
 const camera = new SceneObject("camera", MeshesObj.camera_offcenter, [0,0,0], [0.5,0.5,0.5], [0,0,0]);
@@ -72,14 +80,14 @@ camera.transformTargetTo(view2.camera.pos, view2.camera.target, view2.camera.up,
 camera.aabb = null; // TODO: should find a way to make a "Debugger" "Editor" "Game" class that Extends or Inherits from ViewWindow. Each window will have its own config, like dispaying aabbs.
 ////////////////////////
 
-objects.push(unit_cube, apple, weird_cube, camera, /* plane */);
-debug_objects.push(unit_cube, apple, weird_cube, camera, /* plane */);
+objects.push(unit_cube, apple, weird_cube, /* plane */);
+debug_objects.push(unit_cube, /* apple, weird_cube, */ camera, plane);
 
 view1.objects = debug_objects;
 view2.objects = objects;
 
 function renderFrame(loop = false) {
-    renderer.renderToViews(views, transform_gizmos, line);
+    renderer.renderToViews(views, transform_gizmos, line, line3d);
     if (loop) requestAnimationFrame(renderFrame);
 }
 
@@ -165,6 +173,8 @@ view2.window.addEventListener("mousedown", (e) => {
             if (transform_gizmos.mode === "scale") {
                 start_pos = cur_selection.pos;
                 line.p0 = Interactions.screenToNDC(view2.width, view2.height, transform_gizmos.main_gizmo.center[0], transform_gizmos.main_gizmo.center[1]);
+                line3d.p1 = Interactions.calculatePlaneIntersectionPoint(
+                current_ray, view2.camera.dir, cur_selection.pos);
             }
             transform_gizmos.interaction_with = "2d_gizmo";
             return;
@@ -202,6 +212,20 @@ view2.window.addEventListener("mouseup", e => {
     }
 });
 
+
+
+// TODO:
+/* When dealing with the 2D gizmo it is important to understand what values are needed to do what.
+Translate: need the actual position of the ray in world space to move the object to said position
+Rotate: I believe rotation can be handled with a simple 2d system
+Translate: Probably also handle with 2d system.
+
+// OK backtrack. The main reason for the above is because scaling with 2d gizmo is causing odd behavior when zooming in/out. Ive drawn
+an example out in paper. The solution would be to cast a ray with an origin == mouse position in world space. Currently what happens
+is a ray is generated with an origin == camera pos. 
+
+The 3D gizmos may differ.
+ */
 view2.window.addEventListener("mousemove", e => {
     const mouse_x = e.clientX - view2.rect.left;
     const mouse_y = e.clientY - view2.rect.top;
@@ -233,6 +257,9 @@ view2.window.addEventListener("mousemove", e => {
         camera.transformTargetTo(view2.camera.pos, view2.camera.target, view2.camera.up, [0.5,0.5,0.5]);
         plane.pos = view2.camera.target;
         plane.transformTargetTo(plane.pos, view2.camera.pos, view2.camera.up, plane.scale); // TODO: supremely jank
+
+        // TODO: remove
+        line3d.p0 = view2.camera.pos;
 
         if (transform_gizmos.display_gizmos) {
             // position 2d gizmo at object center
@@ -273,6 +300,7 @@ view2.window.addEventListener("mousemove", e => {
                 cur_selection.last_static_transform.pos[2] + new_pos[2] - start_pos[2]
             ];
         } else if (interaction_with === "2d_gizmo") {
+            // TODO: object center should not SNAP to location of mouse when interacting with 2D gizmo, instead it should maintain its offset from wherever you grabbed the gizmo
             translate_vector = new_pos;
         }
 
@@ -321,7 +349,9 @@ view2.window.addEventListener("mousemove", e => {
                 cur_selection.last_static_transform.scale[2] + (new_pos[2] - start_pos[2]) * cur_selection.last_static_transform.scale[2]
             ];
         } else if (interaction_with === "2d_gizmo") {
+            // TODO: fix - when zooming out or in, scaling_factor is increased/decreased drastically.
             const scaling_factor = vec3.distance(start_pos, new_pos);
+            console.log(scaling_factor);
             scale_vector = vec3.scale([], cur_selection.last_static_transform.scale, scaling_factor);
         }
         cur_selection.updateScale(scale_vector);
@@ -387,6 +417,9 @@ view2.window.addEventListener("wheel", e => {
                 object.updateScale([scale, scale, scale]);
         });
     }
+
+    // TODO: remove
+    line3d.p0 = view2.camera.pos;
 });
 
 document.addEventListener("keydown", (e) => {

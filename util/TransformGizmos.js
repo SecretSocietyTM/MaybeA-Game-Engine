@@ -42,7 +42,7 @@ export default class TransformGizmos {
         switch(mode) {
             case "translate":
                 this.active_objects = this.translate_objects;
-                this.main_gizmo.radius = 12;
+                this.main_gizmo.radius = 15;
                 break;
             case "rotate":
                 this.active_objects = this.rotate_objects;

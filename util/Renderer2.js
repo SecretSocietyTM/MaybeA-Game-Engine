@@ -3,6 +3,12 @@ import fs_src from "../shaders/3d_pass/fragmentshader.js";
 import ui_pass_vs_src from "../shaders/ui_pass/vertexshader.js";
 import ui_pass_fs_src from "../shaders/ui_pass/fragmentshader.js";
 
+const glm = glMatrix; // shorten math library name,
+const vec2 = glm.vec2;
+const vec3 = glm.vec3;
+const vec4 = glm.vec4;
+const mat4 = glm.mat4;
+
 
 // TODO: hopefully delete or make this the main renderer.
 export default class Renderer2 {
@@ -95,6 +101,7 @@ export default class Renderer2 {
         this.ui_pass_clr_uniform = this.gl.getUniformLocation(this.ui_program, "u_clr");
 
         this.ui_pass_windowBotLeft_uniform = this.gl.getUniformLocation(this.ui_program, "u_windowBotLeft");
+        this.ui_pass_draw2DGizmo = this.gl.getUniformLocation(this.ui_program, "u_draw2DGizmo");
 
         return true;
     }
@@ -132,10 +139,14 @@ export default class Renderer2 {
 
     setupRenderer() {
         this.gl.enable(this.gl.SCISSOR_TEST);
+        
+        // TODO: might have to move this around depending on the active program
+        this.gl.enable(this.gl.BLEND);
+        this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
     }
 
     // TODO: find a better way to deal with gizmos
-    renderToViews(views, gizmos, line) {
+    renderToViews(views, gizmos, line, line3d) {
         views.forEach(view => {
             this.gl.viewport(view.left, view.bottom, view.width, view.height);
             this.gl.scissor(view.left, view.bottom, view.width, view.height);
@@ -146,10 +157,10 @@ export default class Renderer2 {
             this.gl.uniformMatrix4fv(this.u_proj_location, this.gl.FALSE, view.proj_matrix);
             this.gl.uniformMatrix4fv(this.u_view_location, this.gl.FALSE, view.camera.view_matrix);
         
-            this.pass3D(view.objects, false); // render scene objects
+            this.pass3D(view.objects, false, line3d); // render scene objects
 
             if (view.show_gizmos && gizmos.display_gizmos) {
-                this.pass3D(gizmos.active_objects, true); // render gizmos
+                this.pass3D(gizmos.active_objects, true, line3d); // render gizmos
 
                 // add another flag to view for displaying UIPass
                 if (view.show_UI) {
@@ -161,7 +172,8 @@ export default class Renderer2 {
         });
     }
 
-    pass3D(objects, is_gizmo) {
+    /* TODO: remove line parameter */
+    pass3D(objects, is_gizmo, line3d) {
         if (is_gizmo) {
             this.gl.disable(this.gl.DEPTH_TEST);
         } else {
@@ -172,7 +184,7 @@ export default class Renderer2 {
         objects.forEach(object => {
             this.gl.uniformMatrix4fv(this.u_model_location, this.gl.FALSE, object.model_matrix);
             this.gl.uniform1i(this.u_useClr_location, object.use_color);
-            this.gl.uniform3fv(this.u_clr_location, object.color);
+            this.gl.uniform4fv(this.u_clr_location, [object.color[0], object.color[1], object.color[2], object.alpha]);
 
             this.gl.bindVertexArray(this.getVAO(object.mesh));
             this.gl.drawElements(this.gl.TRIANGLES, object.mesh.indices.length, this.gl.UNSIGNED_SHORT, 0);
@@ -188,11 +200,16 @@ export default class Renderer2 {
                 this.gl.bindVertexArray(null);
             }
         });
+
+
+        // just want to draw a line... provide coords in world space
+        // TODO: improve
+        this.drawLine3D(line3d.p0, line3d.p1, [1.0, 1.0, 1.0]);
     }
 
     passUI(main_gizmo, line) {
         // fullscreen quad vertices
-        /* const vertices = new Float32Array([
+        const vertices = new Float32Array([
             -1, -1, // bot-left
              1, -1, // bot-right
             -1,  1, // top-left
@@ -207,25 +224,46 @@ export default class Renderer2 {
 
         this.gl.uniform2fv(this.ui_pass_circle_center_uniform, main_gizmo.center);
         this.gl.uniform1f(this.ui_pass_circle_radius, main_gizmo.radius);
-        this.gl.uniform3fv(this.ui_pass_clr_uniform, [1.0, 1.0, 1.0])
+        this.gl.uniform3fv(this.ui_pass_clr_uniform, [1.0, 1.0, 1.0]);
+        this.gl.uniform1i(this.ui_pass_draw2DGizmo, true);
 
-        this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4); */
+        this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
 
+        this.gl.uniform1i(this.ui_pass_draw2DGizmo, false);
 
+        this.drawLine2D(line.p0, line.p1, [0.0, 0.0, 0.0]);
+    }
 
-        // TODO: test code to draw a line between two points
-        const vertices2 = new Float32Array([...line.p0, ...line.p1]);
+    // TODO: improve, currently hardset to only work on UI pass.
+    // want it to work on both, or create a separate function.
+    drawLine2D(p0, p1, color) {
+        const vertices = new Float32Array([...p0, ...p1]);
 
-        const pos_buffer2 = this.gl.createBuffer();
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, pos_buffer2);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices2, this.gl.DYNAMIC_DRAW);
+        const pos_buffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, pos_buffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices, this.gl.DYNAMIC_DRAW);
         this.gl.enableVertexAttribArray(this.ui_pass_pos_attrib);
         this.gl.vertexAttribPointer(this.ui_pass_pos_attrib, 2, this.gl.FLOAT, this.gl.FALSE, 0, 0);
 
-        this.gl.uniform2fv(this.ui_pass_circle_center_uniform, main_gizmo.center);
-        this.gl.uniform1f(this.ui_pass_circle_radius, main_gizmo.radius);
-        this.gl.uniform3fv(this.ui_pass_clr_uniform, [0.0, 0.0, 0.0]);
+        this.gl.uniform3fv(this.ui_pass_clr_uniform, color);
+        
+        this.gl.drawArrays(this.gl.LINES, 0, 2);
+    }
 
+    drawLine3D(p0, p1, color) {
+        this.gl.disable(this.gl.DEPTH_TEST);
+        const vertices = new Float32Array([...p0, ...p1]);
+
+        const pos_buffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, pos_buffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices, this.gl.DYNAMIC_DRAW);
+        this.gl.enableVertexAttribArray(this.a_pos_location);
+        this.gl.vertexAttribPointer(this.a_pos_location, 3, this.gl.FLOAT, this.gl.FALSE, 0, 0);
+
+        this.gl.uniform1i(this.u_useClr_location, true);
+        this.gl.uniform4fv(this.u_clr_location, [color[0], color[1], color[2], 1.0]);
+        this.gl.uniformMatrix4fv(this.u_model_location, this.gl.FALSE, mat4.create());
+        
         this.gl.drawArrays(this.gl.LINES, 0, 2);
     }
 }
