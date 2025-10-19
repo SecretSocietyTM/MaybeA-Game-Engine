@@ -135,7 +135,7 @@ export default class Renderer2 {
     }
 
     // TODO: find a better way to deal with gizmos
-    renderToViews(views, gizmos) {
+    renderToViews(views, gizmos, line) {
         views.forEach(view => {
             this.gl.viewport(view.left, view.bottom, view.width, view.height);
             this.gl.scissor(view.left, view.bottom, view.width, view.height);
@@ -155,7 +155,7 @@ export default class Renderer2 {
                 if (view.show_UI) {
                     this.gl.useProgram(this.ui_program);
                     this.gl.uniform2fv(this.ui_pass_windowBotLeft_uniform, [view.left, view.bottom]);
-                    this.passUI(gizmos.main_gizmo);
+                    this.passUI(gizmos.main_gizmo, line);
                 }
             }
         });
@@ -190,9 +190,9 @@ export default class Renderer2 {
         });
     }
 
-    passUI(main_gizmo) {
+    passUI(main_gizmo, line) {
         // fullscreen quad vertices
-        const vertices = new Float32Array([
+        /* const vertices = new Float32Array([
             -1, -1, // bot-left
              1, -1, // bot-right
             -1,  1, // top-left
@@ -209,6 +209,23 @@ export default class Renderer2 {
         this.gl.uniform1f(this.ui_pass_circle_radius, main_gizmo.radius);
         this.gl.uniform3fv(this.ui_pass_clr_uniform, [1.0, 1.0, 1.0])
 
-        this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+        this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4); */
+
+
+
+        // TODO: test code to draw a line between two points
+        const vertices2 = new Float32Array([...line.p0, ...line.p1]);
+
+        const pos_buffer2 = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, pos_buffer2);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices2, this.gl.DYNAMIC_DRAW);
+        this.gl.enableVertexAttribArray(this.ui_pass_pos_attrib);
+        this.gl.vertexAttribPointer(this.ui_pass_pos_attrib, 2, this.gl.FLOAT, this.gl.FALSE, 0, 0);
+
+        this.gl.uniform2fv(this.ui_pass_circle_center_uniform, main_gizmo.center);
+        this.gl.uniform1f(this.ui_pass_circle_radius, main_gizmo.radius);
+        this.gl.uniform3fv(this.ui_pass_clr_uniform, [0.0, 0.0, 0.0]);
+
+        this.gl.drawArrays(this.gl.LINES, 0, 2);
     }
 }

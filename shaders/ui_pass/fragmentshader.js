@@ -17,7 +17,7 @@ void main() {
     float radius2 = radius - 2.0;
     float alpha = 1.0;
     
-    if (dist > radius || dist < radius2) discard;
+    /* if (dist > radius || dist < radius2) discard; */
     frag_color = vec4(u_clr, alpha);
 } 
 `

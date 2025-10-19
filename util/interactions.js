@@ -33,6 +33,13 @@ export function generateRayDir(width, height, x, y, proj, view) {
     return ray_world;
 }
 
+export function screenToNDC(width, height, x, y) {
+    const x_ndc = (2 * x) / width - 1;
+    const y_ndc = 1 - (2 * y) / height;
+
+    return [x_ndc, y_ndc];
+}
+
 // equation is t = - (dot(ray_origin, plane_normal) + d) / (dot(ray_dir, plane_normal)) 
 export function calculatePlaneIntersectionPoint(ray, plane_normal, plane_p0) {
     let d = -vec3.dot(plane_normal, plane_p0);

@@ -20,6 +20,12 @@ import MeshesObj from "../mimp/models/meshes_index.js";
 //
 // global variables from rework/main.js
 //
+// TODO: improve
+const line = {
+    p0: [0,0],
+    p1: [0,0]
+};
+
 let start_pos;
 let cur_selection = null;
 let cur_x;
@@ -66,14 +72,14 @@ camera.transformTargetTo(view2.camera.pos, view2.camera.target, view2.camera.up,
 camera.aabb = null; // TODO: should find a way to make a "Debugger" "Editor" "Game" class that Extends or Inherits from ViewWindow. Each window will have its own config, like dispaying aabbs.
 ////////////////////////
 
-objects.push(unit_cube, apple, weird_cube, camera, /* plane */);
-debug_objects.push(unit_cube, apple, weird_cube, camera, /* plane */);
+objects.push(unit_cube, apple, weird_cube, camera, plane);
+debug_objects.push(unit_cube, apple, weird_cube, camera, plane);
 
 view1.objects = debug_objects;
 view2.objects = objects;
 
 function renderFrame(loop = false) {
-    renderer.renderToViews(views, transform_gizmos);
+    renderer.renderToViews(views, transform_gizmos, line);
     if (loop) requestAnimationFrame(renderFrame);
 }
 
@@ -151,11 +157,11 @@ view2.window.addEventListener("mousedown", (e) => {
     }
     if (e.button === 0 && transform_gizmos.display_gizmos) {
 
-        // TODO: need to figure this out, its not working, likely due to the views
         if (transform_gizmos.isIntersectingGizmo([cur_x, view2.height - cur_y], view2)) {
             transform_gizmos.is_interacting = true;
             start_pos = Interactions.calculatePlaneIntersectionPoint(
                 current_ray, view2.camera.dir, cur_selection.pos);
+            line.p0 = Interactions.screenToNDC(view2.width, view2.height, cur_x, cur_y);
             transform_gizmos.interaction_with = "2d_gizmo";
             return;
         }
@@ -285,6 +291,11 @@ view2.window.addEventListener("mousemove", e => {
         current_ray.dir = Interactions.generateRayDir(view2.width, view2.height, mouse_x, mouse_y, view2.proj_matrix, view2.camera.view_matrix);
         const new_pos = Interactions.calculatePlaneIntersectionPoint(
                         current_ray, view2.camera.dir, cur_selection.pos);
+
+        // TODO: remove
+        line.p1 = Interactions.screenToNDC(view2.width, view2.height, mouse_x, mouse_y);
+
+
         let scale_vector = null;
 
         if (interaction_with === "x_scale") {

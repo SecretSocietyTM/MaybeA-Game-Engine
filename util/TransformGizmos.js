@@ -128,8 +128,8 @@ export default class TransformGizmos {
             if (dist <= this.main_gizmo.radius) return true;
             return false;
         } else {
-            if (dist >= this.main_gizmo.radius - 4 - 2 && 
-                dist <= this.main_gizmo.radius + 4 ) return true;
+            if (dist >= this.main_gizmo.radius - 10 - 2 && 
+                dist <= this.main_gizmo.radius + 10 ) return true;
             return false
         }
     }
