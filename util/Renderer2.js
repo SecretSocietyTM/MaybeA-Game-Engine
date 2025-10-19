@@ -94,6 +94,8 @@ export default class Renderer2 {
         this.ui_pass_circle_radius = this.gl.getUniformLocation(this.ui_program, "u_radius");
         this.ui_pass_clr_uniform = this.gl.getUniformLocation(this.ui_program, "u_clr");
 
+        this.ui_pass_windowBotLeft_uniform = this.gl.getUniformLocation(this.ui_program, "u_windowBotLeft");
+
         return true;
     }
 
@@ -149,8 +151,12 @@ export default class Renderer2 {
             if (view.show_gizmos && gizmos.display_gizmos) {
                 this.pass3D(gizmos.active_objects, true); // render gizmos
 
-                this.gl.useProgram(this.ui_program);
-                this.passUI(gizmos.main_gizmo);
+                // add another flag to view for displaying UIPass
+                if (view.show_UI) {
+                    this.gl.useProgram(this.ui_program);
+                    this.gl.uniform2fv(this.ui_pass_windowBotLeft_uniform, [view.left, view.bottom]);
+                    this.passUI(gizmos.main_gizmo);
+                }
             }
         });
     }

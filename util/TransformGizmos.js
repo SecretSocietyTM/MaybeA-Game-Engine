@@ -87,7 +87,6 @@ export default class TransformGizmos {
         const y_scale = new SceneObject("y_scale", meshes.scale_gizmo, [0,0,0], 
             Array(3).fill(this.reference_scale), [-90,0,0]);
 
-    
         const z_scale = new SceneObject("z_scale", meshes.scale_gizmo, [0,0,0], 
             Array(3).fill(this.reference_scale), [0,0,0])
 
@@ -123,9 +122,7 @@ export default class TransformGizmos {
     }
 
     isIntersectingGizmo(mouse_pos, view) {
-        // TODO: find better name for this, or just store the real center within the THIS.
-        const real_center = vec2.subtract([], this.main_gizmo.center, [view.left, view.bottom]);
-        const dist = vec2.length(vec2.subtract([], mouse_pos, real_center));
+        const dist = vec2.length(vec2.subtract([], mouse_pos, this.main_gizmo.center));
 
         if (this.mode === "translate") {
             if (dist <= this.main_gizmo.radius) return true;

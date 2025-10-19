@@ -40,10 +40,9 @@ const renderer = new Renderer2(canvas);
 renderer.addAABBMesh(MeshesObj.aabb_wireframe);
 
 const view1 = new ViewWindow("v1", document.getElementById("view1"), canvas);
-view1.show_gizmos = true;
+view1.show_UI = false;
 view1.moveCamera([-30,30,-30]);
 const view2 = new ViewWindow("v2", document.getElementById("view2"), canvas);
-view2.show_gizmos = true;
 const views = [view1, view2];
 
 current_ray.origin = view2.camera.pos;
@@ -57,14 +56,18 @@ const unit_cube = new SceneObject("unit_cube", MeshesObj.unit_cube, [0,0,0], [1,
 const apple = new SceneObject("apple", MeshesObj.apple, [-20,0,-10], [9,9,9], [0,0,0]);
 const weird_cube = new SceneObject("weird cube", MeshesObj.weird_cube, [0,0,0], [1,1,1], [0,0,0]);
 
+const plane = new SceneObject("unit_cube", MeshesObj.unit_cube, [0,0,0], [20,20,0.02], [0,0,0]);
+plane.transformTargetTo(plane.pos, view2.camera.pos, view2.camera.up, plane.scale);
+plane.aabb = null;
+
 // TODO: this is so JANK!
 const camera = new SceneObject("camera", MeshesObj.camera_offcenter, [0,0,0], [0.5,0.5,0.5], [0,0,0]);
 camera.transformTargetTo(view2.camera.pos, view2.camera.target, view2.camera.up, [0.5,0.5,0.5]);
-camera.aabb = null;
+camera.aabb = null; // TODO: should find a way to make a "Debugger" "Editor" "Game" class that Extends or Inherits from ViewWindow. Each window will have its own config, like dispaying aabbs.
 ////////////////////////
 
-objects.push(unit_cube, apple, weird_cube, camera);
-debug_objects.push(unit_cube, apple, weird_cube, camera);
+objects.push(unit_cube, apple, weird_cube, camera, /* plane */);
+debug_objects.push(unit_cube, apple, weird_cube, camera, /* plane */);
 
 view1.objects = debug_objects;
 view2.objects = objects;
@@ -102,8 +105,6 @@ view2.window.addEventListener("click", e => {
     current_ray.dir = Interactions.generateRayDir(view2.width, view2.height, mouse_x, mouse_y, view2.proj_matrix, view2.camera.view_matrix);
 
     for (let i = 0; i < objects.length; i++) {
-        // TODO: temp solution
-        /* console.log(objects[i]); */
         if (objects[i].aabb === null) continue;
         if (objects[i].aabb.isIntersecting(current_ray)) {
             if (cur_selection === objects[i]) return;
@@ -111,9 +112,8 @@ view2.window.addEventListener("click", e => {
 
             transform_gizmos.display_gizmos = true;
 
-            // positoin 2d gizmo at object center
+            // position 2d gizmo at object center
             transform_gizmos.main_gizmo.center = Interactions.coordsWorldToScreen(cur_selection.pos, view2.width, view2.height, view2.proj_matrix, view2.camera.view_matrix)
-            transform_gizmos.main_gizmo.center = vec2.add([], transform_gizmos.main_gizmo.center, [view2.left, view2.bottom]);
 
             // position 3d gizmos at object center
             transform_gizmos.objects.forEach(object => {
@@ -221,11 +221,12 @@ view2.window.addEventListener("mousemove", e => {
 
         // TODO: really jank
         camera.transformTargetTo(view2.camera.pos, view2.camera.target, view2.camera.up, [0.5,0.5,0.5]);
+        plane.pos = view2.camera.target;
+        plane.transformTargetTo(plane.pos, view2.camera.pos, view2.camera.up, plane.scale); // TODO: supremely jank
 
         if (transform_gizmos.display_gizmos) {
-            // positoin 2d gizmo at object center
+            // position 2d gizmo at object center
             transform_gizmos.main_gizmo.center = Interactions.coordsWorldToScreen(cur_selection.pos, view2.width, view2.height, view2.proj_matrix, view2.camera.view_matrix);
-            transform_gizmos.main_gizmo.center = vec2.add([], transform_gizmos.main_gizmo.center, [view2.left, view2.bottom]);
 
             // rescales 3d gizmos
             const distance = vec3.distance(view2.camera.pos, cur_selection.pos);
@@ -268,11 +269,9 @@ view2.window.addEventListener("mousemove", e => {
         cur_selection.updatePos(translate_vector);
         transform_gizmos.updateGizmosPos(cur_selection);
         transform_gizmos.main_gizmo.center = Interactions.calculateObjectCenterScreenCoord(view2.width, view2.height, cur_selection, view2.proj_matrix, view2.camera.view_matrix);
-        transform_gizmos.main_gizmo.center = vec2.add([], transform_gizmos.main_gizmo.center, [view2.left, view2.bottom]);
         // TODO: not too sure why i put this here.
         if (cur_selection) { 
             transform_gizmos.main_gizmo.center = Interactions.calculateObjectCenterScreenCoord(view2.width, view2.height, cur_selection, view2.proj_matrix, view2.camera.view_matrix);
-            transform_gizmos.main_gizmo.center = vec2.add([], transform_gizmos.main_gizmo.center, [view2.left, view2.bottom]);
             const distance = vec3.distance(view2.camera.pos, cur_selection.pos);
             const scale = (distance / transform_gizmos.reference_distance) * transform_gizmos.reference_scale;
             transform_gizmos.objects.forEach(object => {
@@ -367,7 +366,6 @@ view2.window.addEventListener("wheel", e => {
     if (transform_gizmos.display_gizmos) {
         // keeps main gizmo in correct place
         transform_gizmos.main_gizmo.center = Interactions.coordsWorldToScreen(cur_selection.pos, view2.width, view2.height, view2.proj_matrix, view2.camera.view_matrix);
-        transform_gizmos.main_gizmo.center = vec2.add([], transform_gizmos.main_gizmo.center, [view2.left, view2.bottom]);
 
         // rescales 3d gizmos
         const distance = vec3.distance(view2.camera.pos, cur_selection.pos);

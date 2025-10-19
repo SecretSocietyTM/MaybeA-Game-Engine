@@ -31,7 +31,8 @@ export default class ViewWindow {
         );
 
         this.objects = [];
-        this.show_gizmos = false;
+        this.show_gizmos = true;
+        this.show_UI = true;
     }
 
     // TODO: don't create a new camera, just update the pos of the existing one
