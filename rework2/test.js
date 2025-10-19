@@ -72,8 +72,8 @@ camera.transformTargetTo(view2.camera.pos, view2.camera.target, view2.camera.up,
 camera.aabb = null; // TODO: should find a way to make a "Debugger" "Editor" "Game" class that Extends or Inherits from ViewWindow. Each window will have its own config, like dispaying aabbs.
 ////////////////////////
 
-objects.push(unit_cube, apple, weird_cube, camera, plane);
-debug_objects.push(unit_cube, apple, weird_cube, camera, plane);
+objects.push(unit_cube, apple, weird_cube, camera, /* plane */);
+debug_objects.push(unit_cube, apple, weird_cube, camera, /* plane */);
 
 view1.objects = debug_objects;
 view2.objects = objects;
@@ -162,6 +162,10 @@ view2.window.addEventListener("mousedown", (e) => {
             start_pos = Interactions.calculatePlaneIntersectionPoint(
                 current_ray, view2.camera.dir, cur_selection.pos);
             line.p0 = Interactions.screenToNDC(view2.width, view2.height, cur_x, cur_y);
+            if (transform_gizmos.mode === "scale") {
+                start_pos = cur_selection.pos;
+                line.p0 = Interactions.screenToNDC(view2.width, view2.height, transform_gizmos.main_gizmo.center[0], transform_gizmos.main_gizmo.center[1]);
+            }
             transform_gizmos.interaction_with = "2d_gizmo";
             return;
         }
@@ -317,10 +321,8 @@ view2.window.addEventListener("mousemove", e => {
                 cur_selection.last_static_transform.scale[2] + (new_pos[2] - start_pos[2]) * cur_selection.last_static_transform.scale[2]
             ];
         } else if (interaction_with === "2d_gizmo") {
-            // TODO: fix
             const scaling_factor = vec3.distance(start_pos, new_pos);
-            scale_vector = Array(3).fill(scaling_factor);
-            scale_vector = vec3.add([], cur_selection.last_static_transform.scale, scale_vector);
+            scale_vector = vec3.scale([], cur_selection.last_static_transform.scale, scaling_factor);
         }
         cur_selection.updateScale(scale_vector);
 
