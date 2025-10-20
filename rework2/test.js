@@ -40,7 +40,6 @@ renderer.addAABBMesh(MeshesObj.aabb_wireframe); // preload the AABB wireframe me
 
 const view1 = new ViewWindow("v1", document.getElementById("view1"), canvas);
 view1.show_UI = false;
-view1.moveCamera([-30,0,0]);
 const view2 = new ViewWindow("v2", document.getElementById("view2"), canvas);
 const views = [view1, view2];
 
@@ -49,24 +48,16 @@ current_ray.origin = view2.camera.pos;
 const transform_gizmos = new TransformGizmos(MeshesObj, 0.8, vec3.distance(view2.camera.pos, view2.camera.target));
 
 const objects = [];
-const debug_objects = [];
 
 const unit_cube = new SceneObject("unit_cube", MeshesObj.unit_cube, [0,0,0], [1,1,1], [0,0,0]);
 const apple = new SceneObject("apple", MeshesObj.apple, [-20,0,-10], [9,9,9], [0,0,0]);
 const weird_cube = new SceneObject("weird cube", MeshesObj.weird_cube, [0,0,0], [1,1,1], [0,0,0]);
 
 // For debug view
-const camera = new SceneObject("camera", MeshesObj.camera_offcenter, [0,0,0], [0.5,0.5,0.5], [0,0,0]);
-camera.transformTargetTo(view2.camera.pos, view2.camera.target, view2.camera.up, [0.5,0.5,0.5]);
-camera.aabb = null;
+const camera = new SceneObject("camera", MeshesObj.camera_offcenter, [5,5,5], [0.3,0.3,0.3], [0,0,0]);
+camera.transformTargetTo(camera.pos, view2.camera.target, view2.camera.up, camera.scale);
 
-
-
-
-objects.push(unit_cube, apple, weird_cube);
-debug_objects.push(unit_cube, apple, weird_cube, camera);
-
-view1.objects = debug_objects;
+objects.push(unit_cube, apple, weird_cube, camera);
 view2.objects = objects;
 
 function renderFrame(loop = false) {
@@ -234,9 +225,6 @@ view2.window.addEventListener("mousemove", e => {
         current_ray.origin = view2.camera.pos;
         view2.camera.recalculateViewMatrix();
 
-        // TODO: really jank
-        camera.transformTargetTo(view2.camera.pos, view2.camera.target, view2.camera.up, [0.5,0.5,0.5]);
-
         if (transform_gizmos.display_gizmos) {
             // position 2d gizmo at object center
             transform_gizmos.main_gizmo.center = Interactions.coordsWorldToScreen(cur_selection.pos, view2.width, view2.height, view2.proj_matrix, view2.camera.view_matrix);
@@ -372,8 +360,6 @@ view2.window.addEventListener("wheel", e => {
     current_ray.origin = view2.camera.pos;
     view2.camera.recalculateViewMatrix();
 
-    // TODO: really jank
-    camera.transformTargetTo(view2.camera.pos, view2.camera.target, view2.camera.up, [0.5,0.5,0.5]);
     if (transform_gizmos.display_gizmos) {
         // keeps main gizmo in correct place
         transform_gizmos.main_gizmo.center = Interactions.coordsWorldToScreen(cur_selection.pos, view2.width, view2.height, view2.proj_matrix, view2.camera.view_matrix);
