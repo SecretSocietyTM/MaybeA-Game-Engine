@@ -45,22 +45,22 @@ export default class TransformGizmos {
     setMode(mode = "translate") {
         this.mode = mode;
         switch(mode) {
-            case "translate":
-                this.active_objects = this.translate_objects;
-                this.main_gizmo.radius = 18;
-                break;
-            case "rotate":
-                this.active_objects = this.rotate_objects;
-                this.main_gizmo.radius = 90;
-                break;
-            case "scale":
-                this.active_objects = this.scale_objects;
-                this.main_gizmo.radius = 90;
-                break;
-            default:
-                this.mode = "translate";
-                console.error("No valid mode provided");
-                return;
+        case "translate":
+            this.active_objects = this.translate_objects;
+            this.main_gizmo.radius = 18;
+            break;
+        case "rotate":
+            this.active_objects = this.rotate_objects;
+            this.main_gizmo.radius = 90;
+            break;
+        case "scale":
+            this.active_objects = this.scale_objects;
+            this.main_gizmo.radius = 90;
+            break;
+        default:
+            this.mode = "translate";
+            console.error("No valid mode provided");
+            return;
         }
     }
 

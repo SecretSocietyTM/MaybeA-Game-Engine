@@ -40,6 +40,7 @@ renderer.addAABBMesh(MeshesObj.aabb_wireframe); // preload the AABB wireframe me
 
 const view1 = new ViewWindow("v1", document.getElementById("view1"), canvas);
 view1.show_UI = false;
+view1.show_gizmos = false;
 const view2 = new ViewWindow("v2", document.getElementById("view2"), canvas);
 const views = [view1, view2];
 
@@ -48,17 +49,21 @@ current_ray.origin = view2.camera.pos;
 const transform_gizmos = new TransformGizmos(MeshesObj, 0.8, vec3.distance(view2.camera.pos, view2.camera.target));
 
 const objects = [];
+const game_objects = [];
 
 const unit_cube = new SceneObject("unit_cube", MeshesObj.unit_cube, [0,0,0], [1,1,1], [0,0,0]);
-const apple = new SceneObject("apple", MeshesObj.apple, [-20,0,-10], [9,9,9], [0,0,0]);
+const apple = new SceneObject("apple", MeshesObj.apple, [-10,0,-10], [9,9,9], [0,0,0]);
 const weird_cube = new SceneObject("weird cube", MeshesObj.weird_cube, [0,0,0], [1,1,1], [0,0,0]);
 
-// For debug view
-const camera = new SceneObject("camera", MeshesObj.camera_offcenter, [5,5,5], [0.3,0.3,0.3], [0,0,0]);
+// For game view
+const camera = new SceneObject("camera", MeshesObj.camera_offcenter, [10,10,10], [0.3,0.3,0.3], [0,0,0]);
 camera.transformTargetTo(camera.pos, view2.camera.target, view2.camera.up, camera.scale);
+view1.moveCamera(camera.pos);
 
 objects.push(unit_cube, apple, weird_cube, camera);
+game_objects.push(unit_cube, apple, weird_cube);
 view2.objects = objects;
+view1.objects = game_objects;
 
 function renderFrame(loop = false) {
     renderer.renderToViews(views, transform_gizmos);
@@ -70,13 +75,8 @@ renderFrame(true);
 
 
 
-
-
-
 //
-// event listeners
-
-
+// event listeners for Editor View
 // TODO: find a way to make event listeners universal and assignable to windows, might require an Events class XD
 view2.window.addEventListener("click", e => {
     if (transform_gizmos.is_interacting) {
@@ -383,14 +383,36 @@ document.addEventListener("keydown", (e) => {
     }
 });
 
-
-
-
-
 // element stuff...
 const btn_toggle_AABB = document.getElementById("toggle_AABB");
 btn_toggle_AABB.addEventListener("click", e => {
-    views.forEach(view => {
-        view.show_AABB = !view.show_AABB;
-    })
+    view2.show_AABB = !view2.show_AABB;
 });
+
+
+
+
+
+
+// Variables for Game View
+const player = unit_cube;
+
+document.addEventListener("keydown", e => {
+    const speed = 0.5;
+    
+    switch (e.key) {
+    case "w":
+        player.updatePos(vec3.add([], player.last_static_transform.pos, [0,0,-1 * speed]));
+        break;
+    case "s":
+        player.updatePos(vec3.add([], player.last_static_transform.pos, [0,0,1 * speed]));
+        break;
+    case "a":
+        player.updatePos(vec3.add([], player.last_static_transform.pos, [-1 * speed,0,0]));
+        break;
+    case "d":
+        player.updatePos(vec3.add([], player.last_static_transform.pos, [1 * speed,0,0]));
+        break;
+    }
+    player.setLastStaticTransform();
+})
