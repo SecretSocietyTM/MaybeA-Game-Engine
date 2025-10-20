@@ -4,17 +4,6 @@ const vec3 = glm.vec3;
 const vec4 = glm.vec4;
 const mat4 = glm.mat4;
 
-//
-// Functions
-export function calculateAngleBetweenVectors(v, w) {
-
-    // equation: theta = acos((v dot w / len(v) * len(w)));
-    const numerator = vec2.dot(v, w);
-    const denominator = vec2.length(v) * vec2.length(w);
-    const angle = Math.acos(numerator / denominator) * 180 / Math.PI;
-
-    return angle;
-}
 
 export function generateRayDir(width, height, x, y, proj, view) {
     const x_ndc = (2 * x) / width - 1;
@@ -31,41 +20,6 @@ export function generateRayDir(width, height, x, y, proj, view) {
     vec3.normalize(ray_world, ray_world);
 
     return ray_world;
-}
-
-export function screenToNDC(width, height, x, y) {
-    const x_ndc = (2 * x) / width - 1;
-    const y_ndc = 1 - (2 * y) / height;
-
-    return [x_ndc, y_ndc];
-}
-
-// equation is t = - (dot(ray_origin, plane_normal) + d) / (dot(ray_dir, plane_normal)) 
-export function calculatePlaneIntersectionPoint(ray, plane_normal, plane_p0) {
-    let d = -vec3.dot(plane_normal, plane_p0);
-
-    let numerator = vec3.dot(ray.origin, plane_normal) + d;
-    let denominator = vec3.dot(ray.dir, plane_normal);
-    if (denominator === 0) {
-        console.log("ray missed plane with normal = ", plane_normal);
-        return;
-    }
-
-    let t = -(numerator / denominator);
-
-    let p = vec3.scaleAndAdd([], ray.origin, ray.dir, t);
-
-    return p;
-}
-
-// v and b are connected, a is part of w
-export function calculateLineIntersectionPoint(v, a, b) {
-    let numerator = vec2.dot((vec2.subtract([], a, b)), v);
-    let denominator = vec2.length(v)**2;
-    let t = numerator / denominator;
-
-    let p = vec2.scaleAndAdd([], b, v, t);
-    return p;
 }
 
 export function calculateObjectCenterScreenCoord(width, height, object, proj, view) {
@@ -91,4 +45,42 @@ export function coordsWorldToScreen(coords, width, height, proj, view) {
     const screen_x = (p_ndc[0] * 0.5 + 0.5) * width;
     const screen_y = (p_ndc[1] * 0.5 + 0.5) * height;
     return [screen_x, screen_y]; 
+}
+
+
+
+
+export function screenToNDC(width, height, x, y) {
+    const x_ndc = (2 * x) / width - 1;
+    const y_ndc = 1 - (2 * y) / height;
+
+    return [x_ndc, y_ndc];
+}
+
+
+
+
+
+
+
+
+
+
+
+// equation is t = - (dot(ray_origin, plane_normal) + d) / (dot(ray_dir, plane_normal)) 
+export function calculatePlaneIntersectionPoint(ray, plane_normal, plane_p0) {
+    let d = -vec3.dot(plane_normal, plane_p0);
+
+    let numerator = vec3.dot(ray.origin, plane_normal) + d;
+    let denominator = vec3.dot(ray.dir, plane_normal);
+    if (denominator === 0) {
+        console.log("ray missed plane with normal = ", plane_normal);
+        return;
+    }
+
+    let t = -(numerator / denominator);
+
+    let p = vec3.scaleAndAdd([], ray.origin, ray.dir, t);
+
+    return p;
 }

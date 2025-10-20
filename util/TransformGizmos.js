@@ -71,24 +71,35 @@ export default class TransformGizmos {
             Array(3).fill(this.reference_scale), [90,0,0]);
 
         // rotate
-        const x_rotate = new SceneObject("x_rotate", meshes.rotate_gizmo, [0,0,0], 
+        /* const x_rotate = new SceneObject("x_rotate", meshes.rotate_gizmo, [0,0,0], 
             Array(3).fill(this.reference_scale), [90,0,90]);
 
         const y_rotate = new SceneObject("y_rotate", meshes.rotate_gizmo, [0,0,0], 
             Array(3).fill(this.reference_scale), [0,-45,0]);
     
         const z_rotate = new SceneObject("z_rotate", meshes.rotate_gizmo, [0,0,0], 
-            Array(3).fill(this.reference_scale), [90,0,0])
+            Array(3).fill(this.reference_scale), [90,0,0]) */
+
+        // Better UI but needs improvement:
+        // scale AABB, dynamic rotation to face camera
+        const x_rotate = new SceneObject("x_rotate", meshes.rotate_gizmo2, [0,0,0], 
+            Array(3).fill(this.reference_scale), [0,0,0]);
+
+        const y_rotate = new SceneObject("y_rotate", meshes.rotate_gizmo2, [0,0,0], 
+            Array(3).fill(this.reference_scale), [0,0,90]);
+    
+        const z_rotate = new SceneObject("z_rotate", meshes.rotate_gizmo2, [0,0,0], 
+            Array(3).fill(this.reference_scale), [0,90,0])
 
         // scale
-        const x_scale = new SceneObject("x_scale", meshes.scale_gizmo, [0,0,0], 
-            Array(3).fill(this.reference_scale), [0, 90, 0])
+        const x_scale = new SceneObject("x_scale", meshes.scale_gizmo2, [0,0,0], 
+            Array(3).fill(this.reference_scale), [0, 0, -90])
     
-        const y_scale = new SceneObject("y_scale", meshes.scale_gizmo, [0,0,0], 
-            Array(3).fill(this.reference_scale), [-90,0,0]);
+        const y_scale = new SceneObject("y_scale", meshes.scale_gizmo2, [0,0,0], 
+            Array(3).fill(this.reference_scale), [0,0,0]);
 
-        const z_scale = new SceneObject("z_scale", meshes.scale_gizmo, [0,0,0], 
-            Array(3).fill(this.reference_scale), [0,0,0])
+        const z_scale = new SceneObject("z_scale", meshes.scale_gizmo2, [0,0,0], 
+            Array(3).fill(this.reference_scale), [90,0,0])
 
         this.translate_objects.push(x_trans, y_trans, z_trans);
         this.rotate_objects.push(x_rotate, y_rotate, z_rotate);

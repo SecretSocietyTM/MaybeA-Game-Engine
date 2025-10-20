@@ -49,11 +49,11 @@ const view1 = new ViewWindow("v1", document.getElementById("view1"), canvas);
 view1.show_UI = false;
 view1.moveCamera([-30,0,0]);
 const view2 = new ViewWindow("v2", document.getElementById("view2"), canvas);
-const views = [/* view1 */, view2];
+const views = [view1, view2];
 
 current_ray.origin = view2.camera.pos;
 // TODO: find a better way to handle transform gizmos
-const transform_gizmos = new TransformGizmos(MeshesObj, 0.4, vec3.distance(view2.camera.pos, view2.camera.target));
+const transform_gizmos = new TransformGizmos(MeshesObj, 1, vec3.distance(view2.camera.pos, view2.camera.target));
 
 const objects = [];
 const debug_objects = [];
@@ -74,6 +74,9 @@ const camera = new SceneObject("camera", MeshesObj.camera_offcenter, [0,0,0], [0
 camera.transformTargetTo(view2.camera.pos, view2.camera.target, view2.camera.up, [0.5,0.5,0.5]);
 camera.aabb = null; // TODO: should find a way to make a "Debugger" "Editor" "Game" class that Extends or Inherits from ViewWindow. Each window will have its own config, like dispaying aabbs.
 
+
+
+
 objects.push(unit_cube, apple, weird_cube);
 debug_objects.push(unit_cube, apple, weird_cube, camera, plane);
 
@@ -86,9 +89,6 @@ function renderFrame(loop = false) {
 }
 
 renderFrame(true);
-
-
-
 
 
 
