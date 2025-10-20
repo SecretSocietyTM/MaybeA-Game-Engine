@@ -6,11 +6,15 @@ const mat4 = glm.mat4;
 
 import Camera from "./Camera.js";
 
-// TODO: window class should also store its own projection matrix
 export default class ViewWindow {
     constructor(id, window, canvas) {
         this.id = id;
         this.window = window;
+        
+        // TODO: allow for customizable height...
+        this.window.style.width = "800px";
+        this.window.style.height = "600px";
+
         this.canvas = canvas;
 
         this.rect = window.getBoundingClientRect();
@@ -31,8 +35,10 @@ export default class ViewWindow {
         );
 
         this.objects = [];
+
         this.show_gizmos = true;
         this.show_UI = true;
+        this.show_AABB = true;
     }
 
     // TODO: don't create a new camera, just update the pos of the existing one

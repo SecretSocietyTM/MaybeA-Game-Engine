@@ -21,10 +21,6 @@ import MeshesObj from "../mimp/models/meshes_index.js";
 // global variables from rework/main.js
 //
 // TODO: improve
-const line = {
-    p0: [0,0],
-    p1: [0,0]
-};
 
 const line3d = {
     p0: [0,0,10],
@@ -39,7 +35,7 @@ let cur_y;
 let prev_y;
 let pan_camera = false;
 let orbit_camera = false;
-let current_ray = { // TODO: probably want this as a class at some point, something like RayPicker
+let current_ray = {
     origin: null,
     dir: null
 }
@@ -47,17 +43,16 @@ let current_ray = { // TODO: probably want this as a class at some point, someth
 
 
 const renderer = new Renderer2(canvas);
-// preload the AABB wireframe mesh and VAO (adds mesh and calls getVAO(aabb_mesh))
-renderer.addAABBMesh(MeshesObj.aabb_wireframe);
+renderer.addAABBMesh(MeshesObj.aabb_wireframe); // preload the AABB wireframe mesh and VAO
 
 const view1 = new ViewWindow("v1", document.getElementById("view1"), canvas);
 view1.show_UI = false;
-view1.moveCamera([-30,30,-30]);
+view1.moveCamera([-30,0,0]);
 const view2 = new ViewWindow("v2", document.getElementById("view2"), canvas);
-const views = [view1, view2];
+const views = [/* view1 */, view2];
 
 current_ray.origin = view2.camera.pos;
-// TODO: find a better way to do this
+// TODO: find a better way to handle transform gizmos
 const transform_gizmos = new TransformGizmos(MeshesObj, 0.4, vec3.distance(view2.camera.pos, view2.camera.target));
 
 const objects = [];
@@ -74,20 +69,19 @@ plane.assignColor([0.7, 0.7, 0.7]);
 plane.assignAlpha(0.3);
 plane.useColor(true);
 
-// TODO: this is so JANK!
 const camera = new SceneObject("camera", MeshesObj.camera_offcenter, [0,0,0], [0.5,0.5,0.5], [0,0,0]);
+// TODO: this is so JANK!
 camera.transformTargetTo(view2.camera.pos, view2.camera.target, view2.camera.up, [0.5,0.5,0.5]);
 camera.aabb = null; // TODO: should find a way to make a "Debugger" "Editor" "Game" class that Extends or Inherits from ViewWindow. Each window will have its own config, like dispaying aabbs.
-////////////////////////
 
-objects.push(unit_cube, apple, weird_cube, /* plane */);
-debug_objects.push(unit_cube, /* apple, weird_cube, */ camera, plane);
+objects.push(unit_cube, apple, weird_cube);
+debug_objects.push(unit_cube, apple, weird_cube, camera, plane);
 
 view1.objects = debug_objects;
 view2.objects = objects;
 
 function renderFrame(loop = false) {
-    renderer.renderToViews(views, transform_gizmos, line, line3d);
+    renderer.renderToViews(views, transform_gizmos, line3d);
     if (loop) requestAnimationFrame(renderFrame);
 }
 
@@ -114,8 +108,8 @@ view2.window.addEventListener("click", e => {
         return;
     };
 
-    const mouse_x = e.clientX - view2.rect.left; // TODO: likely use offsets, values are the same as offsetX
-    const mouse_y = e.clientY - view2.rect.top;  // TODO: likely use offsets, values are the same as offsetY
+    const mouse_x = e.clientX - view2.rect.left; // TODO NOT URGET: likely use offsets, values are the same as offsetX
+    const mouse_y = e.clientY - view2.rect.top;  // TODO NOT URGET: likely use offsets, values are the same as offsetY
     current_ray.dir = Interactions.generateRayDir(view2.width, view2.height, mouse_x, mouse_y, view2.proj_matrix, view2.camera.view_matrix);
 
     for (let i = 0; i < objects.length; i++) {
@@ -169,10 +163,8 @@ view2.window.addEventListener("mousedown", (e) => {
             transform_gizmos.is_interacting = true;
             start_pos = Interactions.calculatePlaneIntersectionPoint(
                 current_ray, view2.camera.dir, cur_selection.pos);
-            line.p0 = Interactions.screenToNDC(view2.width, view2.height, cur_x, cur_y);
             if (transform_gizmos.mode === "scale") {
                 start_pos = cur_selection.pos;
-                line.p0 = Interactions.screenToNDC(view2.width, view2.height, transform_gizmos.main_gizmo.center[0], transform_gizmos.main_gizmo.center[1]);
                 line3d.p1 = Interactions.calculatePlaneIntersectionPoint(
                 current_ray, view2.camera.dir, cur_selection.pos);
             }
@@ -212,20 +204,6 @@ view2.window.addEventListener("mouseup", e => {
     }
 });
 
-
-
-// TODO:
-/* When dealing with the 2D gizmo it is important to understand what values are needed to do what.
-Translate: need the actual position of the ray in world space to move the object to said position
-Rotate: I believe rotation can be handled with a simple 2d system
-Translate: Probably also handle with 2d system.
-
-// OK backtrack. The main reason for the above is because scaling with 2d gizmo is causing odd behavior when zooming in/out. Ive drawn
-an example out in paper. The solution would be to cast a ray with an origin == mouse position in world space. Currently what happens
-is a ray is generated with an origin == camera pos. 
-
-The 3D gizmos may differ.
- */
 view2.window.addEventListener("mousemove", e => {
     const mouse_x = e.clientX - view2.rect.left;
     const mouse_y = e.clientY - view2.rect.top;
@@ -323,10 +301,6 @@ view2.window.addEventListener("mousemove", e => {
         current_ray.dir = Interactions.generateRayDir(view2.width, view2.height, mouse_x, mouse_y, view2.proj_matrix, view2.camera.view_matrix);
         const new_pos = Interactions.calculatePlaneIntersectionPoint(
                         current_ray, view2.camera.dir, cur_selection.pos);
-
-        // TODO: remove
-        line.p1 = Interactions.screenToNDC(view2.width, view2.height, mouse_x, mouse_y);
-
 
         let scale_vector = null;
 
@@ -430,4 +404,16 @@ document.addEventListener("keydown", (e) => {
     } else if (e.key === "s") {
         transform_gizmos.setMode("scale");
     }
+});
+
+
+
+
+
+// element stuff...
+const btn_toggle_AABB = document.getElementById("toggle_AABB");
+btn_toggle_AABB.addEventListener("click", e => {
+    views.forEach(view => {
+        view.show_AABB = !view.show_AABB;
+    })
 });

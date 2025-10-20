@@ -4,13 +4,8 @@ import ui_pass_vs_src from "../shaders/ui_pass/vertexshader.js";
 import ui_pass_fs_src from "../shaders/ui_pass/fragmentshader.js";
 
 const glm = glMatrix; // shorten math library name,
-const vec2 = glm.vec2;
-const vec3 = glm.vec3;
-const vec4 = glm.vec4;
-const mat4 = glm.mat4;
+const mat4 = glm.mat4; // should not need this...
 
-
-// TODO: hopefully delete or make this the main renderer.
 export default class Renderer2 {
     constructor(canvas) {
         this.gl = canvas.getContext("webgl2");
@@ -22,7 +17,6 @@ export default class Renderer2 {
         this.createUIPassProgram();
         this.getUIPassShaderVariables();
 
-        //  TODO: improve or remove
         this.vao_cache = new Map();
         this.aabb_mesh = null;
     }
@@ -140,13 +134,11 @@ export default class Renderer2 {
     setupRenderer() {
         this.gl.enable(this.gl.SCISSOR_TEST);
         
-        // TODO: might have to move this around depending on the active program
         this.gl.enable(this.gl.BLEND);
         this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
     }
 
-    // TODO: find a better way to deal with gizmos
-    renderToViews(views, gizmos, line, line3d) {
+    renderToViews(views, gizmos, line3d) {
         views.forEach(view => {
             this.gl.viewport(view.left, view.bottom, view.width, view.height);
             this.gl.scissor(view.left, view.bottom, view.width, view.height);
@@ -157,23 +149,23 @@ export default class Renderer2 {
             this.gl.uniformMatrix4fv(this.u_proj_location, this.gl.FALSE, view.proj_matrix);
             this.gl.uniformMatrix4fv(this.u_view_location, this.gl.FALSE, view.camera.view_matrix);
         
-            this.pass3D(view.objects, false, line3d); // render scene objects
+            this.pass3D(view.objects, false, view.show_AABB, line3d); // render scene objects
 
             if (view.show_gizmos && gizmos.display_gizmos) {
-                this.pass3D(gizmos.active_objects, true, line3d); // render gizmos
+                this.pass3D(gizmos.active_objects, true, view.show_AABB, line3d); // render gizmos
 
                 // add another flag to view for displaying UIPass
                 if (view.show_UI) {
                     this.gl.useProgram(this.ui_program);
                     this.gl.uniform2fv(this.ui_pass_windowBotLeft_uniform, [view.left, view.bottom]);
-                    this.passUI(gizmos.main_gizmo, line);
+                    this.passUI(gizmos.main_gizmo);
                 }
             }
         });
     }
 
     /* TODO: remove line parameter */
-    pass3D(objects, is_gizmo, line3d) {
+    pass3D(objects, is_gizmo, show_AABB, line3d) {
         if (is_gizmo) {
             this.gl.disable(this.gl.DEPTH_TEST);
         } else {
@@ -190,24 +182,25 @@ export default class Renderer2 {
             this.gl.drawElements(this.gl.TRIANGLES, object.mesh.indices.length, this.gl.UNSIGNED_SHORT, 0);
             this.gl.bindVertexArray(null);
 
-            if (object.aabb !== null) {
-                if (!this.aabb_mesh) throw new Error("AABB mesh not set!");
-                const aabb = object.aabb;
-                this.gl.uniformMatrix4fv(this.u_model_location, this.gl.FALSE, aabb.model_matrix);
+            if (show_AABB) {
+                if (object.aabb !== null) {
+                    if (!this.aabb_mesh) throw new Error("AABB mesh not set!");
+                    const aabb = object.aabb;
+                    this.gl.uniformMatrix4fv(this.u_model_location, this.gl.FALSE, aabb.model_matrix);
 
-                this.gl.bindVertexArray(this.getVAO(this.aabb_mesh));
-                this.gl.drawElements(this.gl.LINES, 24, this.gl.UNSIGNED_SHORT, 0);
-                this.gl.bindVertexArray(null);
+                    this.gl.bindVertexArray(this.getVAO(this.aabb_mesh));
+                    this.gl.drawElements(this.gl.LINES, 24, this.gl.UNSIGNED_SHORT, 0);
+                    this.gl.bindVertexArray(null);
+                }
             }
         });
 
 
-        // just want to draw a line... provide coords in world space
-        // TODO: improve
+        //  TODO: this is temporary, just want to render lines. create a better system for Ray rendering
         this.drawLine3D(line3d.p0, line3d.p1, [1.0, 1.0, 1.0]);
     }
 
-    passUI(main_gizmo, line) {
+    passUI(main_gizmo) {
         // fullscreen quad vertices
         const vertices = new Float32Array([
             -1, -1, // bot-left
@@ -228,14 +221,17 @@ export default class Renderer2 {
         this.gl.uniform1i(this.ui_pass_draw2DGizmo, true);
 
         this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
-
-        this.gl.uniform1i(this.ui_pass_draw2DGizmo, false);
-
-        this.drawLine2D(line.p0, line.p1, [0.0, 0.0, 0.0]);
     }
 
-    // TODO: improve, currently hardset to only work on UI pass.
-    // want it to work on both, or create a separate function.
+
+
+
+
+
+
+
+
+
     drawLine2D(p0, p1, color) {
         const vertices = new Float32Array([...p0, ...p1]);
 

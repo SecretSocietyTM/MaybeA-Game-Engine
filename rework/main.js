@@ -303,7 +303,6 @@ canvas.addEventListener("mousemove", (e) => {
         transform_gizmos.updateGizmosPos(cur_selection);
         transform_gizmos.main_gizmo.center = interactions.calculateObjectCenterScreenCoord(WIDTH, HEIGHT, cur_selection, proj, view);
        
-       // TODO: not too sure why i put this here.
         if (cur_selection) { 
             transform_gizmos.main_gizmo.center = interactions.calculateObjectCenterScreenCoord(WIDTH, HEIGHT, cur_selection, proj, view);
             const distance = vec3.distance(camera.pos, cur_selection.pos);
@@ -344,7 +343,6 @@ canvas.addEventListener("mousemove", (e) => {
                 cur_selection.last_static_transform.scale[2] + (new_pos[2] - start_pos[2]) * cur_selection.last_static_transform.scale[2]
             ];
         } else if (interaction_with === "2d_gizmo") {
-            // TODO: fix
             const scaling_factor = vec3.distance(start_pos, new_pos);
             scale_vector = Array(3).fill(scaling_factor);
             scale_vector = vec3.add([], cur_selection.last_static_transform.scale, scale_vector);
@@ -389,7 +387,6 @@ canvas.addEventListener("mousemove", (e) => {
                 cur_selection.last_static_transform.rotation[2] + angle
             ];
         } else if (interaction_with === "2d_gizmo") {
-            // TODO: fix
             return;
         }
 

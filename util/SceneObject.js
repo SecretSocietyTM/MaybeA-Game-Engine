@@ -6,7 +6,6 @@ const mat4 = glm.mat4;
 
 import AxisAlignedBoundingBox from "./AxisAlignedBoundingBox.js";
 
-// TODO: make all properties that can be on a SceneObject null in the constructor
 export default class SceneObject {
 
     constructor(
