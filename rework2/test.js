@@ -165,7 +165,7 @@ view2.window.addEventListener("mousedown", (e) => {
             start_pos = Interactions.calculatePlaneIntersectionPoint(
                 current_ray, view2.camera.dir, cur_selection.pos);
 
-            // TODO: remove, this is just for "debugging" the scaling issue when using 2d gizmos
+            // TODO: implement this better. We NEED the start_pos_2 value in order to calculate the distance between the center of the object and the location on the 2d gizmo that the is pressed.
             if (transform_gizmos.mode === "scale") {
                 start_pos_2 = start_pos;
                 start_pos = cur_selection.pos;
@@ -226,7 +226,6 @@ view2.window.addEventListener("mousemove", e => {
             }
         });
     }
-
 
     
     if (pan_camera || orbit_camera) {
@@ -299,8 +298,8 @@ view2.window.addEventListener("mousemove", e => {
                 cur_selection.last_static_transform.pos[2] + new_pos[2] - start_pos[2]
             ];
         } else if (interaction_with === "2d_gizmo") {
-            // TODO: object center should not SNAP to location of mouse when interacting with 2D gizmo, instead it should maintain its offset from wherever you grabbed the gizmo
-            translate_vector = new_pos;
+            const pos_offset = vec3.subtract([], new_pos, start_pos);
+            translate_vector = vec3.add([], cur_selection.last_static_transform.pos, pos_offset);
         }
 
         cur_selection.updatePos(translate_vector);
