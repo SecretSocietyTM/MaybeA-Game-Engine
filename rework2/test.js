@@ -210,26 +210,27 @@ view2.window.addEventListener("mousemove", e => {
 
 
     // Handle hover color change
-        if (transform_gizmos.display_gizmos) {
-            if (transform_gizmos.isIntersectingGizmo([mouse_x, view2.height - mouse_y], view2)) {
-                transform_gizmos.main_gizmo.color = [1.0, 1.0, 1.0];
-            } else {
-                transform_gizmos.main_gizmo.color = [0.9, 0.9, 0.9];
-            }
-
-            current_ray.dir = Interactions.generateRayDir(view2.width, view2.height, mouse_x, mouse_y, view2.proj_matrix, view2.camera.view_matrix);
-            transform_gizmos.active_objects.forEach(object => {
-                if (object.aabb.isIntersecting(current_ray)) {
-                    if (object.name.includes("x")) object.assignColor(transform_gizmos.RED_HOVER);
-                    else if (object.name.includes("y")) object.assignColor(transform_gizmos.GREEN_HOVER);
-                    else if (object.name.includes("z")) object.assignColor(transform_gizmos.BLUE_HOVER);
-                } else {
-                    if (object.name.includes("x")) object.assignColor(transform_gizmos.RED);
-                    else if (object.name.includes("y")) object.assignColor(transform_gizmos.GREEN);
-                    else if (object.name.includes("z")) object.assignColor(transform_gizmos.BLUE);
-                }
-            });
+    // TODO: need to add some flag that keeps note of which thing im interacting with to keep it colored
+    if (transform_gizmos.display_gizmos && !transform_gizmos.is_interacting) {
+        if (transform_gizmos.isIntersectingGizmo([mouse_x, view2.height - mouse_y], view2)) {
+            transform_gizmos.main_gizmo.color = [1.0, 1.0, 1.0];
+        } else {
+            transform_gizmos.main_gizmo.color = [0.9, 0.9, 0.9];
         }
+
+        current_ray.dir = Interactions.generateRayDir(view2.width, view2.height, mouse_x, mouse_y, view2.proj_matrix, view2.camera.view_matrix);
+        transform_gizmos.active_objects.forEach(object => {
+            if (object.aabb.isIntersecting(current_ray)) {
+                if (object.name.includes("x")) object.assignColor(transform_gizmos.RED_HOVER);
+                else if (object.name.includes("y")) object.assignColor(transform_gizmos.GREEN_HOVER);
+                else if (object.name.includes("z")) object.assignColor(transform_gizmos.BLUE_HOVER);
+            } else {
+                if (object.name.includes("x")) object.assignColor(transform_gizmos.RED);
+                else if (object.name.includes("y")) object.assignColor(transform_gizmos.GREEN);
+                else if (object.name.includes("z")) object.assignColor(transform_gizmos.BLUE);
+            }
+        });
+    }
 
 
     

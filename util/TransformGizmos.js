@@ -21,7 +21,7 @@ export default class TransformGizmos {
 
         this.RED_HOVER = [1.0, 0.5, 0.5];
         this.GREEN_HOVER = [0.5, 1.0, 0.5];
-        this.BLUE_HOVER = [0.5, 0.5, 1.0];
+        this.BLUE_HOVER = [0.7, 0.7, 1.0];
 
         this.main_gizmo = {
             center: null,
