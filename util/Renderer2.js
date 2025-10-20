@@ -165,7 +165,7 @@ export default class Renderer2 {
     }
 
     /* TODO: remove line parameter */
-    pass3D(objects, is_gizmo, show_AABB, line3d) {
+    pass3D(objects, is_gizmo, show_AABB) {
         if (is_gizmo) {
             this.gl.disable(this.gl.DEPTH_TEST);
         } else {
@@ -194,10 +194,6 @@ export default class Renderer2 {
                 }
             }
         });
-
-
-        //  TODO: this is temporary, just want to render lines. create a better system for Ray rendering
-        this.drawLine3D(line3d.p0, line3d.p1, [1.0, 1.0, 1.0]);
     }
 
     passUI(main_gizmo) {

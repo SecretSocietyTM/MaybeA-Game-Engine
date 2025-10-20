@@ -19,14 +19,6 @@ import MeshesObj from "../mimp/models/meshes_index.js";
 
 //
 // global variables from rework/main.js
-//
-// TODO: improve
-
-const line3d = {
-    p0: [0,0,10],
-    p1: [0,0,0]
-};
-
 let start_pos;
 let start_pos_2; // for scaling since we start from the center
 let cur_selection = null;
@@ -63,29 +55,22 @@ const unit_cube = new SceneObject("unit_cube", MeshesObj.unit_cube, [0,0,0], [1,
 const apple = new SceneObject("apple", MeshesObj.apple, [-20,0,-10], [9,9,9], [0,0,0]);
 const weird_cube = new SceneObject("weird cube", MeshesObj.weird_cube, [0,0,0], [1,1,1], [0,0,0]);
 
-const plane = new SceneObject("unit_cube", MeshesObj.unit_cube, [0,0,0], [20,20,0.02], [0,0,0]);
-plane.transformTargetTo(plane.pos, view2.camera.pos, view2.camera.up, plane.scale);
-plane.aabb = null;
-plane.assignColor([0.7, 0.7, 0.7]);
-plane.assignAlpha(0.3);
-plane.useColor(true);
-
+// For debug view
 const camera = new SceneObject("camera", MeshesObj.camera_offcenter, [0,0,0], [0.5,0.5,0.5], [0,0,0]);
-// TODO: this is so JANK!
 camera.transformTargetTo(view2.camera.pos, view2.camera.target, view2.camera.up, [0.5,0.5,0.5]);
-camera.aabb = null; // TODO: should find a way to make a "Debugger" "Editor" "Game" class that Extends or Inherits from ViewWindow. Each window will have its own config, like dispaying aabbs.
+camera.aabb = null;
 
 
 
 
 objects.push(unit_cube, apple, weird_cube);
-debug_objects.push(unit_cube, apple, weird_cube, camera, plane);
+debug_objects.push(unit_cube, apple, weird_cube, camera);
 
 view1.objects = debug_objects;
 view2.objects = objects;
 
 function renderFrame(loop = false) {
-    renderer.renderToViews(views, transform_gizmos, line3d);
+    renderer.renderToViews(views, transform_gizmos);
     if (loop) requestAnimationFrame(renderFrame);
 }
 
@@ -169,8 +154,6 @@ view2.window.addEventListener("mousedown", (e) => {
             if (transform_gizmos.mode === "scale") {
                 start_pos_2 = start_pos;
                 start_pos = cur_selection.pos;
-                line3d.p1 = Interactions.calculatePlaneIntersectionPoint(
-                current_ray, view2.camera.dir, cur_selection.pos);
             }
 
             transform_gizmos.interaction_with = "2d_gizmo";
@@ -253,11 +236,6 @@ view2.window.addEventListener("mousemove", e => {
 
         // TODO: really jank
         camera.transformTargetTo(view2.camera.pos, view2.camera.target, view2.camera.up, [0.5,0.5,0.5]);
-        plane.pos = view2.camera.target;
-        plane.transformTargetTo(plane.pos, view2.camera.pos, view2.camera.up, plane.scale); // TODO: supremely jank
-
-        // TODO: remove
-        line3d.p0 = view2.camera.pos;
 
         if (transform_gizmos.display_gizmos) {
             // position 2d gizmo at object center
@@ -407,9 +385,6 @@ view2.window.addEventListener("wheel", e => {
                 object.updateScale([scale, scale, scale]);
         });
     }
-
-    // TODO: remove
-    line3d.p0 = view2.camera.pos;
 });
 
 document.addEventListener("keydown", (e) => {
