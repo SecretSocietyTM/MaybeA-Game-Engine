@@ -21,4 +21,7 @@ export default {
     translate_gizmo: parsePLY(ply_files.translate_gizmo2),
     scale_gizmo2: parsePLY(ply_files.scale_gizmo2),
     rotate_gizmo2: parsePLY(ply_files.rotate_gizmo2),
+
+    // new new rotate gizmo
+    rotate_gizmo3: parsePLY(ply_files.rotate_gizmo3),
 }

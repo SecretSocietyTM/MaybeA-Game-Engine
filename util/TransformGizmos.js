@@ -82,14 +82,24 @@ export default class TransformGizmos {
 
         // Better UI but needs improvement:
         // scale AABB, dynamic rotation to face camera
-        const x_rotate = new SceneObject("x_rotate", meshes.rotate_gizmo2, [0,0,0], 
+        /* const x_rotate = new SceneObject("x_rotate", meshes.rotate_gizmo2, [0,0,0], 
             Array(3).fill(this.reference_scale), [0,0,0]);
 
         const y_rotate = new SceneObject("y_rotate", meshes.rotate_gizmo2, [0,0,0], 
             Array(3).fill(this.reference_scale), [0,0,90]);
     
         const z_rotate = new SceneObject("z_rotate", meshes.rotate_gizmo2, [0,0,0], 
-            Array(3).fill(this.reference_scale), [0,90,0])
+            Array(3).fill(this.reference_scale), [0,90,0]) */
+
+        // Simpler rotation gizmos
+        const x_rotate = new SceneObject("x_rotate", meshes.rotate_gizmo3, [0,0,0], 
+            Array(3).fill(this.reference_scale), [0,0,-90]);
+
+        const y_rotate = new SceneObject("y_rotate", meshes.rotate_gizmo3, [0,0,0], 
+            Array(3).fill(this.reference_scale), [0,0,0]);
+    
+        const z_rotate = new SceneObject("z_rotate", meshes.rotate_gizmo3, [0,0,0], 
+            Array(3).fill(this.reference_scale), [90,0,0])
 
         // scale
         const x_scale = new SceneObject("x_scale", meshes.scale_gizmo2, [0,0,0], 

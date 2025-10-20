@@ -11,6 +11,7 @@ import camera_offcenter_ply from "./js_ply_files/camera_offcenter_ply.js";
 import translate_gizmo2_ply from "./js_ply_files/translate_gizmo_ply.js";
 import scale_gizmo_improved_ply from "./js_ply_files/scale_gizmo_improved_ply.js";
 import rotate_gizmo2_ply from "./js_ply_files/rotate_gizmo_ply.js";
+import rotate_gizmo_new_method_ply from "./js_ply_files/rotate_gizmo_new_method_ply.js";
 
 export default {
     unit_cube: unit_cube_ply,
@@ -29,4 +30,7 @@ export default {
     translate_gizmo2: translate_gizmo2_ply,
     scale_gizmo2: scale_gizmo_improved_ply,
     rotate_gizmo2: rotate_gizmo2_ply,
+
+    // new new gizmo for rotation
+    rotate_gizmo3: rotate_gizmo_new_method_ply,
 }
