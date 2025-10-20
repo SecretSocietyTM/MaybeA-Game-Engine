@@ -17,6 +17,7 @@ export function generateRayDir(width, height, x, y, proj, view) {
 
     let ray_world = vec4.transformMat4([], ray_eye, mat4.invert([], view));
     ray_world = [ray_world[0], ray_world[1], ray_world[2]];
+
     vec3.normalize(ray_world, ray_world);
 
     return ray_world;
@@ -46,18 +47,6 @@ export function coordsWorldToScreen(coords, width, height, proj, view) {
     const screen_y = (p_ndc[1] * 0.5 + 0.5) * height;
     return [screen_x, screen_y]; 
 }
-
-
-
-
-export function screenToNDC(width, height, x, y) {
-    const x_ndc = (2 * x) / width - 1;
-    const y_ndc = 1 - (2 * y) / height;
-
-    return [x_ndc, y_ndc];
-}
-
-
 
 
 

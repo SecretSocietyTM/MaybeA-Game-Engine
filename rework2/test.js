@@ -207,6 +207,31 @@ view2.window.addEventListener("mouseup", e => {
 view2.window.addEventListener("mousemove", e => {
     const mouse_x = e.clientX - view2.rect.left;
     const mouse_y = e.clientY - view2.rect.top;
+
+
+    // Handle hover color change
+        if (transform_gizmos.display_gizmos) {
+            if (transform_gizmos.isIntersectingGizmo([mouse_x, view2.height - mouse_y], view2)) {
+                transform_gizmos.main_gizmo.color = [1.0, 1.0, 1.0];
+            } else {
+                transform_gizmos.main_gizmo.color = [0.9, 0.9, 0.9];
+            }
+
+            current_ray.dir = Interactions.generateRayDir(view2.width, view2.height, mouse_x, mouse_y, view2.proj_matrix, view2.camera.view_matrix);
+            transform_gizmos.active_objects.forEach(object => {
+                if (object.aabb.isIntersecting(current_ray)) {
+                    if (object.name.includes("x")) object.assignColor(transform_gizmos.RED_HOVER);
+                    else if (object.name.includes("y")) object.assignColor(transform_gizmos.GREEN_HOVER);
+                    else if (object.name.includes("z")) object.assignColor(transform_gizmos.BLUE_HOVER);
+                } else {
+                    if (object.name.includes("x")) object.assignColor(transform_gizmos.RED);
+                    else if (object.name.includes("y")) object.assignColor(transform_gizmos.GREEN);
+                    else if (object.name.includes("z")) object.assignColor(transform_gizmos.BLUE);
+                }
+            });
+        }
+
+
     
     if (pan_camera || orbit_camera) {
         prev_x = cur_x;

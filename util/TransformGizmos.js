@@ -6,10 +6,6 @@ const mat4 = glm.mat4;
 
 import SceneObject from "./SceneObject.js";
 
-const RED_COLOR = [1.0, 0.3, 0.2];
-const GREEN_COLOR = [0.35, 0.8, 0.46];
-const BLUE_COLOR = [0.2, 0.56, 0.85];
-
 
 export default class TransformGizmos {
     constructor(meshes, ref_scale, ref_distance) {
@@ -19,9 +15,18 @@ export default class TransformGizmos {
         this.scale_objects = [];
         this.active_objects = [];
 
+        this.RED =    [1.0, 0.3, 0.2];
+        this.GREEN =  [0.35, 0.8, 0.46];
+        this.BLUE =   [0.2, 0.56, 0.85];
+
+        this.RED_HOVER = [1.0, 0.5, 0.5];
+        this.GREEN_HOVER = [0.5, 1.0, 0.5];
+        this.BLUE_HOVER = [0.5, 0.5, 1.0];
+
         this.main_gizmo = {
             center: null,
             radius: null,
+            color: [0.9, 0.9, 0.9],
         }
 
         this.interaction_with = null;
@@ -70,8 +75,8 @@ export default class TransformGizmos {
         const z_trans = new SceneObject("z_trans", meshes.translate_gizmo, [0,0,0],
             Array(3).fill(this.reference_scale), [90,0,0]);
 
-        // rotate
-        /* const x_rotate = new SceneObject("x_rotate", meshes.rotate_gizmo, [0,0,0], 
+        /* // rotate
+        const x_rotate = new SceneObject("x_rotate", meshes.rotate_gizmo, [0,0,0], 
             Array(3).fill(this.reference_scale), [90,0,90]);
 
         const y_rotate = new SceneObject("y_rotate", meshes.rotate_gizmo, [0,0,0], 
@@ -82,24 +87,25 @@ export default class TransformGizmos {
 
         // Better UI but needs improvement:
         // scale AABB, dynamic rotation to face camera
-        /* const x_rotate = new SceneObject("x_rotate", meshes.rotate_gizmo2, [0,0,0], 
+        const x_rotate = new SceneObject("x_rotate", meshes.rotate_gizmo2, [0,0,0], 
             Array(3).fill(this.reference_scale), [0,0,0]);
 
         const y_rotate = new SceneObject("y_rotate", meshes.rotate_gizmo2, [0,0,0], 
             Array(3).fill(this.reference_scale), [0,0,90]);
     
         const z_rotate = new SceneObject("z_rotate", meshes.rotate_gizmo2, [0,0,0], 
-            Array(3).fill(this.reference_scale), [0,90,0]) */
+            Array(3).fill(this.reference_scale), [0,90,0])
 
+        // TODO: this should be simpler but im an idiot.
         // Simpler rotation gizmos
-        const x_rotate = new SceneObject("x_rotate", meshes.rotate_gizmo3, [0,0,0], 
+        /* const x_rotate = new SceneObject("x_rotate", meshes.rotate_gizmo3, [0,0,0], 
             Array(3).fill(this.reference_scale), [0,0,-90]);
 
         const y_rotate = new SceneObject("y_rotate", meshes.rotate_gizmo3, [0,0,0], 
             Array(3).fill(this.reference_scale), [0,0,0]);
     
         const z_rotate = new SceneObject("z_rotate", meshes.rotate_gizmo3, [0,0,0], 
-            Array(3).fill(this.reference_scale), [90,0,0])
+            Array(3).fill(this.reference_scale), [90,0,0]) */
 
         // scale
         const x_scale = new SceneObject("x_scale", meshes.scale_gizmo2, [0,0,0], 
@@ -119,17 +125,17 @@ export default class TransformGizmos {
                           x_rotate, y_rotate, z_rotate,
                           x_scale, y_scale, z_scale);
 
-        x_trans.assignColor(RED_COLOR);
-        x_rotate.assignColor(RED_COLOR);
-        x_scale.assignColor(RED_COLOR);
+        x_trans.assignColor(this.RED);
+        x_rotate.assignColor(this.RED);
+        x_scale.assignColor(this.RED);
 
-        y_trans.assignColor(GREEN_COLOR);
-        y_rotate.assignColor(GREEN_COLOR);
-        y_scale.assignColor(GREEN_COLOR);
+        y_trans.assignColor(this.GREEN);
+        y_rotate.assignColor(this.GREEN);
+        y_scale.assignColor(this.GREEN);
 
-        z_trans.assignColor(BLUE_COLOR);
-        z_rotate.assignColor(BLUE_COLOR);
-        z_scale.assignColor(BLUE_COLOR);
+        z_trans.assignColor(this.BLUE);
+        z_rotate.assignColor(this.BLUE);
+        z_scale.assignColor(this.BLUE);
 
         this.objects.forEach(object => {
             object.useColor(true);
@@ -146,11 +152,11 @@ export default class TransformGizmos {
         const dist = vec2.length(vec2.subtract([], mouse_pos, this.main_gizmo.center));
 
         if (this.mode === "translate") {
-            if (dist <= this.main_gizmo.radius) return true;
+            if (dist <= this.main_gizmo.radius + 5) return true;
             return false;
         } else {
-            if (dist >= this.main_gizmo.radius - 10 - 2 && 
-                dist <= this.main_gizmo.radius + 10 ) return true;
+            if (dist >= this.main_gizmo.radius - 5 - 2 && 
+                dist <= this.main_gizmo.radius + 5 ) return true;
             return false
         }
     }

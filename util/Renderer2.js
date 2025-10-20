@@ -217,7 +217,7 @@ export default class Renderer2 {
 
         this.gl.uniform2fv(this.ui_pass_circle_center_uniform, main_gizmo.center);
         this.gl.uniform1f(this.ui_pass_circle_radius, main_gizmo.radius);
-        this.gl.uniform3fv(this.ui_pass_clr_uniform, [1.0, 1.0, 1.0]);
+        this.gl.uniform3fv(this.ui_pass_clr_uniform, main_gizmo.color);
         this.gl.uniform1i(this.ui_pass_draw2DGizmo, true);
 
         this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
