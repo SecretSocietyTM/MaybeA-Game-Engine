@@ -82,6 +82,15 @@ export default class SceneObject {
         if (this.aabb !== null) this.aabb.updateAABB(this.model_matrix);
     }
 
+    rotateOnAxis(angle, axis) {
+        this.model_matrix = mat4.create();
+        mat4.translate(this.model_matrix, this.model_matrix, this.pos);
+        mat4.rotate(this.model_matrix, this.model_matrix, glm.glMatrix.toRadian(angle), axis);
+        mat4.scale(this.model_matrix, this.model_matrix, this.scale);
+
+        if ("aabb" in this) this.aabb.updateAABB(this.model_matrix);
+    }
+
     setLastStaticTransform() {
         this.last_static_transform = {
             pos: this.pos, 

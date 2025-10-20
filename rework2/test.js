@@ -54,7 +54,7 @@ const views = [view1, view2];
 
 current_ray.origin = view2.camera.pos;
 // TODO: find a better way to handle transform gizmos
-const transform_gizmos = new TransformGizmos(MeshesObj, 1, vec3.distance(view2.camera.pos, view2.camera.target));
+const transform_gizmos = new TransformGizmos(MeshesObj, 0.8, vec3.distance(view2.camera.pos, view2.camera.target));
 
 const objects = [];
 const debug_objects = [];
@@ -171,8 +171,6 @@ view2.window.addEventListener("mousedown", (e) => {
                 start_pos = cur_selection.pos;
                 line3d.p1 = Interactions.calculatePlaneIntersectionPoint(
                 current_ray, view2.camera.dir, cur_selection.pos);
-
-                 console.log(vec3.distance(start_pos, start_pos_2));
             }
 
             transform_gizmos.interaction_with = "2d_gizmo";
@@ -345,8 +343,7 @@ view2.window.addEventListener("mousemove", e => {
                 cur_selection.last_static_transform.scale[2] + (new_pos[2] - start_pos[2]) * cur_selection.last_static_transform.scale[2]
             ];
         } else if (interaction_with === "2d_gizmo") {
-            // TODO: rename circle_radius, or store value within gizmos
-            const circle_radius = vec3.distance(start_pos_2, start_pos);
+            const circle_radius = vec3.distance(start_pos_2, start_pos); // TODO: rename circle_radius, or store value within gizmos
             const scaling_factor = vec3.distance(start_pos, new_pos) / circle_radius;
             scale_vector = vec3.scale([], cur_selection.last_static_transform.scale, scaling_factor);
         }
@@ -355,33 +352,41 @@ view2.window.addEventListener("mousemove", e => {
     } else if (transform_gizmos.is_interacting && 
                 transform_gizmos.mode === "rotate") {
 
-            const interaction_with = transform_gizmos.interaction_with;
-            current_ray.dir = Interactions.generateRayDir(view2.width, view2.height, mouse_x, mouse_y, view2.proj_matrix, view2.camera.view_matrix);
-            const new_pos = Interactions.calculatePlaneIntersectionPoint(
-                            current_ray, view2.camera.dir, cur_selection.pos);
-            
-            let rotate_vector = null;
-            if (interaction_with === "x_rotate") {
-                rotate_vector = [
-                    cur_selection.last_static_transform.rotation[0] + (new_pos[0] - start_pos[0]) * 180 / Math.PI,
-                    cur_selection.rotation_angles[1],
-                    cur_selection.rotation_angles[2]
-                ];
-            } else if (interaction_with === "y_rotate") {
-                rotate_vector = [
-                    cur_selection.rotation_angles[0],
-                    cur_selection.last_static_transform.rotation[1] + (new_pos[1] - start_pos[1]) * 180 / Math.PI,
-                    cur_selection.rotation_angles[2]
-                ];  
-            } else if (interaction_with === "z_rotate") {
-                rotate_vector = [
-                    cur_selection.rotation_angles[0],
-                    cur_selection.rotation_angles[1],
-                    cur_selection.last_static_transform.rotation[2] + (new_pos[2] - start_pos[2]) * 180 / Math.PI,    
-                ]
-            }
-            
-            cur_selection.updateRot(rotate_vector);
+        const interaction_with = transform_gizmos.interaction_with;
+        current_ray.dir = Interactions.generateRayDir(view2.width, view2.height, mouse_x, mouse_y, view2.proj_matrix, view2.camera.view_matrix);
+        const new_pos = Interactions.calculatePlaneIntersectionPoint(
+                        current_ray, view2.camera.dir, cur_selection.pos);
+        
+        let rotate_vector = null;
+        if (interaction_with === "x_rotate") {
+            rotate_vector = [
+                cur_selection.last_static_transform.rotation[0] + (new_pos[0] - start_pos[0]) * 180 / Math.PI,
+                cur_selection.rotation_angles[1],
+                cur_selection.rotation_angles[2]
+            ];
+        } else if (interaction_with === "y_rotate") {
+            rotate_vector = [
+                cur_selection.rotation_angles[0],
+                cur_selection.last_static_transform.rotation[1] + (new_pos[1] - start_pos[1]) * 180 / Math.PI,
+                cur_selection.rotation_angles[2]
+            ];  
+        } else if (interaction_with === "z_rotate") {
+            rotate_vector = [
+                cur_selection.rotation_angles[0],
+                cur_selection.rotation_angles[1],
+                cur_selection.last_static_transform.rotation[2] + (new_pos[2] - start_pos[2]) * 180 / Math.PI,    
+            ]
+        } else if (interaction_with === "2d_gizmo") {
+            // TODO NOT URGET: not sure what is happening, the entire thing will snap to a different angle if rotated after moving the camera after a rotation
+            // TODO NOT URGENT: when scaling after rotating with any gizmo, the axis of scaling is fucked
+            const angle = Math.atan2(vec3.dot(view2.camera.dir, 
+                vec3.cross([], start_pos, new_pos)), vec3.dot(start_pos, new_pos)) * 180 / Math.PI;  
+
+            cur_selection.rotateOnAxis(angle, view2.camera.dir);
+            return;
+        }
+        
+        cur_selection.updateRot(rotate_vector);
     }
 });
 

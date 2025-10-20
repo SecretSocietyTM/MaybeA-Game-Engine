@@ -49,6 +49,15 @@ export function coordsWorldToScreen(coords, width, height, proj, view) {
 }
 
 
+export function calculateAngleBetweenVectors(v, w) {
+
+    // equation: theta = acos((v dot w / len(v) * len(w)));
+    const numerator = vec2.dot(v, w);
+    const denominator = vec2.length(v) * vec2.length(w);
+    const angle = Math.acos(numerator / denominator) * 180 / Math.PI;
+
+    return angle;
+}
 
 
 
