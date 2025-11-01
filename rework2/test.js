@@ -88,17 +88,20 @@ function gameLoop() {
     const speed = 0.05;
     if (w_pressed) {
         player.updatePos(vec3.add([], player.last_static_transform.pos, [0,0,-1 * speed]));
+        player.setLastStaticTransform();
     } 
     if (a_pressed) {
         player.updatePos(vec3.add([], player.last_static_transform.pos, [-1 * speed,0,0]));
+        player.setLastStaticTransform();
     } 
     if (s_pressed) {
         player.updatePos(vec3.add([], player.last_static_transform.pos, [0,0,1 * speed]));
+        player.setLastStaticTransform();
     } 
     if (d_pressed) {
         player.updatePos(vec3.add([], player.last_static_transform.pos, [1 * speed,0,0]));
+        player.setLastStaticTransform();
     }
-    player.setLastStaticTransform();
 
     // need to check collisions here
     weird_cube.aabb.isColliding(player);
@@ -126,6 +129,10 @@ btn_toggle_GameLoop.addEventListener("click", e => {
 
 
 // element stuff...
+const btn_w = document.getElementById("w_pressed");
+const btn_a = document.getElementById("a_pressed");
+const btn_s = document.getElementById("s_pressed");
+const btn_d = document.getElementById("d_pressed");
 const btn_toggle_AABB = document.getElementById("toggle_AABB");
 btn_toggle_AABB.addEventListener("click", e => {
     btn_toggle_AABB.classList.toggle("toggle");
@@ -133,17 +140,41 @@ btn_toggle_AABB.addEventListener("click", e => {
 });
 
 document.addEventListener("keydown", e => {
-    if (e.key === "w") w_pressed = true;
-    if (e.key === "a") a_pressed = true;
-    if (e.key === "s") s_pressed = true;
-    if (e.key === "d") d_pressed = true;
+    if (e.key === "w") {
+        btn_w.classList.remove("toggle");
+        w_pressed = true;
+    } 
+    if (e.key === "a") {
+        btn_a.classList.remove("toggle");
+        a_pressed = true;
+    }
+    if (e.key === "s") {
+        btn_s.classList.remove("toggle");
+        s_pressed = true;
+    }
+    if (e.key === "d") {
+        btn_d.classList.remove("toggle");
+        d_pressed = true;
+    }
 });
 
 document.addEventListener("keyup" , e => {
-    if (e.key === "w") w_pressed = false;
-    if (e.key === "a") a_pressed = false;
-    if (e.key === "s") s_pressed = false;
-    if (e.key === "d") d_pressed = false;
+    if (e.key === "w") {
+        btn_w.classList.add("toggle");
+        w_pressed = false;
+    } 
+    if (e.key === "a") {
+        btn_a.classList.add("toggle");
+        a_pressed = false;
+    }
+    if (e.key === "s") {
+        btn_s.classList.add("toggle");
+        s_pressed = false;
+    }
+    if (e.key === "d") {
+        btn_d.classList.add("toggle");
+        d_pressed = false;
+    }
 });
 
 
