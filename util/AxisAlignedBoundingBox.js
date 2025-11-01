@@ -123,4 +123,12 @@ export default class AxisAlignedBoundingBox {
 
         return true;
     }
+
+    isColliding(object) {
+        const object_extrema = object.aabb.extrema;
+        // VERY BAD
+        if (object_extrema.max[2] > this.extrema.min[2] && object_extrema.max[2] < this.extrema.max[2]) {
+            console.log("object is hitting object along z axis");
+        }
+    }
 }

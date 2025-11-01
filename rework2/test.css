@@ -47,3 +47,7 @@ body {
 #view_1, #view_2 {
     outline: solid black 2px;
 }
+
+.toggle {
+    background-color: grey;
+}

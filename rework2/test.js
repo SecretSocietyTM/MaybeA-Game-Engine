@@ -34,6 +34,14 @@ let current_ray = {
 }
 
 
+// Variables for Game Loop
+let enable_game_loop = false;
+let w_pressed = false;
+let a_pressed = false;
+let s_pressed = false;
+let d_pressed = false;
+
+
 
 const renderer = new Renderer2(canvas);
 renderer.addAABBMesh(MeshesObj.aabb_wireframe); // preload the AABB wireframe mesh and VAO
@@ -52,6 +60,7 @@ const objects = [];
 const game_objects = [];
 
 const unit_cube = new SceneObject("unit_cube", MeshesObj.unit_cube, [0,0,0], [1,1,1], [0,0,0]);
+const player = unit_cube;
 const apple = new SceneObject("apple", MeshesObj.apple, [-10,0,-10], [9,9,9], [0,0,0]);
 const weird_cube = new SceneObject("weird cube", MeshesObj.weird_cube, [0,0,0], [1,1,1], [0,0,0]);
 
@@ -65,12 +74,77 @@ game_objects.push(unit_cube, apple, weird_cube);
 view2.objects = objects;
 view1.objects = game_objects;
 
-function renderFrame(loop = false) {
+// render loop variables
+let editor_req_id;
+let game_req_id;
+
+function editorLoop() {
     renderer.renderToViews(views, transform_gizmos);
-    if (loop) requestAnimationFrame(renderFrame);
+    editor_req_id = requestAnimationFrame(editorLoop);
 }
 
-renderFrame(true);
+// THIS IS THE GAME LOOP
+function gameLoop() {
+    const speed = 0.05;
+    if (w_pressed) {
+        player.updatePos(vec3.add([], player.last_static_transform.pos, [0,0,-1 * speed]));
+    } 
+    if (a_pressed) {
+        player.updatePos(vec3.add([], player.last_static_transform.pos, [-1 * speed,0,0]));
+    } 
+    if (s_pressed) {
+        player.updatePos(vec3.add([], player.last_static_transform.pos, [0,0,1 * speed]));
+    } 
+    if (d_pressed) {
+        player.updatePos(vec3.add([], player.last_static_transform.pos, [1 * speed,0,0]));
+    }
+    player.setLastStaticTransform();
+
+    // need to check collisions here
+    weird_cube.aabb.isColliding(player);
+
+    renderer.renderToViews(views, transform_gizmos);
+    game_req_id = requestAnimationFrame(gameLoop);
+}
+
+editor_req_id = requestAnimationFrame(editorLoop);
+
+// enables the "game loop"
+const btn_toggle_GameLoop = document.getElementById("toggle_GameLoop");
+btn_toggle_GameLoop.addEventListener("click", e => {
+    btn_toggle_GameLoop.classList.toggle("toggle");
+    enable_game_loop = !enable_game_loop;
+    if (enable_game_loop) {
+        cancelAnimationFrame(editor_req_id);
+        game_req_id = requestAnimationFrame(gameLoop);
+        return;
+    }
+
+    cancelAnimationFrame(game_req_id);
+    editor_req_id = requestAnimationFrame(editorLoop);
+});
+
+
+// element stuff...
+const btn_toggle_AABB = document.getElementById("toggle_AABB");
+btn_toggle_AABB.addEventListener("click", e => {
+    btn_toggle_AABB.classList.toggle("toggle");
+    view2.show_AABB = !view2.show_AABB;
+});
+
+document.addEventListener("keydown", e => {
+    if (e.key === "w") w_pressed = true;
+    if (e.key === "a") a_pressed = true;
+    if (e.key === "s") s_pressed = true;
+    if (e.key === "d") d_pressed = true;
+});
+
+document.addEventListener("keyup" , e => {
+    if (e.key === "w") w_pressed = false;
+    if (e.key === "a") a_pressed = false;
+    if (e.key === "s") s_pressed = false;
+    if (e.key === "d") d_pressed = false;
+});
 
 
 
@@ -382,37 +456,3 @@ document.addEventListener("keydown", (e) => {
         transform_gizmos.setMode("scale");
     }
 });
-
-// element stuff...
-const btn_toggle_AABB = document.getElementById("toggle_AABB");
-btn_toggle_AABB.addEventListener("click", e => {
-    view2.show_AABB = !view2.show_AABB;
-});
-
-
-
-
-
-
-// Variables for Game View
-const player = unit_cube;
-
-document.addEventListener("keydown", e => {
-    const speed = 0.5;
-    
-    switch (e.key) {
-    case "w":
-        player.updatePos(vec3.add([], player.last_static_transform.pos, [0,0,-1 * speed]));
-        break;
-    case "s":
-        player.updatePos(vec3.add([], player.last_static_transform.pos, [0,0,1 * speed]));
-        break;
-    case "a":
-        player.updatePos(vec3.add([], player.last_static_transform.pos, [-1 * speed,0,0]));
-        break;
-    case "d":
-        player.updatePos(vec3.add([], player.last_static_transform.pos, [1 * speed,0,0]));
-        break;
-    }
-    player.setLastStaticTransform();
-})
