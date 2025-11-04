@@ -58,19 +58,28 @@ const transform_gizmos = new TransformGizmos(MeshesObj, 0.8, vec3.distance(view2
 
 const objects = [];
 const game_objects = [];
+const collision_objects = [];
 
 const unit_cube = new SceneObject("unit_cube", MeshesObj.unit_cube, [0,0,0], [1,1,1], [0,0,0]);
 const player = unit_cube;
 const apple = new SceneObject("apple", MeshesObj.apple, [-10,0,-10], [9,9,9], [0,0,0]);
 const weird_cube = new SceneObject("weird cube", MeshesObj.weird_cube, [0,0,0], [1,1,1], [0,0,0]);
 
+const wall = new SceneObject("wall", MeshesObj.unit_cube, [0,0,10], [10,10,1], [0,0,0]);
+wall.assignColor([0.6,0.6,0.6]);
+wall.useColor(true);
+const floor = new SceneObject("floor", MeshesObj.unit_cube, [0,-2.2,0], [15,1,15], [0,0,0]);
+floor.assignColor([0.2,0.2,0.2]);
+floor.useColor(true);
+
 // For game view
-const camera = new SceneObject("camera", MeshesObj.camera_offcenter, [10,10,10], [0.3,0.3,0.3], [0,0,0]);
+const camera = new SceneObject("camera", MeshesObj.camera_offcenter, [-30,30,-30], [0.3,0.3,0.3], [0,0,0]);
 camera.transformTargetTo(camera.pos, view2.camera.target, view2.camera.up, camera.scale);
 view1.moveCamera(camera.pos);
 
-objects.push(unit_cube, apple, weird_cube, camera);
-game_objects.push(unit_cube, apple, weird_cube);
+objects.push(unit_cube, apple, weird_cube, camera, wall, floor);
+game_objects.push(unit_cube, apple, weird_cube, wall, floor);
+collision_objects.push(wall, floor);
 view2.objects = objects;
 view1.objects = game_objects;
 
@@ -85,26 +94,27 @@ function editorLoop() {
 
 // THIS IS THE GAME LOOP
 function gameLoop() {
-    const speed = 0.05;
-    if (w_pressed) {
+    const speed = 0.15;
+    if (d_pressed) {
         player.updatePos(vec3.add([], player.last_static_transform.pos, [0,0,-1 * speed]));
         player.setLastStaticTransform();
     } 
-    if (a_pressed) {
-        player.updatePos(vec3.add([], player.last_static_transform.pos, [-1 * speed,0,0]));
+    if (w_pressed) {
+        player.updatePos(vec3.add([], player.last_static_transform.pos, [0,1 * speed,0]));
         player.setLastStaticTransform();
     } 
-    if (s_pressed) {
+    if (a_pressed) {
         player.updatePos(vec3.add([], player.last_static_transform.pos, [0,0,1 * speed]));
         player.setLastStaticTransform();
     } 
-    if (d_pressed) {
-        player.updatePos(vec3.add([], player.last_static_transform.pos, [1 * speed,0,0]));
+    if (s_pressed) {
+        player.updatePos(vec3.add([], player.last_static_transform.pos, [0,-1 * speed,0]));
         player.setLastStaticTransform();
     }
 
-    // need to check collisions here
-    weird_cube.aabb.isColliding(player);
+    collision_objects.forEach(object => {
+        player.repelFrom(object);
+    });
 
     renderer.renderToViews(views, transform_gizmos);
     game_req_id = requestAnimationFrame(gameLoop);
@@ -136,6 +146,7 @@ const btn_d = document.getElementById("d_pressed");
 const btn_toggle_AABB = document.getElementById("toggle_AABB");
 btn_toggle_AABB.addEventListener("click", e => {
     btn_toggle_AABB.classList.toggle("toggle");
+    view1.show_AABB = !view1.show_AABB;
     view2.show_AABB = !view2.show_AABB;
 });
 

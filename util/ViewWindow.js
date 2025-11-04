@@ -23,8 +23,8 @@ export default class ViewWindow {
         this.width = this.rect.width;
         this.height = this.rect.height;
 
-        // the view matrix should be within the camera i think...
-        this.camera = new Camera([0,0,10], [0,0,0], [0,1,0]);
+        // [0,0,10]
+        this.camera = new Camera([10,0,0], [0,0,0], [0,1,0]);
 
         this.proj_matrix = mat4.create();
         mat4.perspective(

@@ -67,9 +67,9 @@ export default class AxisAlignedBoundingBox {
         const min_z = Math.min(...z);
 
         let extrema = {
-            max: [max_x, max_y, max_z],
-            min: [min_x, min_y, min_z]
-        };
+            max: {x: max_x, y: max_y, z: max_z},
+            min: {x: min_x, y: min_y, z: min_z},
+        }
 
         this.extrema = extrema;
     }
@@ -78,17 +78,21 @@ export default class AxisAlignedBoundingBox {
      * Computes the model matrix to be applied onto the unit AABB during rendiring.
      */
     getABBModelMatrix() {
-        const center = (vec3.scale([], vec3.add([], this.extrema.min, this.extrema.max), 1/2));
-        const scale_factor = vec3.subtract([], this.extrema.max, this.extrema.min);
+        const min_vector = vec3.fromValues(this.extrema.min.x, this.extrema.min.y, this.extrema.min.z);
+        const max_vector = vec3.fromValues(this.extrema.max.x, this.extrema.max.y, this.extrema.max.z);
+
+        const center = (vec3.scale([], vec3.add([], min_vector, max_vector), 1/2));
+        const scale_factor = vec3.subtract([], max_vector, min_vector);
 
         this.model_matrix = mat4.create();
         mat4.translate(this.model_matrix, this.model_matrix, center);
         mat4.scale(this.model_matrix, this.model_matrix, scale_factor);
     }
 
+    // Credit: https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection.html
     isIntersecting(ray) {
-        let tmin = (this.extrema.min[0] - ray.origin[0]) / ray.dir[0];
-        let tmax = (this.extrema.max[0] - ray.origin[0]) / ray.dir[0];
+        let tmin = (this.extrema.min.x - ray.origin[0]) / ray.dir[0];
+        let tmax = (this.extrema.max.x - ray.origin[0]) / ray.dir[0];
 
         if (tmin > tmax) {
             let temp = tmax;
@@ -96,8 +100,8 @@ export default class AxisAlignedBoundingBox {
             tmin = temp;
         }
 
-        let tymin = (this.extrema.min[1] - ray.origin[1]) / ray.dir[1];
-        let tymax = (this.extrema.max[1] - ray.origin[1]) / ray.dir[1];
+        let tymin = (this.extrema.min.y - ray.origin[1]) / ray.dir[1];
+        let tymax = (this.extrema.max.y - ray.origin[1]) / ray.dir[1];
 
         if (tymin > tymax) {
             let temp = tymax;
@@ -110,8 +114,8 @@ export default class AxisAlignedBoundingBox {
         if (tymin > tmin) tmin = tymin; 
         if (tymax < tmax) tmax = tymax;
 
-        let tzmin = (this.extrema.min[2] - ray.origin[2]) / ray.dir[2];
-        let tzmax = (this.extrema.max[2] - ray.origin[2]) / ray.dir[2];
+        let tzmin = (this.extrema.min.z - ray.origin[2]) / ray.dir[2];
+        let tzmax = (this.extrema.max.z - ray.origin[2]) / ray.dir[2];
 
         if (tzmin > tzmax) {
             let temp = tzmax;
@@ -124,11 +128,39 @@ export default class AxisAlignedBoundingBox {
         return true;
     }
 
+    // This function is used to check whether two SceneObjects are colliding
+    // Credit: https://developer.mozilla.org/en-US/docs/Games/Techniques/3D_collision_detection
     isColliding(object) {
-        const object_extrema = object.aabb.extrema;
-        // VERY BAD
-        if (object_extrema.max[2] > this.extrema.min[2] && object_extrema.max[2] < this.extrema.max[2]) {
-            console.log("object is hitting object along z axis");
-        }
+        const a = this.extrema;
+        const b = object.extrema;
+
+        const is_colliding = a.min.x <= b.max.x &&
+                             a.max.x >= b.min.x &&
+                             a.min.y <= b.max.y &&
+                             a.max.y >= b.min.y &&
+                             a.min.z <= b.max.z &&
+                             a.max.z >= b.min.z
+
+        return is_colliding;
+    }
+
+    getPenetration(object) {
+        const a = this.extrema;
+        const b = object.extrema;
+
+        const dx1 = a.max.x - b.min.x;
+        const dx2 = b.max.x - a.min.x;
+        const dy1 = a.max.y - b.min.y;
+        const dy2 = b.max.y - a.min.y;
+        const dz1 = a.max.z - b.min.z;
+        const dz2 = b.max.z - a.min.z;
+
+        const overlaps = [
+            { axis: 'x', depth: Math.min(dx1, dx2), dir: dx1 < dx2 ? -1 : 1 },
+            { axis: 'y', depth: Math.min(dy1, dy2), dir: dy1 < dy2 ? -1 : 1 },
+            { axis: 'z', depth: Math.min(dz1, dz2), dir: dz1 < dz2 ? -1 : 1 },
+        ];
+
+        return overlaps.reduce((min, o) => o.depth < min.depth ? o : min);
     }
 }

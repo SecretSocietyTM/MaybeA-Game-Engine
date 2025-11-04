@@ -109,4 +109,20 @@ export default class SceneObject {
     updateScale(scale) {
         this.transform(this.pos, scale, this.rotation_angles);
     }
+
+    repelFrom(object) {
+        if (!this.aabb.isColliding(object.aabb)) return;
+
+        const penetration = this.aabb.getPenetration(object.aabb);
+        const move = [0,0,0];
+
+        if (penetration.axis === 'x') move[0] = penetration.dir * penetration.depth;
+        if (penetration.axis === 'y') move[1] = penetration.dir * penetration.depth;
+        if (penetration.axis === 'z') move[2] = penetration.dir * penetration.depth;
+
+        /* console.log(move); */
+
+        this.updatePos(vec3.add([], this.last_static_transform.pos, move));
+        this.setLastStaticTransform();
+    }
 }

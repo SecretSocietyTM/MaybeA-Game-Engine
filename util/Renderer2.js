@@ -183,6 +183,7 @@ export default class Renderer2 {
             this.gl.bindVertexArray(null);
 
             if (show_AABB) {
+                this.gl.uniform1i(this.u_useClr_location, false);
                 if (object.aabb !== null) {
                     if (!this.aabb_mesh) throw new Error("AABB mesh not set!");
                     const aabb = object.aabb;
