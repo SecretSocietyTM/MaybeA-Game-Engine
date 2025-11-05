@@ -18,6 +18,11 @@ body {
     height: 100%;
 }
 
+ul {
+    list-style-type: none;
+}
+
+
 #canvas {
     display: block;
     position: absolute;
@@ -31,21 +36,63 @@ body {
     /* If I want to be able to click on the view windows I need to assign
     canvas a z-index of -1 and remove the background color from the __body element */
 
-    padding: 10rem 5rem;
     width: 100%;
     height: 100%;
 
     /* background-color: aquamarine; TODO: uncomment */
 }
 
-.views {
+
+.page {
+    width: 100%;
+    height: 100%;
+
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;    
+    grid-template-columns: auto max-content;
+    grid-template-rows: max-content auto;
+    gap: 0.5rem;
+
+    padding: 0.5rem;
 }
 
-#view_1, #view_2 {
+.scene-objects_section {
+    background-color: rgba(0, 255, 255, 0.4);
+}
+
+.scene-objects_list {
+    padding-inline: 0.75rem;
+}
+
+.views_section {
+    display: flex;
+    justify-content: end;
+    gap: 0.5rem;
+}
+
+.debug_section {
+    margin-block-start: 3rem;
+}
+
+.section {
+    padding: 0.5rem;
+    background-color: #8B8B8B;
+}
+
+.section_title {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+#view1, #view2 {
     outline: solid black 2px;
+
+    /* TODO: 
+    need to figure out a way to recalculate
+    viewport / scissor location. Since view1 is loaded
+    before view2, it is placed in a location that will be 
+    "overwritten" when view2 has its size assigned */
+    width: 800px;
+    height: 600px;
 }
 
 .toggle {

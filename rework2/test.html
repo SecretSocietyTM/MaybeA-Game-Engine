@@ -11,19 +11,64 @@
 <body>
 <canvas id="canvas" class="canvas"></canvas>
 <div class="__body">
-    <div class="views"> 
+<div class="page">
+    <div class="scene-objects_section section">
+        <p class="section_title">Scene Objects</p>
+        <ul class="scene-objects_list">
+            <li>unit_cube</li>
+            <li>weird_cube</li>
+            <li>apple</li>
+            <li>floor</li>
+            <li>wall</li>
+        </ul>
+    </div>
+    <div class="views_section">
         <div id="view1" class="view1"></div>
         <div id="view2" class="view2"></div>
     </div>
-    <button type="button" id="toggle_AABB" class="toggle">Toggle AABB</button>
-    <button type="button" id="toggle_GameLoop" class="toggle">Toggle Game Loop</button>
-    
-    <div>
-        <button type="button" id="w_pressed" class="toggle">W</button>
-        <button type="button" id="a_pressed" class="toggle">A</button>
-        <button type="button" id="s_pressed" class="toggle">S</button>
-        <button type="button" id="d_pressed" class="toggle">D</button>
+    <div class="object-inspector_section section">
+        <p class="section_title">Object Inspector</p>
+        <div class="transform_section">
+            <p class="section_title">Transform</p>
+            <div class="transform_subsection">
+                <div class="position">
+                    <p>Position</p>
+                    <input type="number" name="" id="x">
+                    <input type="number" name="" id="y">
+                    <input type="number" name="" id="z">
+                </div>
+                <div class="rotation">
+                    <p>Rotation</p>
+                    <input type="number" name="" id="x">
+                    <input type="number" name="" id="y">
+                    <input type="number" name="" id="z">
+                </div>
+                <div class="scale">
+                    <p>Scale</p>
+                    <input type="number" name="" id="x">
+                    <input type="number" name="" id="y">
+                    <input type="number" name="" id="z">
+                </div>
+            </div>
+        </div>
+
+        <!-- TODO: temp -->
+         <div class="debug_section">
+            <button type="button" id="toggle_AABB" class="toggle">Toggle AABB</button>
+            <button type="button" id="toggle_GameLoop" class="toggle">Toggle Game Loop</button>
+            
+            <div>
+                <button type="button" id="w_pressed" class="toggle">W</button>
+                <button type="button" id="a_pressed" class="toggle">A</button>
+                <button type="button" id="s_pressed" class="toggle">S</button>
+                <button type="button" id="d_pressed" class="toggle">D</button>
+            </div>
+         </div>
     </div>
+    <div class="models_section section">
+        <p class="section_title">Models</p>
+    </div>
+</div>
 </div>
 </body>
 </html>

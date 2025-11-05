@@ -46,11 +46,15 @@ let d_pressed = false;
 const renderer = new Renderer2(canvas);
 renderer.addAABBMesh(MeshesObj.aabb_wireframe); // preload the AABB wireframe mesh and VAO
 
+const div1 = document.getElementById("view1");
+console.log(div1.getBoundingClientRect());
+
 const view1 = new ViewWindow("v1", document.getElementById("view1"), canvas);
 view1.show_UI = false;
 view1.show_gizmos = false;
 const view2 = new ViewWindow("v2", document.getElementById("view2"), canvas);
 const views = [view1, view2];
+console.log(views);
 
 current_ray.origin = view2.camera.pos;
 const transform_gizmos = new TransformGizmos(MeshesObj, 0.8, vec3.distance(view2.camera.pos, view2.camera.target));
@@ -65,7 +69,7 @@ const apple = new SceneObject("apple", MeshesObj.apple, [-10,0,-10], [9,9,9], [0
 const weird_cube = new SceneObject("weird cube", MeshesObj.weird_cube, [0,0,0], [1,1,1], [0,0,0]);
 
 const wall = new SceneObject("wall", MeshesObj.unit_cube, [0,0,10], [10,10,1], [0,0,0]);
-wall.assignColor([0.6,0.6,0.6]);
+wall.assignColor([1.0, 0.5, 0.0]);
 wall.useColor(true);
 const floor = new SceneObject("floor", MeshesObj.unit_cube, [0,-2.2,0], [15,1,15], [0,0,0]);
 floor.assignColor([0.2,0.2,0.2]);
