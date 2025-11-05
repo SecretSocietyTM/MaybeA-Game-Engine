@@ -53,7 +53,6 @@ const view2 = new ViewWindow("v2", document.getElementById("view2"), canvas);
 const views = [view1, view2];
 
 current_ray.origin = view2.camera.pos;
-// TODO: find a better way to handle transform gizmos
 const transform_gizmos = new TransformGizmos(MeshesObj, 0.8, vec3.distance(view2.camera.pos, view2.camera.target));
 
 const objects = [];
@@ -201,8 +200,8 @@ view2.window.addEventListener("click", e => {
         return;
     };
 
-    const mouse_x = e.clientX - view2.rect.left; // TODO NOT URGET: likely use offsets, values are the same as offsetX
-    const mouse_y = e.clientY - view2.rect.top;  // TODO NOT URGET: likely use offsets, values are the same as offsetY
+    const mouse_x = e.clientX - view2.rect.left; // TODO NOT URGET: use offsets, values are the same as offsetX
+    const mouse_y = e.clientY - view2.rect.top;  // TODO NOT URGET: use offsets, values are the same as offsetY
     current_ray.dir = Interactions.generateRayDir(view2.width, view2.height, mouse_x, mouse_y, view2.proj_matrix, view2.camera.view_matrix);
 
     for (let i = 0; i < objects.length; i++) {
