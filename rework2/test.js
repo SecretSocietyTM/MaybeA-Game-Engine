@@ -209,6 +209,7 @@ view2.window.addEventListener("click", e => {
         if (objects[i].aabb.isIntersecting(current_ray)) {
             if (cur_selection === objects[i]) return;
             cur_selection = objects[i];
+            setTransformUI(transform_ui, cur_selection);
 
             transform_gizmos.display_gizmos = true;
 
@@ -384,6 +385,7 @@ view2.window.addEventListener("mousemove", e => {
         }
 
         cur_selection.updatePos(translate_vector);
+        setTransformUI(transform_ui, cur_selection);
         transform_gizmos.updateGizmosPos(cur_selection);
         transform_gizmos.main_gizmo.center = Interactions.calculateObjectCenterScreenCoord(view2.width, view2.height, cur_selection, view2.proj_matrix, view2.camera.view_matrix);
         // TODO: not too sure why i put this here.
@@ -428,7 +430,7 @@ view2.window.addEventListener("mousemove", e => {
             scale_vector = vec3.scale([], cur_selection.last_static_transform.scale, scaling_factor);
         }
         cur_selection.updateScale(scale_vector);
-
+        setTransformUI(transform_ui, cur_selection);
     } else if (transform_gizmos.is_interacting && 
                 transform_gizmos.mode === "rotate") {
 
@@ -465,8 +467,8 @@ view2.window.addEventListener("mousemove", e => {
             cur_selection.rotateOnAxis(angle, view2.camera.dir);
             return;
         }
-        
         cur_selection.updateRot(rotate_vector);
+        setTransformUI(transform_ui, cur_selection);
     }
 });
 
@@ -507,6 +509,26 @@ document.addEventListener("keydown", (e) => {
 
 // UI elements
 const sceneobject_list = document.getElementById("sceneobjects_list");
+const transform_ui = {
+    position: {
+        x: document.getElementById("position").querySelector(".x"),
+        y: document.getElementById("position").querySelector(".y"),
+        z: document.getElementById("position").querySelector(".z")
+    },
+
+    rotation: {
+        x: document.getElementById("rotation").querySelector(".x"),
+        y: document.getElementById("rotation").querySelector(".y"),
+        z: document.getElementById("rotation").querySelector(".z")
+    }, 
+
+    scale: {
+        x: document.getElementById("scale").querySelector(".x"),
+        y: document.getElementById("scale").querySelector(".y"),
+        z: document.getElementById("scale").querySelector(".z")
+    }
+}
+
 
 
 loadSceneObjectsToList(sceneobject_list, objects);
@@ -520,6 +542,12 @@ sceneobject_list.addEventListener("click", e => {
         objects.forEach(object => {
             if (object.name === list_object.textContent) {
                 cur_selection = object;
+
+                transform_gizmos.display_gizmos = true;
+                transform_gizmos.updateGizmosPos(cur_selection);
+                transform_gizmos.main_gizmo.center = Interactions.calculateObjectCenterScreenCoord(view2.width, view2.height, cur_selection, view2.proj_matrix, view2.camera.view_matrix);
+                
+                setTransformUI(transform_ui, cur_selection);
                 return;
             }
         });
@@ -537,4 +565,28 @@ function addSceneObjectToList(list, object) {
     const p = document.createElement("p");
     p.textContent = object.name;
     list.appendChild(p);
+}
+
+function setTransformUI(transform_ui, object) {
+    setPositionUI(transform_ui.position, object);
+    setScaleUI(transform_ui.scale, object);
+    setRotationUI(transform_ui.rotation, object);
+}
+
+function setPositionUI(position_ui, object) {
+    position_ui.x.value = object.pos[0];
+    position_ui.y.value = object.pos[1];
+    position_ui.z.value = object.pos[2];
+}
+
+function setScaleUI(scale_ui, object) {
+    scale_ui.x.value = object.scale[0];
+    scale_ui.y.value = object.scale[1];
+    scale_ui.z.value = object.scale[2];    
+}
+
+function setRotationUI(rotation_ui, object) {
+    rotation_ui.x.value = object.rotation_angles[0];
+    rotation_ui.y.value = object.rotation_angles[1];
+    rotation_ui.z.value = object.rotation_angles[2];
 }
