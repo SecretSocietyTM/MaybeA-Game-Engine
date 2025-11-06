@@ -81,20 +81,16 @@ export default class AxisAlignedBoundingBox {
         const min_vector = vec3.fromValues(this.extrema.min.x, this.extrema.min.y, this.extrema.min.z);
         const max_vector = vec3.fromValues(this.extrema.max.x, this.extrema.max.y, this.extrema.max.z);
 
-        const center = vec3.scale([], vec3.add([], min_vector, max_vector), 1/2);
-        const scale_factor = vec3.subtract([], max_vector, min_vector);
+        this.center = vec3.scale([], vec3.add([], min_vector, max_vector), 1/2);
+        this.scale_factor = vec3.subtract([], max_vector, min_vector);
 
         // TODO: improve how this is added
-        this.center = center;
-        this.scale_factor = scale_factor;
-        this.extent = vec3.subtract([], max_vector, center);
-        this.radius = vec3.length(this.extent);
-        // TODO: need a better way to feed an FOV into this part
-        this.distance = this.radius / Math.tan(glm.glMatrix.toRadian(45) / 2) * 1.2;
+        this.extent = vec3.subtract([], max_vector, this.center);
+        this.sphere_radius = vec3.length(this.extent);
 
         this.model_matrix = mat4.create();
-        mat4.translate(this.model_matrix, this.model_matrix, center);
-        mat4.scale(this.model_matrix, this.model_matrix, scale_factor);
+        mat4.translate(this.model_matrix, this.model_matrix, this.center);
+        mat4.scale(this.model_matrix, this.model_matrix, this.scale_factor);
     }
 
     // Credit: https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection.html

@@ -201,8 +201,9 @@ view2.window.addEventListener("click", e => {
         return;
     };
 
-    const mouse_x = e.clientX - view2.rect.left; // TODO NOT URGET: use offsets, values are the same as offsetX
-    const mouse_y = e.clientY - view2.rect.top;  // TODO NOT URGET: use offsets, values are the same as offsetY
+    const mouse_x = e.offsetX;
+    const mouse_y = e.offsetY;
+
     current_ray.dir = Interactions.generateRayDir(view2.width, view2.height, mouse_x, mouse_y, view2.proj_matrix, view2.camera.view_matrix);
 
     for (let i = 0; i < objects.length; i++) {
@@ -258,7 +259,8 @@ view2.window.addEventListener("mousedown", (e) => {
             start_pos = Interactions.calculatePlaneIntersectionPoint(
                 current_ray, view2.camera.dir, cur_selection.pos);
 
-            // TODO: implement this better. We NEED the start_pos_2 value in order to calculate the distance between the center of the object and the location on the 2d gizmo that the is pressed.
+            // TODO - 2D GIZMO: implement this better. We NEED the start_pos_2 value in order to calculate the distance 
+            // between the center of the object / 2d gizmo and the location on the 2d gizmo that the is pressed.
             if (transform_gizmos.mode === "scale") {
                 start_pos_2 = start_pos;
                 start_pos = cur_selection.pos;
@@ -296,7 +298,6 @@ view2.window.addEventListener("mousemove", e => {
 
 
     // Handle hover color change
-    // TODO: need to add some flag that keeps note of which thing im interacting with to keep it colored
     if (transform_gizmos.display_gizmos && !transform_gizmos.is_interacting) {
         if (transform_gizmos.isIntersectingGizmo([mouse_x, view2.height - mouse_y], view2)) {
             transform_gizmos.main_gizmo.color = [1.0, 1.0, 1.0];
@@ -389,7 +390,7 @@ view2.window.addEventListener("mousemove", e => {
         setTransformUI(transform_ui, cur_selection);
         transform_gizmos.updateGizmosPos(cur_selection);
         transform_gizmos.main_gizmo.center = Interactions.calculateObjectCenterScreenCoord(view2.width, view2.height, cur_selection, view2.proj_matrix, view2.camera.view_matrix);
-        // TODO: not too sure why i put this here.
+
         if (cur_selection) { 
             transform_gizmos.main_gizmo.center = Interactions.calculateObjectCenterScreenCoord(view2.width, view2.height, cur_selection, view2.proj_matrix, view2.camera.view_matrix);
             const distance = vec3.distance(view2.camera.pos, cur_selection.pos);
@@ -426,7 +427,8 @@ view2.window.addEventListener("mousemove", e => {
                 cur_selection.last_static_transform.scale[2] + (new_pos[2] - start_pos[2]) * cur_selection.last_static_transform.scale[2]
             ];
         } else if (interaction_with === "2d_gizmo") {
-            const circle_radius = vec3.distance(start_pos_2, start_pos); // TODO: rename circle_radius, or store value within gizmos
+            // TODO - 2D GIZMO: rename circle_radius, or store value within gizmos - the circle radius is calculted in world space coordinates i believe
+            const circle_radius = vec3.distance(start_pos_2, start_pos); 
             const scaling_factor = vec3.distance(start_pos, new_pos) / circle_radius;
             scale_vector = vec3.scale([], cur_selection.last_static_transform.scale, scaling_factor);
         }
@@ -460,8 +462,7 @@ view2.window.addEventListener("mousemove", e => {
                 cur_selection.last_static_transform.rotation[2] + (new_pos[2] - start_pos[2]) * 180 / Math.PI,    
             ]
         } else if (interaction_with === "2d_gizmo") {
-            // TODO NOT URGET: not sure what is happening, the entire thing will snap to a different angle if rotated after moving the camera after a rotation
-            // TODO NOT URGENT: when scaling after rotating with any gizmo, the axis of scaling is fucked
+            // TODO - Issue #4: the object will snap to a different angle if rotated after moving the camera after an initial rotation
             const angle = Math.atan2(vec3.dot(view2.camera.dir, 
                 vec3.cross([], start_pos, new_pos)), vec3.dot(start_pos, new_pos)) * 180 / Math.PI;  
 
@@ -546,11 +547,12 @@ sceneobject_list.addEventListener("click", e => {
                 cur_selection = object;
 
 
-
                 // TODO: REMOVE - going to implement the object focus feature here:
                 cur_selection.updatePos([0,0,0]);
                 console.log(cur_selection.aabb);
-                const new_distance = vec3.scale([], vec3.normalize([], [1,1,1]), cur_selection.aabb.distance);
+
+                const distance = cur_selection.aabb.sphere_radius / Math.tan(glm.glMatrix.toRadian(45) / 2) * 1.2;
+                const new_distance = vec3.scale([], vec3.normalize([], [1,0.5,1]), distance);
                 view2.moveCamera(vec3.add([], cur_selection.aabb.center, new_distance));
 
                 transform_gizmos.display_gizmos = true;
