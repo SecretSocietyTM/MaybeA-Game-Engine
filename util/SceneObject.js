@@ -46,6 +46,7 @@ export default class SceneObject {
         this.alpha = alpha;
     }
 
+    // TODO: need to NORMALIZE the position of the object at (0,0,0) so that imported models that are offcenter, like weird_cube have their actual model positioned at (0,0,0);
     transform(pos = [0, 0, 0], 
               scale = [1, 1, 1], 
               rotation_angles = [0,0,0]) {

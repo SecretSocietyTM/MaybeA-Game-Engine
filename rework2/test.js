@@ -16,6 +16,7 @@ import TransformGizmos from "../util/TransformGizmos.js";
 
 import * as Interactions from "../util/interactions.js";
 import MeshesObj from "../mimp/models/meshes_index.js";
+import { parsePLY } from "../mimp/parse_ply.js";
 
 //
 // global variables from rework/main.js
@@ -527,7 +528,8 @@ const transform_ui = {
         y: document.getElementById("scale").querySelector(".y"),
         z: document.getElementById("scale").querySelector(".z")
     }
-}
+};
+const file_input = document.getElementById("file_input");
 
 
 
@@ -543,6 +545,14 @@ sceneobject_list.addEventListener("click", e => {
             if (object.name === list_object.textContent) {
                 cur_selection = object;
 
+
+
+                // TODO: REMOVE - going to implement the object focus feature here:
+                cur_selection.updatePos([0,0,0]);
+                console.log(cur_selection.aabb);
+                const new_distance = vec3.scale([], vec3.normalize([], [1,1,1]), cur_selection.aabb.distance);
+                view2.moveCamera(vec3.add([], cur_selection.aabb.center, new_distance));
+
                 transform_gizmos.display_gizmos = true;
                 transform_gizmos.updateGizmosPos(cur_selection);
                 transform_gizmos.main_gizmo.center = Interactions.calculateObjectCenterScreenCoord(view2.width, view2.height, cur_selection, view2.proj_matrix, view2.camera.view_matrix);
@@ -552,6 +562,36 @@ sceneobject_list.addEventListener("click", e => {
             }
         });
     }
+});
+
+file_input.addEventListener("change", (e) => {
+    const file = file_input.files[0];
+    if (!file) {
+        alert("No file selected.");
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {        
+        // parse the file to get the necessary mesh data
+        const mesh_ply = reader.result;
+        const mesh = parsePLY(mesh_ply);
+
+        // splice the file name to name the object
+        const name = file.name.split(".")[0];
+
+        // create the object with the mesh
+        const object = new SceneObject(name, mesh, [0,0,0], [1,1,1], [0,0,0]);
+
+        objects.push(object);
+        game_objects.push(object);
+        
+        addSceneObjectToList(sceneobject_list, object);
+    }
+    reader.onerror = () => {
+        alert("Error reading the file.");
+    }
+    reader.readAsText(file);
 });
 
 // UI functions
