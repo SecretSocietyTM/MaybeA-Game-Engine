@@ -46,15 +46,11 @@ let d_pressed = false;
 const renderer = new Renderer2(canvas);
 renderer.addAABBMesh(MeshesObj.aabb_wireframe); // preload the AABB wireframe mesh and VAO
 
-const div1 = document.getElementById("view1");
-console.log(div1.getBoundingClientRect());
-
 const view1 = new ViewWindow("v1", document.getElementById("view1"), canvas);
 view1.show_UI = false;
 view1.show_gizmos = false;
 const view2 = new ViewWindow("v2", document.getElementById("view2"), canvas);
 const views = [view1, view2];
-console.log(views);
 
 current_ray.origin = view2.camera.pos;
 const transform_gizmos = new TransformGizmos(MeshesObj, 0.8, vec3.distance(view2.camera.pos, view2.camera.target));
@@ -501,3 +497,44 @@ document.addEventListener("keydown", (e) => {
         transform_gizmos.setMode("scale");
     }
 });
+
+
+
+
+
+
+
+
+// UI elements
+const sceneobject_list = document.getElementById("sceneobjects_list");
+
+
+loadSceneObjectsToList(sceneobject_list, objects);
+
+// UI event listeners
+sceneobject_list.addEventListener("click", e => {
+
+    const list_object = e.target.closest("p");
+    
+    if (list_object) {
+        objects.forEach(object => {
+            if (object.name === list_object.textContent) {
+                cur_selection = object;
+                return;
+            }
+        });
+    }
+});
+
+// UI functions
+function loadSceneObjectsToList(list, objects) {
+    objects.forEach(object => {
+        addSceneObjectToList(list, object);
+    });
+}
+
+function addSceneObjectToList(list, object) {
+    const p = document.createElement("p");
+    p.textContent = object.name;
+    list.appendChild(p);
+}

@@ -63,6 +63,10 @@ ul {
     padding-inline: 0.75rem;
 }
 
+.scene-objects_list p:hover {
+    background-color: #6d6d6d;
+}
+
 .views_section {
     display: flex;
     justify-content: end;
