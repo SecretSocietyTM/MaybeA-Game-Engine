@@ -575,7 +575,7 @@ sceneobject_list.addEventListener("click", e => {
         });
     }
 });
-
+console.log(view2);
 file_input.addEventListener("change", (e) => {
     const file = file_input.files[0];
     if (!file) {
@@ -595,10 +595,14 @@ file_input.addEventListener("change", (e) => {
         // create the object with the mesh
         const object = new SceneObject(name, mesh, [0,0,0], [1,1,1], [0,0,0]);
 
-        objects.push(object);
+        // create a new framebuffer
+        // render to the buffer
+        // take a screenshot of the result
+        console.log(renderer.modelPreviewThing(object));
+
+        /* objects.push(object);
         game_objects.push(object);
-        
-        addSceneObjectToList(sceneobject_list, object);
+        addSceneObjectToList(sceneobject_list, object); */
     }
     reader.onerror = () => {
         alert("Error reading the file.");
