@@ -59,6 +59,7 @@ const transform_gizmos = new TransformGizmos(MeshesObj, 0.8, vec3.distance(view2
 const objects = [];
 const game_objects = [];
 const collision_objects = [];
+const new_meshes = [];
 
 const unit_cube = new SceneObject("unit_cube", MeshesObj.unit_cube, [0,0,0], [1,1,1], [0,0,0]);
 const player = unit_cube;
@@ -511,6 +512,7 @@ document.addEventListener("keydown", (e) => {
 
 // UI elements
 const sceneobject_list = document.getElementById("sceneobjects_list");
+const model_grid = document.getElementById("model_grid");
 const transform_ui = {
     position: {
         x: document.getElementById("position").querySelector(".x"),
@@ -575,7 +577,23 @@ sceneobject_list.addEventListener("click", e => {
         });
     }
 });
-console.log(view2);
+
+model_grid.addEventListener("click", e => {
+    const model_card = e.target.closest("div");
+    if (!model_card) return;
+
+    new_meshes.forEach(mesh => {
+        if (mesh.name === model_card.dataset.model_name) {
+            const new_object = new SceneObject(mesh.name, mesh.mesh)
+            objects.push(new_object);
+            game_objects.push(new_object);
+            addSceneObjectToList(sceneobject_list, new_object);
+
+            return;
+        }
+    })
+})
+
 file_input.addEventListener("change", (e) => {
     const file = file_input.files[0];
     if (!file) {
@@ -592,17 +610,14 @@ file_input.addEventListener("change", (e) => {
         // splice the file name to name the object
         const name = file.name.split(".")[0];
 
-        // create the object with the mesh
-        const object = new SceneObject(name, mesh, [0,0,0], [1,1,1], [0,0,0]);
+        // add the mesh to a list // TODO: for previews, will need to assign the mesh to a SceneObject for rendering
+        const mesh_item = {
+            name: name,
+            mesh: mesh
+        };
 
-        // create a new framebuffer
-        // render to the buffer
-        // take a screenshot of the result
-        console.log(renderer.modelPreviewThing(object));
-
-        /* objects.push(object);
-        game_objects.push(object);
-        addSceneObjectToList(sceneobject_list, object); */
+        addModelCardToGrid(model_grid, name);
+        new_meshes.push(mesh_item);
     }
     reader.onerror = () => {
         alert("Error reading the file.");
@@ -645,4 +660,20 @@ function setRotationUI(rotation_ui, object) {
     rotation_ui.x.value = object.rotation_angles[0];
     rotation_ui.y.value = object.rotation_angles[1];
     rotation_ui.z.value = object.rotation_angles[2];
+}
+
+function addModelCardToGrid(grid, name) {
+    const div = document.createElement("div");
+    const img = document.createElement("img");
+    const p = document.createElement("p");
+
+    div.dataset.model_name = name;
+    p.textContent = name;
+    img.className = "model_preview";
+    img.src = "../image.png";
+
+    div.appendChild(img);
+    div.appendChild(p);
+
+    grid.appendChild(div);
 }
