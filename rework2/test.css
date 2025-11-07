@@ -102,3 +102,16 @@ ul {
 .toggle {
     background-color: grey;
 }
+
+.model_grid {
+    display: flex;
+    padding: 1rem;
+    gap: 2rem;
+}
+
+.model_preview {
+    width: 150px;
+    height: 150px;
+
+    background-color: red;
+}
