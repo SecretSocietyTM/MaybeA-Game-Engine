@@ -546,14 +546,24 @@ sceneobject_list.addEventListener("click", e => {
             if (object.name === list_object.textContent) {
                 cur_selection = object;
 
-
-                // TODO: REMOVE - going to implement the object focus feature here:
-                cur_selection.updatePos([0,0,0]);
-                console.log(cur_selection.aabb);
-
-                const distance = cur_selection.aabb.sphere_radius / Math.tan(glm.glMatrix.toRadian(45) / 2) * 1.2;
-                const new_distance = vec3.scale([], vec3.normalize([], [1,0.5,1]), distance);
+                // this logic can be reused for importing objects
+                const distance2 = cur_selection.aabb.sphere_radius / Math.tan(glm.glMatrix.toRadian(45) / 2) * 1.2;
+                /* const new_distance = vec3.scale([], vec3.normalize([], [1,0.5,1]), distance2); */ //  TODO: for model previews, a fixed direction is ok
+                const new_distance = vec3.scale([], view2.camera.dir, distance2);
                 view2.moveCamera(vec3.add([], cur_selection.aabb.center, new_distance));
+                view2.camera.target = cur_selection.pos;
+                // TODO: modularize this. The zoom val needs to be recalculated whenever zooming in/out or focusing
+                // on objects with vastly different bounding sphere radii
+                view2.camera.zoom_val = vec3.length(vec3.subtract([], view2.camera.pos, view2.camera.target));
+                view2.camera.recalculateViewMatrix();
+
+                // TODO: modularize this. This is used in the zooming event listener as well as the panning/orbiting
+                // and when the object's position is changed
+                const distance = vec3.distance(view2.camera.pos, cur_selection.pos);
+                const scale = (distance / transform_gizmos.reference_distance) * transform_gizmos.reference_scale;
+                transform_gizmos.objects.forEach(object => {
+                        object.updateScale([scale, scale, scale]);
+                });
 
                 transform_gizmos.display_gizmos = true;
                 transform_gizmos.updateGizmosPos(cur_selection);

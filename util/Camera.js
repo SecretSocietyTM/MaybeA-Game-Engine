@@ -11,9 +11,13 @@ export default class Camera {
         this.dir = vec3.normalize([], vec3.subtract([], this.pos, this.target));
         this.right = vec3.normalize([], vec3.cross([], this.up, this.dir));
 
-        this.yaw = 90;
+        // TODO: need to dynamically calculate the yaw and pitch to prevent snapping of the camera 
+        // to a position when yaw or pitch = 0.
+        // This is also useful for when I manually move the camera position via the constructor or moveCamera
+        this.yaw = 0;
         this.pitch = 0;
-        this.zoom_val = 10;
+        /* this.zoom_val = 10; */
+        this.zoom_val = vec3.length(vec3.subtract([], this.pos, this.target));
 
         this.view_matrix = mat4.create();
         mat4.lookAt(this.view_matrix, this.pos, this.dir, this.up);
@@ -53,6 +57,6 @@ export default class Camera {
     }
 
     recalculateViewMatrix() {
-        mat4.lookAt(this.view_matrix, this.pos, vec3.subtract([], this.pos, this.dir), this.up);
+        mat4.lookAt(this.view_matrix, this.pos, this.target, this.up);
     }
 }
