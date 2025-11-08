@@ -5,8 +5,8 @@ const glm = glMatrix; // shorten math library name,
 const mat4 = glm.mat4; // should not need this...
 
 const canvas = document.getElementById("canvas");
-const width = 400;
-const height = 400;
+const width = canvas.clientWidth;
+const height = canvas.clientHeight;
 canvas.width = width;
 canvas.height = height;
 
@@ -110,7 +110,6 @@ const vertex_colors =  [
 
 const model_matrix = mat4.create();
 let view_matrix = mat4.create();
-mat4.lookAt(view_matrix, [3,1,3], [0,0,0], [0,1,0]);
 const proj_matrix = mat4.create();
 mat4.perspective(proj_matrix, glm.glMatrix.toRadian(45), (width / height), 0.1, 1000);
 
@@ -126,37 +125,51 @@ gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertex_colors), gl.STATIC_DRAW);
 gl.enableVertexAttribArray(color_location);
 gl.vertexAttribPointer(color_location, 3, gl.FLOAT, gl.FALSE, 0, 0);
 
-gl.viewport(0, 0, width, height);
+
+const width_segments = width / 7;
+const height_segments = height / 4;
+
 gl.useProgram(program);
-gl.clearColor(0.3, 0.3, 0.3, 1.0);
+gl.clearColor(0.7, 0.7, 0.7, 1.0);
 gl.enable(gl.DEPTH_TEST);
+gl.enable(gl.SCISSOR_TEST);
+
+// config to view 1
+gl.viewport(width_segments, height_segments, width_segments * 2, height_segments * 2);
+gl.scissor(width_segments, height_segments, width_segments * 2, height_segments * 2);
 gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-// set uniforms for FRAMEBUFFER0
-gl.uniformMatrix4fv(proj_location, gl.FALSE, proj_matrix);
+mat4.lookAt(view_matrix, [3,1,3], [0,0,0], [0,1,0]);
 gl.uniformMatrix4fv(view_location, gl.FALSE, view_matrix);
+gl.uniformMatrix4fv(proj_location, gl.FALSE, proj_matrix);
 gl.uniformMatrix4fv(model_location, gl.FALSE, model_matrix);
+gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 3);
 
+// config to view 2
+gl.viewport(width_segments * 4, height_segments, width_segments * 2, height_segments * 2);
+gl.scissor(width_segments * 4, height_segments, width_segments * 2, height_segments * 2);
+mat4.lookAt(view_matrix, [1,0,2], [0,0,0], [0,1,0]);
+gl.uniformMatrix4fv(view_location, gl.FALSE, view_matrix);
+gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+gl.uniformMatrix4fv(proj_location, gl.FALSE, proj_matrix);
+gl.uniformMatrix4fv(model_location, gl.FALSE, model_matrix);
 gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 3);
 
 
-// create an image
-// console.log(canvas.toDataURL("image/png"));
-canvas.toBlob((blob) => {
-    const url = URL.createObjectURL(blob);
-    const img = new Image();
-    img.src = url;
+// NO SCISSOR TEST
+// clear needs to be called before each viewport configuration. If called AFTER a viewport config then the previous
+// draw call will be covered
 
-    document.getElementById("img1").appendChild(img);
-});
+// WITH SCISSOR TEST
+// clear can be called AFTER a viewport config but also need to define the area that is being scissored. This
+// discards all other parts of the buffer, saving computation power + producing the expected results
 
 
 frameBufferSection();
 
 
-
-
 function frameBufferSection() {
+    const width = 150;
+    const height = 150;
     // Now do the same thing but with a framebuffer using a texture buffer
     const fb = gl.createFramebuffer();
     gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
@@ -193,11 +206,12 @@ function frameBufferSection() {
     gl.useProgram(program);
     gl.clearColor(0.3, 0.3, 0.3, 1.0);
     gl.enable(gl.DEPTH_TEST); // without a depth renderbuffer, enabling a depth test does nothing
+    gl.disable(gl.SCISSOR_TEST);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     // set uniforms for FRAMEBUFFER1
     view_matrix = mat4.create();
-    mat4.lookAt(view_matrix, [3,1,3], [0,0,0], [0,-1,0]);
+    mat4.lookAt(view_matrix, [2,2,2], [0,0,0], [0,-1,0]);
     gl.uniformMatrix4fv(proj_location, gl.FALSE, proj_matrix);
     gl.uniformMatrix4fv(view_location, gl.FALSE, view_matrix);
     gl.uniformMatrix4fv(model_location, gl.FALSE, model_matrix);
@@ -222,7 +236,7 @@ function frameBufferSection() {
         const img = new Image();
         img.src = url;
         
-        document.getElementById("img2").appendChild(img);
+        document.body.appendChild(img);
+        img.style.display = "none";
     });
 }
-

@@ -134,6 +134,7 @@ export default class Renderer2 {
     setupRenderer() {
         this.gl.enable(this.gl.SCISSOR_TEST);
         
+        // Needed to render UI pass
         this.gl.enable(this.gl.BLEND);
         this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
     }
@@ -152,7 +153,7 @@ export default class Renderer2 {
             this.pass3D(view.objects, false, view.show_AABB, line3d); // render scene objects
 
             // TODO: interesting behavior...
-            this.takeScreenshot();
+            this.takeScreenshot(view);
 
             if (view.show_gizmos && gizmos.display_gizmos) {
                 this.pass3D(gizmos.active_objects, true, view.show_AABB, line3d); // render gizmos
@@ -224,11 +225,127 @@ export default class Renderer2 {
     }
 
 
+    takeScreenshot(view) {
+        const pixel_data = new Uint8Array(view.width * view.height * 4);
+        this.gl.readPixels(view.left, view.bottom, view.width, view.height, 
+            this.gl.RGBA, this.gl.UNSIGNED_BYTE, pixel_data);
+        
+        const canvas2 = document.createElement("canvas");
+        canvas2.width = view.width;
+        canvas2.height = view.height;
+        const ctx = canvas2.getContext("2d");
+
+        const image_data = ctx.createImageData(view.width, view.height);
+        image_data.data.set(pixel_data);
+        ctx.putImageData(image_data, 0, 0);
+
+        canvas2.toBlob((blob) => {
+            const url = URL.createObjectURL(blob);
+            const img = new Image();
+            img.src = url;
+            
+            document.body.appendChild(img);
+            img.style.display = "none";
+        });
+    }
+
+
+    modelPreviewThing(object) {
+
+        // define the buffer dimensions
+        const width = 150;
+        const height = 150;
+
+        // create a new framebuffer to render to and bind it
+        const fb = this.gl.createFramebuffer();
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, fb);
+
+        // create a texture since it can be written to as if it was a color/depth buffer
+        const texture = this.gl.createTexture();
+        this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+
+        const level = 0;
+        const internalFormat = this.gl.RGBA;
+        const border = 0;
+        const format = this.gl.RGBA;
+        const type = this.gl.UNSIGNED_BYTE;
+        const data = null;
+        // The goal is to allocate memory to use as a buffer to do off-screen rendering
+        this.gl.texImage2D(this.gl.TEXTURE_2D, level, internalFormat, width, height, border, format, type, data); 
+
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+
+
+        // depth buffer
+        const depthBuffer = this.gl.createRenderbuffer();
+        this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, depthBuffer);
+        this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16, width, height);
+
+        // attach the texture buffer and depth buffer to the framebuffer
+        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, texture, level);
+        this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, depthBuffer);
+
+        const status = this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER);
+        if (status !== this.gl.FRAMEBUFFER_COMPLETE) {
+            console.error("Framebuffer incomplete:", status.toString(16));
+        }
 
 
 
+        // now you can supply data to it like you would the default framebuffer
+        // need to redefine the viewport as thats how the viewport transform part of the rendering pipeline works
+        this.gl.useProgram(this.program);
+        this.gl.viewport(0, 0, width, height);
+        this.gl.clearColor(0.3, 0.3, 0.3, 1.0);
+        this.gl.enable(this.gl.DEPTH_TEST);
+        this.gl.disable(this.gl.SCISSOR_TEST);
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
+        // redefine proj/view matrices
+        const view_matrix = mat4.create();
+        mat4.lookAt(view_matrix, [5,5,5], [0,0,0], [0,-1,0]);
+        const proj_matrix = mat4.create();
+        mat4.perspective(proj_matrix, glm.glMatrix.toRadian(45), (width / height), 0.1, 1000);
 
+        this.gl.uniformMatrix4fv(this.u_view_location, this.gl.FALSE, view_matrix);
+        this.gl.uniformMatrix4fv(this.u_proj_location, this.gl.FALSE, proj_matrix);
+
+        // use object properties
+        this.gl.uniformMatrix4fv(this.u_model_location, this.gl.FALSE, object.model_matrix);
+        this.gl.uniform1i(this.u_useClr_location, object.use_color);
+        this.gl.uniform4fv(this.u_clr_location, [object.color[0], object.color[1], object.color[2], object.alpha]);
+
+        this.gl.bindVertexArray(this.getVAO(object.mesh));
+        this.gl.drawElements(this.gl.TRIANGLES, object.mesh.indices.length, this.gl.UNSIGNED_SHORT, 0);
+        this.gl.bindVertexArray(null);
+
+        // read the pixel data
+        const pixels = new Uint8Array(width * height * 4);
+        this.gl.readPixels(0, 0, width, height, this.gl.RGBA, this.gl.UNSIGNED_BYTE, pixels);
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+
+        const image_data = ctx.createImageData(width, height);
+        image_data.data.set(pixels);
+        ctx.putImageData(image_data, 0, 0);
+
+        canvas.toBlob((blob) => {
+            const url = URL.createObjectURL(blob);
+            const img = new Image();
+            img.src = url;
+            
+            document.body.appendChild(img);
+            img.style.display = "none";
+        });
+
+        // set the framebuffer back to the default once done
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+    }
 
 
 
@@ -261,130 +378,5 @@ export default class Renderer2 {
         this.gl.uniformMatrix4fv(this.u_model_location, this.gl.FALSE, mat4.create());
         
         this.gl.drawArrays(this.gl.LINES, 0, 2);
-    }
-
-
-
-    modelPreviewThing(object) {
-
-        // define the buffer dimensions
-        const width = 150;
-        const height = 150;
-
-        // create a new framebuffer to render to and bind it
-        const fb = this.gl.createFramebuffer();
-        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, fb);
-
-        // create a texture since it can be written to as if it was a color/depth buffer
-        const texture = this.gl.createTexture();
-        this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
-
-        // LearnOpenGL uses gl.RGB but WebGL fundamentals uses gl.RGBA, probably to achieve different effects?
-        const level = 0;
-        const internalFormat = this.gl.RGBA;
-        const border = 0;
-        const format = this.gl.RGBA;
-        const type = this.gl.UNSIGNED_BYTE;
-        const data = null;
-        this.gl.texImage2D(this.gl.TEXTURE_2D, level, internalFormat,
-                      width, height, border, format, type, data);
-        // The goal is to allocate memory to use as a buffer to do off-screen rendering
-
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-
-
-        // depth buffer
-        const depthBuffer = this.gl.createRenderbuffer();
-        this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, depthBuffer);
-        this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16, width, height);
-
-        // attach the texture to the framebuffer
-        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, texture, level);
-        
-        // apparently i need a depth buffer as well
-        this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, depthBuffer);
-
-        const status = this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER);
-        if (status !== this.gl.FRAMEBUFFER_COMPLETE) {
-            console.error("Framebuffer incomplete:", status.toString(16));
-        }
-
-
-
-        // now you can supply data to it like you would the default framebuffer
-        // need to redefine the viewport as thats how the viewport transform part of the rendering pipeline works
-        this.gl.viewport(0, 0, width, height);
-        this.gl.clearColor(0.3, 0.3, 0.3, 1.0);
-        this.gl.enable(this.gl.DEPTH_TEST);
-        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-
-        this.gl.useProgram(this.program);
-
-        // redefine proj/view matrices
-        const view_matrix = mat4.create();
-        mat4.lookAt(view_matrix, [5,5,5], [0,0,0], [0,1,0]);
-        this.gl.uniformMatrix4fv(this.u_view_location, this.gl.FALSE, view_matrix);
-
-        const proj_matrix = mat4.create();
-        mat4.perspective(proj_matrix, glm.glMatrix.toRadian(45), (width / height), 0.1, 1000);
-        this.gl.uniformMatrix4fv(this.u_proj_location, this.gl.FALSE, proj_matrix);
-
-        // use object properties
-        this.gl.uniformMatrix4fv(this.u_model_location, this.gl.FALSE, object.model_matrix);
-        this.gl.uniform1i(this.u_useClr_location, object.use_color);
-        this.gl.uniform4fv(this.u_clr_location, [object.color[0], object.color[1], object.color[2], object.alpha]);
-
-        this.gl.bindVertexArray(this.getVAO(object.mesh));
-        this.gl.drawElements(this.gl.TRIANGLES, object.mesh.indices.length, this.gl.UNSIGNED_SHORT, 0);
-        this.gl.bindVertexArray(null);
-
-        // set the framebuffer back to the default once done
-        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
-        this.gl.clearColor(1.0, 0.0, 0.0, 1.0);
-        this.gl.clear(this.gl.COLOR_BUFFER_BIT);
-
-        // read the pixel data
-        const pixels = new Uint8Array(width * height * 4);
-        /* view.left, view.bottom, view.width, view.height */
-        this.gl.readPixels(1104, 394, width, height, this.gl.RGBA, this.gl.UNSIGNED_BYTE, pixels);
-
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-
-        const image_data = ctx.createImageData(width, height);
-        image_data.data.set(pixels);
-        ctx.putImageData(image_data, 0, 0);
-
-        return canvas.toDataURL("image/png");
-    }
-
-    takeScreenshot(/* view */) {
-        /* const pixel_data = new Uint8Array(view.width * view.height * 4);
-        this.gl.readPixels(view.left, view.bottom, view.width, view.height, 
-            this.gl.RGBA, this.gl.UNSIGNED_BYTE, pixel_data);
-        
-        const canvas2 = document.createElement("canvas");
-        canvas2.width = view.width;
-        canvas2.height = view.height;
-        const ctx = canvas2.getContext("2d");
-
-        const image_data = ctx.createImageData(view.width, view.height);
-        image_data.data.set(pixel_data);
-        ctx.putImageData(image_data, 0, 0); */
-        /* this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height); */
-
-        this.gl.canvas.toBlob((blob) => {
-            const url = URL.createObjectURL(blob);
-            const img = new Image();
-            img.src = url;
-            
-            document.body.appendChild(img);
-            img.style.display = "none";
-        });
-        /* this.gl.enable(this.gl.SCISSOR_TEST); */
     }
 }

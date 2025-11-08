@@ -623,6 +623,8 @@ file_input.addEventListener("change", (e) => {
             mesh: mesh
         };
 
+        renderer.modelPreviewThing(new SceneObject(undefined, mesh));
+
         addModelCardToGrid(model_grid, name);
         new_meshes.push(mesh_item);
     }
