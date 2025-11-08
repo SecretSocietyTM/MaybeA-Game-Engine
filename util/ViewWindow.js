@@ -37,7 +37,6 @@ export default class ViewWindow {
         this.objects = [];
 
         this.show_gizmos = true;
-        this.show_UI = true;
         this.show_AABB = false;
     }
 

@@ -10,12 +10,13 @@ export default class Renderer2 {
     constructor(canvas) {
         this.gl = canvas.getContext("webgl2");
 
-        this.createProgram();
-        this.getShaderVariables();
-        this.setupRenderer();
+        this.program = this.createProgram(vs_src, fs_src);
+        this.ui_program = this.createProgram(ui_pass_vs_src, ui_pass_fs_src);
 
-        this.createUIPassProgram();
-        this.getUIPassShaderVariables();
+        this.getShaderVariables();
+        this.getShaderVariablesUIPass();
+
+        this.setupRenderer();
 
         this.vao_cache = new Map();
         this.aabb_mesh = null;
@@ -36,10 +37,10 @@ export default class Renderer2 {
         return vao;
     }
 
-    createProgram() {
+    createProgram(vs_src, fs_src) {
         const vertex_shader = this.gl.createShader(this.gl.VERTEX_SHADER);
         const fragment_shader = this.gl.createShader(this.gl.FRAGMENT_SHADER);
-        this.program = this.gl.createProgram();
+        const program = this.gl.createProgram();
 
         this.gl.shaderSource(vertex_shader, vs_src);
         this.gl.compileShader(vertex_shader);
@@ -47,11 +48,11 @@ export default class Renderer2 {
         this.gl.shaderSource(fragment_shader, fs_src);
         this.gl.compileShader(fragment_shader);
 
-        this.gl.attachShader(this.program, vertex_shader);
-        this.gl.attachShader(this.program, fragment_shader);
-        this.gl.linkProgram(this.program);
+        this.gl.attachShader(program, vertex_shader);
+        this.gl.attachShader(program, fragment_shader);
+        this.gl.linkProgram(program);
 
-        return true;
+        return program;
     }
 
     getShaderVariables() {
@@ -69,27 +70,8 @@ export default class Renderer2 {
         return true;
     }
 
-    createUIPassProgram() {
-        const vertex_shader = this.gl.createShader(this.gl.VERTEX_SHADER);
-        const fragment_shader = this.gl.createShader(this.gl.FRAGMENT_SHADER);
-        this.ui_program = this.gl.createProgram();
-
-        this.gl.shaderSource(vertex_shader, ui_pass_vs_src);
-        this.gl.compileShader(vertex_shader);
-
-        this.gl.shaderSource(fragment_shader, ui_pass_fs_src);
-        this.gl.compileShader(fragment_shader);
-
-        this.gl.attachShader(this.ui_program, vertex_shader);
-        this.gl.attachShader(this.ui_program, fragment_shader);
-        this.gl.linkProgram(this.ui_program);
-
-        return true;    
-    }
-
-    getUIPassShaderVariables() {
+    getShaderVariablesUIPass() {
         this.ui_pass_pos_attrib = this.gl.getAttribLocation(this.ui_program, "a_pos");
-
         this.ui_pass_circle_center_uniform = this.gl.getUniformLocation(this.ui_program, "u_cntr");
         this.ui_pass_circle_radius = this.gl.getUniformLocation(this.ui_program, "u_radius");
         this.ui_pass_clr_uniform = this.gl.getUniformLocation(this.ui_program, "u_clr");
@@ -139,7 +121,7 @@ export default class Renderer2 {
         this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
     }
 
-    renderToViews(views, gizmos, line3d) {
+    renderToViews(views, gizmos) {
         views.forEach(view => {
             this.gl.viewport(view.left, view.bottom, view.width, view.height);
             this.gl.scissor(view.left, view.bottom, view.width, view.height);
@@ -149,31 +131,25 @@ export default class Renderer2 {
             this.gl.useProgram(this.program);
             this.gl.uniformMatrix4fv(this.u_proj_location, this.gl.FALSE, view.proj_matrix);
             this.gl.uniformMatrix4fv(this.u_view_location, this.gl.FALSE, view.camera.view_matrix);
-        
-            this.pass3D(view.objects, false, view.show_AABB, line3d); // render scene objects
 
+            // 3D pass
+            this.gl.enable(this.gl.DEPTH_TEST);
+            this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+            this.pass3D(view.objects, view.show_AABB);
+
+            // UI pass
             if (view.show_gizmos && gizmos.display_gizmos) {
-                this.pass3D(gizmos.active_objects, true, view.show_AABB, line3d); // render gizmos
+                this.gl.disable(this.gl.DEPTH_TEST);
+                this.pass3D(gizmos.active_objects, view.show_AABB);
 
-                // add another flag to view for displaying UIPass
-                if (view.show_UI) {
-                    this.gl.useProgram(this.ui_program);
-                    this.gl.uniform2fv(this.ui_pass_windowBotLeft_uniform, [view.left, view.bottom]);
-                    this.passUI(gizmos.main_gizmo);
-                }
+                this.gl.useProgram(this.ui_program);
+                this.gl.uniform2fv(this.ui_pass_windowBotLeft_uniform, [view.left, view.bottom]);
+                this.passUI(gizmos.main_gizmo);  
             }
         });
     }
 
-    /* TODO: remove line parameter */
-    pass3D(objects, is_gizmo, show_AABB) {
-        if (is_gizmo) {
-            this.gl.disable(this.gl.DEPTH_TEST);
-        } else {
-            this.gl.enable(this.gl.DEPTH_TEST);
-            this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-        }
-
+    pass3D(objects, show_AABB) {
         objects.forEach(object => {
             this.gl.uniformMatrix4fv(this.u_model_location, this.gl.FALSE, object.model_matrix);
             this.gl.uniform1i(this.u_useClr_location, object.use_color);
@@ -221,32 +197,6 @@ export default class Renderer2 {
         this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
     }
 
-
-    takeScreenshot(view) {
-        const pixel_data = new Uint8Array(view.width * view.height * 4);
-        this.gl.readPixels(view.left, view.bottom, view.width, view.height, 
-            this.gl.RGBA, this.gl.UNSIGNED_BYTE, pixel_data);
-        
-        const canvas2 = document.createElement("canvas");
-        canvas2.width = view.width;
-        canvas2.height = view.height;
-        const ctx = canvas2.getContext("2d");
-
-        const image_data = ctx.createImageData(view.width, view.height);
-        image_data.data.set(pixel_data);
-        ctx.putImageData(image_data, 0, 0);
-
-        canvas2.toBlob((blob) => {
-            const url = URL.createObjectURL(blob);
-            const img = new Image();
-            img.src = url;
-            
-            document.body.appendChild(img);
-            img.style.display = "none";
-        });
-    }
-
-
     modelPreviewThing(object, view_matrix) {
 
         // define the buffer dimensions
@@ -290,7 +240,6 @@ export default class Renderer2 {
         }
 
 
-
         // now you can supply data to it like you would the default framebuffer
         // need to redefine the viewport as thats how the viewport transform part of the rendering pipeline works
         this.gl.useProgram(this.program);
@@ -300,9 +249,7 @@ export default class Renderer2 {
         this.gl.disable(this.gl.SCISSOR_TEST);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
-        // redefine proj/view matrices
-        /* const view_matrix = mat4.create();
-        mat4.lookAt(view_matrix, [5,5,5], [0,0,0], [0,-1,0]); */
+
         const proj_matrix = mat4.create();
         mat4.perspective(proj_matrix, glm.glMatrix.toRadian(45), (width / height), 0.1, 1000);
 
@@ -336,38 +283,5 @@ export default class Renderer2 {
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
         this.gl.enable(this.gl.SCISSOR_TEST);
         return url;
-    }
-
-
-
-    drawLine2D(p0, p1, color) {
-        const vertices = new Float32Array([...p0, ...p1]);
-
-        const pos_buffer = this.gl.createBuffer();
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, pos_buffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices, this.gl.DYNAMIC_DRAW);
-        this.gl.enableVertexAttribArray(this.ui_pass_pos_attrib);
-        this.gl.vertexAttribPointer(this.ui_pass_pos_attrib, 2, this.gl.FLOAT, this.gl.FALSE, 0, 0);
-
-        this.gl.uniform3fv(this.ui_pass_clr_uniform, color);
-        
-        this.gl.drawArrays(this.gl.LINES, 0, 2);
-    }
-
-    drawLine3D(p0, p1, color) {
-        this.gl.disable(this.gl.DEPTH_TEST);
-        const vertices = new Float32Array([...p0, ...p1]);
-
-        const pos_buffer = this.gl.createBuffer();
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, pos_buffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices, this.gl.DYNAMIC_DRAW);
-        this.gl.enableVertexAttribArray(this.a_pos_location);
-        this.gl.vertexAttribPointer(this.a_pos_location, 3, this.gl.FLOAT, this.gl.FALSE, 0, 0);
-
-        this.gl.uniform1i(this.u_useClr_location, true);
-        this.gl.uniform4fv(this.u_clr_location, [color[0], color[1], color[2], 1.0]);
-        this.gl.uniformMatrix4fv(this.u_model_location, this.gl.FALSE, mat4.create());
-        
-        this.gl.drawArrays(this.gl.LINES, 0, 2);
     }
 }

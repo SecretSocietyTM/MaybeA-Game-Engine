@@ -48,7 +48,6 @@ const renderer = new Renderer2(canvas);
 renderer.addAABBMesh(MeshesObj.aabb_wireframe); // preload the AABB wireframe mesh and VAO
 
 const view1 = new ViewWindow("v1", document.getElementById("view1"), canvas);
-view1.show_UI = false;
 view1.show_gizmos = false;
 const view2 = new ViewWindow("v2", document.getElementById("view2"), canvas);
 const views = [view1, view2];
@@ -169,11 +168,6 @@ document.addEventListener("keydown", e => {
         btn_d.classList.remove("toggle");
         d_pressed = true;
     }
-
-    // TODO: remove / move
-    if (e.key === "p") {
-        renderer.takeScreenshot(view2);
-    }
 });
 
 document.addEventListener("keyup" , e => {
@@ -208,7 +202,7 @@ function rayPickingInEditor(e) {
     // will execute after "mouseup". This means that if we are interacting with the gizmos and the 
     // mouse is no longer over the current active object, it will be deselected
     if (transform_gizmos.is_interacting) {
-        transform_gizmos.is_interacting =  false;
+        transform_gizmos.is_interacting = false;
         cur_selection.setLastStaticTransform();
         return;
     }
@@ -264,6 +258,12 @@ view2.window.addEventListener("mousedown", (e) => {
 
             // TODO - 2D GIZMO: implement this better. We NEED the start_pos_2 value in order to calculate the distance 
             // between the center of the object / 2d gizmo and the location on the 2d gizmo that is pressed.
+
+            // NOTE: this works for now, an alternative would be to calculate the radius of 2d gizmo in world space
+            // and using that. Since the radius is calculated as the distance between two points on the same plane
+            // the radius should always be the same no matter how zoomed in or how the camera is moved.
+            // However this will require that outer circle be projected into world space and flattened onto a plane
+            // centered at (0,0,0) and i dont know how to go about this.
             if (transform_gizmos.mode === "scale") {
                 start_pos_2 = start_pos;
                 start_pos = cur_selection.pos;
@@ -350,149 +350,132 @@ view2.window.addEventListener("mousemove", e => {
         if (transform_gizmos.display_gizmos) {
             // position 2d gizmo at object center
             transform_gizmos.main_gizmo.center = Interactions.coordsWorldToScreen(cur_selection.pos, view2.width, view2.height, view2.proj_matrix, view2.camera.view_matrix);
-
-            // rescales 3d gizmos
-            const distance = vec3.distance(view2.camera.pos, cur_selection.pos);
-            const scale = (distance / transform_gizmos.reference_distance) * transform_gizmos.reference_scale;
-            transform_gizmos.objects.forEach(object => {
-                object.updateScale([scale, scale, scale]);
-            });
+            transform_gizmos.updateGizmosScale(vec3.distance(view2.camera.pos, cur_selection.pos));
         }
         return;
-    } else if (transform_gizmos.is_interacting && transform_gizmos.mode === "translate") {
+    } 
+    if (transform_gizmos.is_interacting) {
+        if (transform_gizmos.mode === "translate") {
+            const interaction_with = transform_gizmos.interaction_with;
+            current_ray.dir = Interactions.generateRayDir(view2.width, view2.height, mouse_x, mouse_y, view2.proj_matrix, view2.camera.view_matrix);
+            const new_pos = Interactions.calculatePlaneIntersectionPoint(
+                            current_ray, view2.camera.dir, cur_selection.pos);
 
-        const interaction_with = transform_gizmos.interaction_with;
-        current_ray.dir = Interactions.generateRayDir(view2.width, view2.height, mouse_x, mouse_y, view2.proj_matrix, view2.camera.view_matrix);
-        const new_pos = Interactions.calculatePlaneIntersectionPoint(
-                        current_ray, view2.camera.dir, cur_selection.pos);
+            let translate_vector = null;
+            if (interaction_with === "x_trans") {
+                translate_vector = [
+                    cur_selection.last_static_transform.pos[0] + new_pos[0] - start_pos[0],
+                    cur_selection.pos[1],
+                    cur_selection.pos[2]
+                ];
+            } else if (interaction_with === "y_trans") {
+                translate_vector = [
+                    cur_selection.pos[0],
+                    cur_selection.last_static_transform.pos[1] + new_pos[1] - start_pos[1],
+                    cur_selection.pos[2]
+                ];
+            } else if (interaction_with === "z_trans") {
+                translate_vector = [
+                    cur_selection.pos[0],
+                    cur_selection.pos[1],
+                    cur_selection.last_static_transform.pos[2] + new_pos[2] - start_pos[2]
+                ];
+            } else if (interaction_with === "2d_gizmo") {
+                const pos_offset = vec3.subtract([], new_pos, start_pos);
+                translate_vector = vec3.add([], cur_selection.last_static_transform.pos, pos_offset);
+            }
 
-        let translate_vector = null;
-        if (interaction_with === "x_trans") {
-            translate_vector = [
-                cur_selection.last_static_transform.pos[0] + new_pos[0] - start_pos[0],
-                cur_selection.pos[1],
-                cur_selection.pos[2]
-            ];
-        } else if (interaction_with === "y_trans") {
-            translate_vector = [
-                cur_selection.pos[0],
-                cur_selection.last_static_transform.pos[1] + new_pos[1] - start_pos[1],
-                cur_selection.pos[2]
-            ];
-        } else if (interaction_with === "z_trans") {
-            translate_vector = [
-                cur_selection.pos[0],
-                cur_selection.pos[1],
-                cur_selection.last_static_transform.pos[2] + new_pos[2] - start_pos[2]
-            ];
-        } else if (interaction_with === "2d_gizmo") {
-            const pos_offset = vec3.subtract([], new_pos, start_pos);
-            translate_vector = vec3.add([], cur_selection.last_static_transform.pos, pos_offset);
-        }
-
-        cur_selection.updatePos(translate_vector);
-        setTransformUI(transform_ui, cur_selection);
-        transform_gizmos.updateGizmosPos(cur_selection);
-        transform_gizmos.main_gizmo.center = Interactions.calculateObjectCenterScreenCoord(view2.width, view2.height, cur_selection, view2.proj_matrix, view2.camera.view_matrix);
-
-        if (cur_selection) { 
+            cur_selection.updatePos(translate_vector);
+            setTransformUI(transform_ui, cur_selection);
+            transform_gizmos.updateGizmosPos(cur_selection);
             transform_gizmos.main_gizmo.center = Interactions.calculateObjectCenterScreenCoord(view2.width, view2.height, cur_selection, view2.proj_matrix, view2.camera.view_matrix);
-            const distance = vec3.distance(view2.camera.pos, cur_selection.pos);
-            const scale = (distance / transform_gizmos.reference_distance) * transform_gizmos.reference_scale;
-            transform_gizmos.objects.forEach(object => {
-                    object.updateScale([scale, scale, scale]);
-            });
+
+            if (cur_selection) { 
+                transform_gizmos.main_gizmo.center = Interactions.calculateObjectCenterScreenCoord(view2.width, view2.height, cur_selection, view2.proj_matrix, view2.camera.view_matrix);
+                transform_gizmos.updateGizmosScale(vec3.distance(view2.camera.pos, cur_selection.pos));
+            }
+        } else if (transform_gizmos.mode === "scale") {
+            const interaction_with = transform_gizmos.interaction_with;
+            current_ray.dir = Interactions.generateRayDir(view2.width, view2.height, mouse_x, mouse_y, view2.proj_matrix, view2.camera.view_matrix);
+            const new_pos = Interactions.calculatePlaneIntersectionPoint(
+                            current_ray, view2.camera.dir, cur_selection.pos);
+
+            let scale_vector = null;
+            if (interaction_with === "x_scale") {
+                scale_vector = [
+                    cur_selection.last_static_transform.scale[0] + (new_pos[0] - start_pos[0]) * cur_selection.last_static_transform.scale[0],
+                    cur_selection.scale[1],
+                    cur_selection.scale[2]
+                ];
+            } else if (interaction_with === "y_scale") {
+                scale_vector = [
+                    cur_selection.scale[0],
+                    cur_selection.last_static_transform.scale[1] + (new_pos[1] - start_pos[1]) * cur_selection.last_static_transform.scale[1],
+                    cur_selection.scale[2]
+                ];
+            } else if (interaction_with === "z_scale") {
+                scale_vector = [
+                    cur_selection.scale[0],
+                    cur_selection.scale[1],
+                    cur_selection.last_static_transform.scale[2] + (new_pos[2] - start_pos[2]) * cur_selection.last_static_transform.scale[2]
+                ];
+            } else if (interaction_with === "2d_gizmo") {
+                // TODO - 2D GIZMO: rename circle_radius, or store value within gizmos - the circle radius is calculted in world space coordinates i believe
+                const circle_radius = vec3.distance(start_pos_2, start_pos); 
+                const scaling_factor = vec3.distance(start_pos, new_pos) / circle_radius;
+                scale_vector = vec3.scale([], cur_selection.last_static_transform.scale, scaling_factor);
+            }
+            cur_selection.updateScale(scale_vector);
+            setTransformUI(transform_ui, cur_selection);
+        } else if (transform_gizmos.mode === "rotate") {
+            const interaction_with = transform_gizmos.interaction_with;
+            current_ray.dir = Interactions.generateRayDir(view2.width, view2.height, mouse_x, mouse_y, view2.proj_matrix, view2.camera.view_matrix);
+            const new_pos = Interactions.calculatePlaneIntersectionPoint(
+                            current_ray, view2.camera.dir, cur_selection.pos);
+            
+            let rotate_vector = null;
+            if (interaction_with === "x_rotate") {
+                rotate_vector = [
+                    cur_selection.last_static_transform.rotation[0] + (new_pos[0] - start_pos[0]) * 180 / Math.PI,
+                    cur_selection.rotation_angles[1],
+                    cur_selection.rotation_angles[2]
+                ];
+            } else if (interaction_with === "y_rotate") {
+                rotate_vector = [
+                    cur_selection.rotation_angles[0],
+                    cur_selection.last_static_transform.rotation[1] + (new_pos[1] - start_pos[1]) * 180 / Math.PI,
+                    cur_selection.rotation_angles[2]
+                ];  
+            } else if (interaction_with === "z_rotate") {
+                rotate_vector = [
+                    cur_selection.rotation_angles[0],
+                    cur_selection.rotation_angles[1],
+                    cur_selection.last_static_transform.rotation[2] + (new_pos[2] - start_pos[2]) * 180 / Math.PI,    
+                ]
+            } else if (interaction_with === "2d_gizmo") {
+                // TODO - Issue #4: the object will snap to a different angle if rotated after moving the camera after an initial rotation
+                const angle = Math.atan2(vec3.dot(view2.camera.dir, 
+                    vec3.cross([], start_pos, new_pos)), vec3.dot(start_pos, new_pos)) * 180 / Math.PI;  
+
+                cur_selection.rotateOnAxis(angle, view2.camera.dir);
+                return;
+            }
+            cur_selection.updateRot(rotate_vector);
+            setTransformUI(transform_ui, cur_selection);
         }
-
-    } else if (transform_gizmos.is_interacting && transform_gizmos.mode === "scale") {
-
-        const interaction_with = transform_gizmos.interaction_with;
-        current_ray.dir = Interactions.generateRayDir(view2.width, view2.height, mouse_x, mouse_y, view2.proj_matrix, view2.camera.view_matrix);
-        const new_pos = Interactions.calculatePlaneIntersectionPoint(
-                        current_ray, view2.camera.dir, cur_selection.pos);
-
-        let scale_vector = null;
-        if (interaction_with === "x_scale") {
-            scale_vector = [
-                cur_selection.last_static_transform.scale[0] + (new_pos[0] - start_pos[0]) * cur_selection.last_static_transform.scale[0],
-                cur_selection.scale[1],
-                cur_selection.scale[2]
-            ];
-        } else if (interaction_with === "y_scale") {
-            scale_vector = [
-                cur_selection.scale[0],
-                cur_selection.last_static_transform.scale[1] + (new_pos[1] - start_pos[1]) * cur_selection.last_static_transform.scale[1],
-                cur_selection.scale[2]
-            ];
-        } else if (interaction_with === "z_scale") {
-            scale_vector = [
-                cur_selection.scale[0],
-                cur_selection.scale[1],
-                cur_selection.last_static_transform.scale[2] + (new_pos[2] - start_pos[2]) * cur_selection.last_static_transform.scale[2]
-            ];
-        } else if (interaction_with === "2d_gizmo") {
-            // TODO - 2D GIZMO: rename circle_radius, or store value within gizmos - the circle radius is calculted in world space coordinates i believe
-            const circle_radius = vec3.distance(start_pos_2, start_pos); 
-            const scaling_factor = vec3.distance(start_pos, new_pos) / circle_radius;
-            scale_vector = vec3.scale([], cur_selection.last_static_transform.scale, scaling_factor);
-        }
-        cur_selection.updateScale(scale_vector);
-        setTransformUI(transform_ui, cur_selection);
-    } else if (transform_gizmos.is_interacting && 
-                transform_gizmos.mode === "rotate") {
-
-        const interaction_with = transform_gizmos.interaction_with;
-        current_ray.dir = Interactions.generateRayDir(view2.width, view2.height, mouse_x, mouse_y, view2.proj_matrix, view2.camera.view_matrix);
-        const new_pos = Interactions.calculatePlaneIntersectionPoint(
-                        current_ray, view2.camera.dir, cur_selection.pos);
-        
-        let rotate_vector = null;
-        if (interaction_with === "x_rotate") {
-            rotate_vector = [
-                cur_selection.last_static_transform.rotation[0] + (new_pos[0] - start_pos[0]) * 180 / Math.PI,
-                cur_selection.rotation_angles[1],
-                cur_selection.rotation_angles[2]
-            ];
-        } else if (interaction_with === "y_rotate") {
-            rotate_vector = [
-                cur_selection.rotation_angles[0],
-                cur_selection.last_static_transform.rotation[1] + (new_pos[1] - start_pos[1]) * 180 / Math.PI,
-                cur_selection.rotation_angles[2]
-            ];  
-        } else if (interaction_with === "z_rotate") {
-            rotate_vector = [
-                cur_selection.rotation_angles[0],
-                cur_selection.rotation_angles[1],
-                cur_selection.last_static_transform.rotation[2] + (new_pos[2] - start_pos[2]) * 180 / Math.PI,    
-            ]
-        } else if (interaction_with === "2d_gizmo") {
-            // TODO - Issue #4: the object will snap to a different angle if rotated after moving the camera after an initial rotation
-            const angle = Math.atan2(vec3.dot(view2.camera.dir, 
-                vec3.cross([], start_pos, new_pos)), vec3.dot(start_pos, new_pos)) * 180 / Math.PI;  
-
-            cur_selection.rotateOnAxis(angle, view2.camera.dir);
-            return;
-        }
-        cur_selection.updateRot(rotate_vector);
-        setTransformUI(transform_ui, cur_selection);
     }
 });
 
 view2.window.addEventListener("wheel", e => {
     view2.camera.zoom(e.deltaY);
-    current_ray.origin = view2.camera.pos;
+    current_ray.origin = view2.camera.pos; // need to adjust origin whenever camera pos changes
     view2.camera.recalculateViewMatrix();
 
     if (transform_gizmos.display_gizmos) {
         // keeps main gizmo in correct place
         transform_gizmos.main_gizmo.center = Interactions.coordsWorldToScreen(cur_selection.pos, view2.width, view2.height, view2.proj_matrix, view2.camera.view_matrix);
-
         // rescales 3d gizmos
-        const distance = vec3.distance(view2.camera.pos, cur_selection.pos);
-        const scale = (distance / transform_gizmos.reference_distance) * transform_gizmos.reference_scale;
-        transform_gizmos.objects.forEach(object => {
-                object.updateScale([scale, scale, scale]);
-        });
+        transform_gizmos.updateGizmosScale(vec3.distance(view2.camera.pos, cur_selection.pos));
     }
 });
 
@@ -553,22 +536,14 @@ sceneobject_list.addEventListener("click", e => {
 
                 // this logic can be reused for importing objects
                 const distance2 = cur_selection.aabb.sphere_radius / Math.tan(glm.glMatrix.toRadian(45) / 2) * 1.2;
-                /* const new_distance = vec3.scale([], vec3.normalize([], [1,0.5,1]), distance2); */ //  TODO: for model previews, a fixed direction is ok
                 const new_distance = vec3.scale([], view2.camera.dir, distance2);
                 view2.moveCamera(vec3.add([], cur_selection.aabb.center, new_distance));
                 view2.camera.target = cur_selection.pos;
-                // TODO: modularize this. The zoom val needs to be recalculated whenever zooming in/out or focusing
-                // on objects with vastly different bounding sphere radii
+                // since the camera snaps to the cur_selection's bounding sphere the zoom_val may have changed
                 view2.camera.zoom_val = vec3.length(vec3.subtract([], view2.camera.pos, view2.camera.target));
                 view2.camera.recalculateViewMatrix();
 
-                // TODO: modularize this. This is used in the zooming event listener as well as the panning/orbiting
-                // and when the object's position is changed
-                const distance = vec3.distance(view2.camera.pos, cur_selection.pos);
-                const scale = (distance / transform_gizmos.reference_distance) * transform_gizmos.reference_scale;
-                transform_gizmos.objects.forEach(object => {
-                        object.updateScale([scale, scale, scale]);
-                });
+                transform_gizmos.updateGizmosScale(vec3.distance(view2.camera.pos, cur_selection.pos));
 
                 transform_gizmos.display_gizmos = true;
                 transform_gizmos.updateGizmosPos(cur_selection);

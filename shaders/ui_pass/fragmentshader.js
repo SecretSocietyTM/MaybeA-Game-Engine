@@ -6,9 +6,7 @@ out vec4 frag_color;
 uniform vec2 u_cntr;
 uniform float u_radius;
 uniform vec3 u_clr;
-
 uniform vec2 u_windowBotLeft;
-
 uniform bool u_draw2DGizmo;
 
 void main() {
