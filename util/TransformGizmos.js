@@ -121,9 +121,13 @@ export default class TransformGizmos {
     }
 
     updateGizmosPos(selected_object) {
-       this.objects.forEach(object => {
-            object.updatePos(selected_object.pos);
-        }); 
+       this.objects.forEach(object => object.updatePos(selected_object.pos)); 
+    }
+
+    // distance from camera to selected object
+    updateGizmosScale(distance) {
+        const scale = (distance / this.reference_distance) * this.reference_scale;
+        this.objects.forEach(object => object.updateScale([scale, scale, scale]));
     }
 
     isIntersectingGizmo(mouse_pos, view) {

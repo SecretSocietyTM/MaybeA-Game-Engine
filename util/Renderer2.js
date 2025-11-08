@@ -330,14 +330,6 @@ export default class Renderer2 {
         const image_data = ctx.createImageData(width, height);
         image_data.data.set(pixels);
         ctx.putImageData(image_data, 0, 0);
-
-        // For larger images use:
-        /* const img = canvas.toBlob((blob) => {
-            const url = URL.createObjectURL(blob);
-            console.log(url);
-            return url;
-        }); */
-
         const url = canvas.toDataURL("image/png");
 
         // set the framebuffer back to the default once done

@@ -200,51 +200,47 @@ document.addEventListener("keyup" , e => {
 
 //
 // event listeners for Editor View
-// TODO: find a way to make event listeners universal and assignable to windows, might require an Events class XD
-view2.window.addEventListener("click", e => {
+
+// This event triggeres after letting go of the mouse button
+view2.window.addEventListener("click", rayPickingInEditor);
+function rayPickingInEditor(e) {
+    // This needs to be here because event "mouseup" occurs BEFORE "click" so this callback function
+    // will execute after "mouseup". This means that if we are interacting with the gizmos and the 
+    // mouse is no longer over the current active object, it will be deselected
     if (transform_gizmos.is_interacting) {
-        transform_gizmos.is_interacting = false;
+        transform_gizmos.is_interacting =  false;
         cur_selection.setLastStaticTransform();
         return;
-    };
+    }
 
     const mouse_x = e.offsetX;
     const mouse_y = e.offsetY;
-
+    
     current_ray.dir = Interactions.generateRayDir(view2.width, view2.height, mouse_x, mouse_y, view2.proj_matrix, view2.camera.view_matrix);
 
-    for (let i = 0; i < objects.length; i++) {
-        if (objects[i].aabb === null) continue;
-        if (objects[i].aabb.isIntersecting(current_ray)) {
-            if (cur_selection === objects[i]) return;
-            cur_selection = objects[i];
-            setTransformUI(transform_ui, cur_selection);
+    for (let object of objects) {
+        if (object.aabb.isIntersecting(current_ray)) {
+            if (object === cur_selection) return;
 
+            cur_selection = object;
             transform_gizmos.display_gizmos = true;
+            
+            // position 2D gizmo at object center
+            transform_gizmos.main_gizmo.center = Interactions.coordsWorldToScreen(cur_selection.pos, view2.width, view2.height, view2.proj_matrix, view2.camera.view_matrix);
+            // poisition 3D gizmos at object center
+            transform_gizmos.updateGizmosPos(cur_selection);
+            // rescale 3D gizmos
+            transform_gizmos.updateGizmosScale(vec3.distance(view2.camera.pos, cur_selection.pos));
 
-            // position 2d gizmo at object center
-            transform_gizmos.main_gizmo.center = Interactions.coordsWorldToScreen(cur_selection.pos, view2.width, view2.height, view2.proj_matrix, view2.camera.view_matrix)
-
-            // position 3d gizmos at object center
-            transform_gizmos.objects.forEach(object => {
-                object.updatePos(cur_selection.pos);
-            });
-
-            // rescales 3d gizmos
-            const distance = vec3.distance(view2.camera.pos, cur_selection.pos);
-            const scale = (distance / transform_gizmos.reference_distance) * transform_gizmos.reference_scale;
-            transform_gizmos.objects.forEach(object => {
-                    object.updateScale([scale, scale, scale]);
-            });
-
-            return;
+            setTransformUI(transform_ui, cur_selection);
+            return
         }
+        
     }
-
     // if no scene objects were hit
     cur_selection = null;
     transform_gizmos.display_gizmos = false;
-});
+}
 
 view2.window.addEventListener("mousedown", (e) => {
     // might be better to just use offset coordinates
@@ -267,7 +263,7 @@ view2.window.addEventListener("mousedown", (e) => {
                 current_ray, view2.camera.dir, cur_selection.pos);
 
             // TODO - 2D GIZMO: implement this better. We NEED the start_pos_2 value in order to calculate the distance 
-            // between the center of the object / 2d gizmo and the location on the 2d gizmo that the is pressed.
+            // between the center of the object / 2d gizmo and the location on the 2d gizmo that is pressed.
             if (transform_gizmos.mode === "scale") {
                 start_pos_2 = start_pos;
                 start_pos = cur_selection.pos;
@@ -296,6 +292,7 @@ view2.window.addEventListener("mouseup", e => {
     if (e.button === 1 || e.shiftKey) {
         pan_camera = false;
         orbit_camera = false;
+        return;
     }
 });
 
