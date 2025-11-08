@@ -91,8 +91,7 @@ let game_req_id;
 function editorLoop() {
     renderer.renderToViews(views, transform_gizmos);
 
-    // TODO: uncomment
-    /* editor_req_id = requestAnimationFrame(editorLoop); */
+    editor_req_id = requestAnimationFrame(editorLoop);
 }
 
 // THIS IS THE GAME LOOP
@@ -623,9 +622,16 @@ file_input.addEventListener("change", (e) => {
             mesh: mesh
         };
 
-        renderer.modelPreviewThing(new SceneObject(undefined, mesh));
+        const new_object = new SceneObject(undefined, mesh)
 
-        addModelCardToGrid(model_grid, name);
+        const distance2 = new_object.aabb.sphere_radius / Math.tan(glm.glMatrix.toRadian(45) / 2) * 1.2;
+        const new_distance = vec3.scale([], vec3.normalize([], [1,0.5,1]), distance2); //  TODO: for model previews, a fixed direction is ok
+        const view_matrix = mat4.create();
+        mat4.lookAt(view_matrix, vec3.add([], new_object.aabb.center, new_distance), [0,0,0], [0,-1,0]);
+
+        const model_preview_url = renderer.modelPreviewThing(new_object, view_matrix);
+
+        addModelCardToGrid(model_grid, name, model_preview_url);
         new_meshes.push(mesh_item);
     }
     reader.onerror = () => {
@@ -671,7 +677,7 @@ function setRotationUI(rotation_ui, object) {
     rotation_ui.z.value = object.rotation_angles[2];
 }
 
-function addModelCardToGrid(grid, name) {
+function addModelCardToGrid(grid, name, model_preview_url) {
     const div = document.createElement("div");
     const img = document.createElement("img");
     const p = document.createElement("p");
@@ -679,7 +685,7 @@ function addModelCardToGrid(grid, name) {
     div.dataset.model_name = name;
     p.textContent = name;
     img.className = "model_preview";
-    img.src = "../image.png";
+    img.src = model_preview_url;
 
     div.appendChild(img);
     div.appendChild(p);

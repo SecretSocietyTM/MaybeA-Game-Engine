@@ -152,9 +152,6 @@ export default class Renderer2 {
         
             this.pass3D(view.objects, false, view.show_AABB, line3d); // render scene objects
 
-            // TODO: interesting behavior...
-            this.takeScreenshot(view);
-
             if (view.show_gizmos && gizmos.display_gizmos) {
                 this.pass3D(gizmos.active_objects, true, view.show_AABB, line3d); // render gizmos
 
@@ -250,7 +247,7 @@ export default class Renderer2 {
     }
 
 
-    modelPreviewThing(object) {
+    modelPreviewThing(object, view_matrix) {
 
         // define the buffer dimensions
         const width = 150;
@@ -304,8 +301,8 @@ export default class Renderer2 {
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
         // redefine proj/view matrices
-        const view_matrix = mat4.create();
-        mat4.lookAt(view_matrix, [5,5,5], [0,0,0], [0,-1,0]);
+        /* const view_matrix = mat4.create();
+        mat4.lookAt(view_matrix, [5,5,5], [0,0,0], [0,-1,0]); */
         const proj_matrix = mat4.create();
         mat4.perspective(proj_matrix, glm.glMatrix.toRadian(45), (width / height), 0.1, 1000);
 
@@ -334,17 +331,19 @@ export default class Renderer2 {
         image_data.data.set(pixels);
         ctx.putImageData(image_data, 0, 0);
 
-        canvas.toBlob((blob) => {
+        // For larger images use:
+        /* const img = canvas.toBlob((blob) => {
             const url = URL.createObjectURL(blob);
-            const img = new Image();
-            img.src = url;
-            
-            document.body.appendChild(img);
-            img.style.display = "none";
-        });
+            console.log(url);
+            return url;
+        }); */
+
+        const url = canvas.toDataURL("image/png");
 
         // set the framebuffer back to the default once done
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+        this.gl.enable(this.gl.SCISSOR_TEST);
+        return url;
     }
 
 
