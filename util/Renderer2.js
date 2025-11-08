@@ -151,6 +151,9 @@ export default class Renderer2 {
         
             this.pass3D(view.objects, false, view.show_AABB, line3d); // render scene objects
 
+            // TODO: interesting behavior...
+            this.takeScreenshot();
+
             if (view.show_gizmos && gizmos.display_gizmos) {
                 this.pass3D(gizmos.active_objects, true, view.show_AABB, line3d); // render gizmos
 
@@ -357,5 +360,31 @@ export default class Renderer2 {
         ctx.putImageData(image_data, 0, 0);
 
         return canvas.toDataURL("image/png");
+    }
+
+    takeScreenshot(/* view */) {
+        /* const pixel_data = new Uint8Array(view.width * view.height * 4);
+        this.gl.readPixels(view.left, view.bottom, view.width, view.height, 
+            this.gl.RGBA, this.gl.UNSIGNED_BYTE, pixel_data);
+        
+        const canvas2 = document.createElement("canvas");
+        canvas2.width = view.width;
+        canvas2.height = view.height;
+        const ctx = canvas2.getContext("2d");
+
+        const image_data = ctx.createImageData(view.width, view.height);
+        image_data.data.set(pixel_data);
+        ctx.putImageData(image_data, 0, 0); */
+        /* this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height); */
+
+        this.gl.canvas.toBlob((blob) => {
+            const url = URL.createObjectURL(blob);
+            const img = new Image();
+            img.src = url;
+            
+            document.body.appendChild(img);
+            img.style.display = "none";
+        });
+        /* this.gl.enable(this.gl.SCISSOR_TEST); */
     }
 }

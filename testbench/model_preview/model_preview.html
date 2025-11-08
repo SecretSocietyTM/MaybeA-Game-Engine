@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Testbench - Model Preview</title>
+    <script type="module" src="./model_preview.js" defer></script>
+    <script src="../../util/gl-matrix.js"></script>
+</head>
+<body>
+    <div>
+        <p>Default Render Context</p>
+        <canvas id="canvas" class="canvas"></canvas>
+    </div>
+    <div id="img1">
+        <p>Snapshot of default Render Context</p>
+    </div>
+    <div id="img2">
+        <p>Snapshot of New Framebuffer</p>
+    </div>
+</body>
+
+<style>
+    *, *::before, *::after {
+    box-sizing: border-box;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+    }
+
+    html {
+        width: 100vw;
+        height: 100vh;
+    }
+
+    body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 5rem;
+
+        width: 100%;
+        height: 100%;
+
+        background-color: rgb(34, 34, 34);
+    }
+
+    canvas {
+        background-color: black;
+    }
+
+    p {
+        color: white;
+    }
+</style>
+</html>

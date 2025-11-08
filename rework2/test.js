@@ -90,7 +90,9 @@ let game_req_id;
 
 function editorLoop() {
     renderer.renderToViews(views, transform_gizmos);
-    editor_req_id = requestAnimationFrame(editorLoop);
+
+    // TODO: uncomment
+    /* editor_req_id = requestAnimationFrame(editorLoop); */
 }
 
 // THIS IS THE GAME LOOP
@@ -167,6 +169,11 @@ document.addEventListener("keydown", e => {
     if (e.key === "d") {
         btn_d.classList.remove("toggle");
         d_pressed = true;
+    }
+
+    // TODO: remove / move
+    if (e.key === "p") {
+        renderer.takeScreenshot(view2);
     }
 });
 
