@@ -7,25 +7,22 @@ const mat4 = glm.mat4;
 import Camera from "./Camera.js";
 
 export default class ViewWindow {
-    constructor(id, window, canvas) {
+    constructor(id, window, canvas, width = 800, height = 600) {
         this.id = id;
         this.window = window;
+        this.canvas = canvas;
         
         // TODO: allow for customizable height...
-        this.window.style.width = "800px";
-        this.window.style.height = "600px";
+        this.window.style.width = `${width}px`;
+        this.window.style.height = `${height}px`;
 
-        this.canvas = canvas;
+        this.left = null;
+        this.bottom = null;
+        this.width = width;
+        this.height = height;
 
-        this.rect = window.getBoundingClientRect();
-        this.left = this.rect.left;
-        this.bottom = this.canvas.clientHeight - this.rect.bottom;
-        this.width = this.rect.width;
-        this.height = this.rect.height;
 
-        // [0,0,10]
         this.camera = new Camera([10,0,0], [0,0,0], [0,1,0]);
-
         this.proj_matrix = mat4.create();
         mat4.perspective(
             this.proj_matrix, 
@@ -40,8 +37,9 @@ export default class ViewWindow {
         this.show_AABB = false;
     }
 
-    // TODO: don't create a new camera, just update the pos of the existing one
-    moveCamera(pos) {
-        this.camera = new Camera(pos, [0,0,0], [0,1,0]);
+    setBoundingRect() {
+        const rect = this.window.getBoundingClientRect();
+        this.left = rect.left;
+        this.bottom = this.canvas.clientHeight - rect.bottom;
     }
 }

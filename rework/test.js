@@ -51,7 +51,10 @@ renderer.addAABBMesh(MeshesObj.aabb_wireframe); // preload the AABB wireframe me
 const view1 = new ViewWindow("v1", document.getElementById("view1"), canvas);
 view1.show_gizmos = false;
 const view2 = new ViewWindow("v2", document.getElementById("view2"), canvas);
+
+// after both windows have had a size assigned, get the bounding rect
 const views = [view1, view2];
+views.forEach(view => view.setBoundingRect());
 
 current_ray.origin = view2.camera.pos;
 const transform_gizmos = new TransformGizmos(MeshesObj, 0.8, vec3.distance(view2.camera.pos, view2.camera.target));
@@ -65,17 +68,19 @@ const unit_cube = new SceneObject("unit_cube", MeshesObj.unit_cube);
 const apple = new SceneObject("apple", MeshesObj.apple, [-10,0,-10], [9,9,9], [0,0,0]);
 const weird_cube = new SceneObject("weird cube", MeshesObj.weird_cube);
 
-const wall = new SceneObject("wall", MeshesObj.unit_cube, [0,0,10], [10,10,1], [0,0,0], [1.0,0.5,0.0]);
+const wall = new SceneObject("wall", MeshesObj.unit_cube, [0,0,-15], [10,10,1], [0,0,0], [1.0,0.5,0.0]);
 const floor = new SceneObject("floor", MeshesObj.unit_cube, [0,-2.2,0], [15,1,15], [0,0,0], [0.2,0.2,0.2]);
-
 
 // For game view
 const camera = new SceneObject("camera", MeshesObj.camera_offcenter, [-30,30,-30], [0.3,0.3,0.3], [0,0,0]);
 camera.transformTargetTo(camera.pos, view2.camera.target, view2.camera.up, camera.scale);
-view1.moveCamera(camera.pos);
+view1.camera.pos = camera.pos;
+view1.camera.recalculateViewMatrix();
 
-objects.push(unit_cube, apple, weird_cube, camera, wall, floor);
-game_objects.push(unit_cube, apple, weird_cube, wall, floor);
+objects.push(camera, 
+    unit_cube, apple, weird_cube, wall, floor);
+game_objects.push(
+    unit_cube, apple, weird_cube, wall, floor);
 collision_objects.push(wall, floor);
 view2.objects = objects;
 view1.objects = game_objects;
@@ -244,8 +249,8 @@ view2.window.addEventListener("click", e => {
 // Camera movement state management + gizmo state management
 view2.window.addEventListener("mousedown", (e) => {
     // might be better to just use offset coordinates
-    cur_x = e.clientX - view2.rect.left;
-    cur_y = e.clientY - view2.rect.top;
+    cur_x = e.offsetX;
+    cur_y = e.offsetY;
 
     if (e.button === 1 && e.shiftKey) {
         pan_camera = true;
@@ -467,7 +472,7 @@ sceneobject_list.addEventListener("click", e => {
                 // this logic can be reused for importing objects
                 const distance2 = cur_selection.aabb.sphere_radius / Math.tan(glm.glMatrix.toRadian(45) / 2) * 1.2;
                 const new_distance = vec3.scale([], view2.camera.dir, distance2);
-                view2.moveCamera(vec3.add([], cur_selection.aabb.center, new_distance));
+                view2.camera.pos = vec3.add([], cur_selection.aabb.center, new_distance);
                 view2.camera.target = cur_selection.pos;
                 // since the camera snaps to the cur_selection's bounding sphere the zoom_val may have changed
                 view2.camera.zoom_val = vec3.length(vec3.subtract([], view2.camera.pos, view2.camera.target));
@@ -502,7 +507,6 @@ model_grid.addEventListener("click", e => {
         }
     })
 })
-
 
 // Interacting with model section file input
 file_input.addEventListener("change", (e) => {

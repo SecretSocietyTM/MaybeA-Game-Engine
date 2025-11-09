@@ -89,14 +89,6 @@ ul {
 
 #view1, #view2 {
     outline: solid black 2px;
-
-    /* TODO: 
-    need to figure out a way to recalculate
-    viewport / scissor location. Since view1 is loaded
-    before view2, it is placed in a location that will be 
-    "overwritten" when view2 has its size assigned */
-    width: 800px;
-    height: 600px;
 }
 
 .toggle {
