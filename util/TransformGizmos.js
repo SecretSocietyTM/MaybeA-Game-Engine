@@ -69,33 +69,33 @@ export default class TransformGizmos {
     initGizmoObjects(meshes) {
         // translate
         const x_trans = new SceneObject("x_trans", meshes.translate_gizmo, [0,0,0],
-            Array(3).fill(this.reference_scale), [0,0,-90]);
+            Array(3).fill(this.reference_scale), [0,0,-90], this.RED);
 
         const y_trans = new SceneObject("y_trans", meshes.translate_gizmo, [0,0,0], 
-            Array(3).fill(this.reference_scale), [0,0,0]);
+            Array(3).fill(this.reference_scale), [0,0,0], this.GREEN);
 
         const z_trans = new SceneObject("z_trans", meshes.translate_gizmo, [0,0,0],
-            Array(3).fill(this.reference_scale), [90,0,0]);
+            Array(3).fill(this.reference_scale), [90,0,0], this.BLUE);
 
         // rotate
         const x_rotate = new SceneObject("x_rotate", meshes.rotate_gizmo3, [0,0,0], 
-            Array(3).fill(this.reference_scale), [0,0,-90]);
+            Array(3).fill(this.reference_scale), [0,0,-90], this.RED);
 
         const y_rotate = new SceneObject("y_rotate", meshes.rotate_gizmo3, [0,0,0], 
-            Array(3).fill(this.reference_scale), [0,0,0]);
+            Array(3).fill(this.reference_scale), [0,0,0], this.GREEN);
     
         const z_rotate = new SceneObject("z_rotate", meshes.rotate_gizmo3, [0,0,0], 
-            Array(3).fill(this.reference_scale), [90,0,0])
+            Array(3).fill(this.reference_scale), [90,0,0], this.BLUE)
 
         // scale
         const x_scale = new SceneObject("x_scale", meshes.scale_gizmo2, [0,0,0], 
-            Array(3).fill(this.reference_scale), [0, 0, -90])
+            Array(3).fill(this.reference_scale), [0, 0, -90], this.RED)
     
         const y_scale = new SceneObject("y_scale", meshes.scale_gizmo2, [0,0,0], 
-            Array(3).fill(this.reference_scale), [0,0,0]);
+            Array(3).fill(this.reference_scale), [0,0,0], this.GREEN);
 
         const z_scale = new SceneObject("z_scale", meshes.scale_gizmo2, [0,0,0], 
-            Array(3).fill(this.reference_scale), [90,0,0])
+            Array(3).fill(this.reference_scale), [90,0,0], this.BLUE)
 
         this.translate_objects.push(x_trans, y_trans, z_trans);
         this.rotate_objects.push(x_rotate, y_rotate, z_rotate);
@@ -104,22 +104,6 @@ export default class TransformGizmos {
         this.objects.push(x_trans, y_trans, z_trans,
                           x_rotate, y_rotate, z_rotate,
                           x_scale, y_scale, z_scale);
-
-        x_trans.assignColor(this.RED);
-        x_rotate.assignColor(this.RED);
-        x_scale.assignColor(this.RED);
-
-        y_trans.assignColor(this.GREEN);
-        y_rotate.assignColor(this.GREEN);
-        y_scale.assignColor(this.GREEN);
-
-        z_trans.assignColor(this.BLUE);
-        z_rotate.assignColor(this.BLUE);
-        z_scale.assignColor(this.BLUE);
-
-        this.objects.forEach(object => {
-            object.useColor(true);
-        });
     }
 
     updateGizmosPos(selected_object) {

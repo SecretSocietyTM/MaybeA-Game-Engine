@@ -65,12 +65,9 @@ const unit_cube = new SceneObject("unit_cube", MeshesObj.unit_cube);
 const apple = new SceneObject("apple", MeshesObj.apple, [-10,0,-10], [9,9,9], [0,0,0]);
 const weird_cube = new SceneObject("weird cube", MeshesObj.weird_cube);
 
-const wall = new SceneObject("wall", MeshesObj.unit_cube, [0,0,10], [10,10,1], [0,0,0]);
-const floor = new SceneObject("floor", MeshesObj.unit_cube, [0,-2.2,0], [15,1,15], [0,0,0]);
-wall.assignColor([1.0, 0.5, 0.0]);
-wall.useColor(true);
-floor.assignColor([0.2,0.2,0.2]);
-floor.useColor(true);
+const wall = new SceneObject("wall", MeshesObj.unit_cube, [0,0,10], [10,10,1], [0,0,0], [1.0,0.5,0.0]);
+const floor = new SceneObject("floor", MeshesObj.unit_cube, [0,-2.2,0], [15,1,15], [0,0,0], [0.2,0.2,0.2]);
+
 
 // For game view
 const camera = new SceneObject("camera", MeshesObj.camera_offcenter, [-30,30,-30], [0.3,0.3,0.3], [0,0,0]);
@@ -530,10 +527,10 @@ file_input.addEventListener("change", (e) => {
             mesh: mesh
         };
 
-        const new_object = new SceneObject(undefined, mesh)
+        const new_object = new SceneObject(undefined, mesh);
 
         const distance2 = new_object.aabb.sphere_radius / Math.tan(glm.glMatrix.toRadian(45) / 2) * 1.2;
-        const new_distance = vec3.scale([], vec3.normalize([], [1,0.5,1]), distance2); //  TODO: for model previews, a fixed direction is ok
+        const new_distance = vec3.scale([], vec3.normalize([], [1,0.5,1]), distance2);
         const view_matrix = mat4.create();
         mat4.lookAt(view_matrix, vec3.add([], new_object.aabb.center, new_distance), [0,0,0], [0,-1,0]);
 

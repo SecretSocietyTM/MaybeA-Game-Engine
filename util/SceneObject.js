@@ -14,6 +14,8 @@ export default class SceneObject {
         pos = [0,0,0],
         scale = [1,1,1],
         rotation_angles = [0,0,0],
+        
+        color,
     ) {         
         if(!mesh) {
             throw new Error("Please provide the constructor with a mesh");
@@ -30,7 +32,11 @@ export default class SceneObject {
         this.setLastStaticTransform();
 
         this.use_color = false;
-        this.color = [0.8, 0.8, 0.8];
+        this.color = [0.8,0.8,0.8];
+        if (color) {
+            this.use_color = true;
+            this.color = color;
+        }
         this.alpha = 1.0;
     }
 
