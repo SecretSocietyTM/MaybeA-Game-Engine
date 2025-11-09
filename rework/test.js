@@ -15,6 +15,7 @@ import SceneObject from "../util/SceneObject.js";
 import TransformGizmos from "../util/TransformGizmos.js";
 
 import * as Interactions from "../util/interactions.js";
+import * as ui from "../extra/ui.js";
 import MeshesObj from "../mimp/models/meshes_index.js";
 import { parsePLY } from "../mimp/parse_ply.js";
 
@@ -60,15 +61,14 @@ const game_objects = [];
 const collision_objects = [];
 const new_meshes = [];
 
-const unit_cube = new SceneObject("unit_cube", MeshesObj.unit_cube, [0,0,0], [1,1,1], [0,0,0]);
-const player = unit_cube;
+const unit_cube = new SceneObject("unit_cube", MeshesObj.unit_cube);
 const apple = new SceneObject("apple", MeshesObj.apple, [-10,0,-10], [9,9,9], [0,0,0]);
-const weird_cube = new SceneObject("weird cube", MeshesObj.weird_cube, [0,0,0], [1,1,1], [0,0,0]);
+const weird_cube = new SceneObject("weird cube", MeshesObj.weird_cube);
 
 const wall = new SceneObject("wall", MeshesObj.unit_cube, [0,0,10], [10,10,1], [0,0,0]);
+const floor = new SceneObject("floor", MeshesObj.unit_cube, [0,-2.2,0], [15,1,15], [0,0,0]);
 wall.assignColor([1.0, 0.5, 0.0]);
 wall.useColor(true);
-const floor = new SceneObject("floor", MeshesObj.unit_cube, [0,-2.2,0], [15,1,15], [0,0,0]);
 floor.assignColor([0.2,0.2,0.2]);
 floor.useColor(true);
 
@@ -83,9 +83,14 @@ collision_objects.push(wall, floor);
 view2.objects = objects;
 view1.objects = game_objects;
 
-// render loop variables
+
+
+//
+//
+// Render loop state / logic
 let editor_req_id;
 let game_req_id;
+const player = unit_cube;
 
 function editorLoop() {
     renderer.renderToViews(views, transform_gizmos);
@@ -93,7 +98,6 @@ function editorLoop() {
     editor_req_id = requestAnimationFrame(editorLoop);
 }
 
-// THIS IS THE GAME LOOP
 function gameLoop() {
     const speed = 0.15;
     if (d_pressed) {
@@ -121,10 +125,20 @@ function gameLoop() {
     game_req_id = requestAnimationFrame(gameLoop);
 }
 
+// initialize general render loop
 editor_req_id = requestAnimationFrame(editorLoop);
 
-// enables the "game loop"
+// 
+// 
+// UI elements related to view state / game loop
+const btn_w = document.getElementById("w_pressed");
+const btn_a = document.getElementById("a_pressed");
+const btn_s = document.getElementById("s_pressed");
+const btn_d = document.getElementById("d_pressed");
+const btn_toggle_AABB = document.getElementById("toggle_AABB");
 const btn_toggle_GameLoop = document.getElementById("toggle_GameLoop");
+
+// Toggles the game loop on and off
 btn_toggle_GameLoop.addEventListener("click", e => {
     btn_toggle_GameLoop.classList.toggle("toggle");
     enable_game_loop = !enable_game_loop;
@@ -138,19 +152,14 @@ btn_toggle_GameLoop.addEventListener("click", e => {
     editor_req_id = requestAnimationFrame(editorLoop);
 });
 
-
-// element stuff...
-const btn_w = document.getElementById("w_pressed");
-const btn_a = document.getElementById("a_pressed");
-const btn_s = document.getElementById("s_pressed");
-const btn_d = document.getElementById("d_pressed");
-const btn_toggle_AABB = document.getElementById("toggle_AABB");
+// Toggles visibility of SceneObject AABBs
 btn_toggle_AABB.addEventListener("click", e => {
     btn_toggle_AABB.classList.toggle("toggle");
     view1.show_AABB = !view1.show_AABB;
     view2.show_AABB = !view2.show_AABB;
 });
 
+// Player movement
 document.addEventListener("keydown", e => {
     if (e.key === "w") {
         btn_w.classList.remove("toggle");
@@ -170,6 +179,7 @@ document.addEventListener("keydown", e => {
     }
 });
 
+// Player movement
 document.addEventListener("keyup" , e => {
     if (e.key === "w") {
         btn_w.classList.add("toggle");
@@ -190,14 +200,12 @@ document.addEventListener("keyup" , e => {
 });
 
 
-
-
+// 
 //
-// event listeners for Editor View
+// event listeners for the editor window
 
-// This event triggeres after letting go of the mouse button
-view2.window.addEventListener("click", rayPickingInEditor);
-function rayPickingInEditor(e) {
+// Ray picking
+view2.window.addEventListener("click", e => {
     // This needs to be here because event "mouseup" occurs BEFORE "click" so this callback function
     // will execute after "mouseup". This means that if we are interacting with the gizmos and the 
     // mouse is no longer over the current active object, it will be deselected
@@ -226,7 +234,7 @@ function rayPickingInEditor(e) {
             // rescale 3D gizmos
             transform_gizmos.updateGizmosScale(vec3.distance(view2.camera.pos, cur_selection.pos));
 
-            setTransformUI(transform_ui, cur_selection);
+            ui.setTransformUI(transform_ui, cur_selection);
             return
         }
         
@@ -234,8 +242,9 @@ function rayPickingInEditor(e) {
     // if no scene objects were hit
     cur_selection = null;
     transform_gizmos.display_gizmos = false;
-}
+});
 
+// Camera movement state management + gizmo state management
 view2.window.addEventListener("mousedown", (e) => {
     // might be better to just use offset coordinates
     cur_x = e.clientX - view2.rect.left;
@@ -257,13 +266,7 @@ view2.window.addEventListener("mousedown", (e) => {
                 current_ray, view2.camera.dir, cur_selection.pos);
 
             // TODO - 2D GIZMO: implement this better. We NEED the start_pos_2 value in order to calculate the distance 
-            // between the center of the object / 2d gizmo and the location on the 2d gizmo that is pressed.
-
-            // NOTE: this works for now, an alternative would be to calculate the radius of 2d gizmo in world space
-            // and using that. Since the radius is calculated as the distance between two points on the same plane
-            // the radius should always be the same no matter how zoomed in or how the camera is moved.
-            // However this will require that outer circle be projected into world space and flattened onto a plane
-            // centered at (0,0,0) and i dont know how to go about this.
+            // between the center of the object / 2d gizmo and the location on the 2d gizmo that is pressed.  (Calc the 2d gizmo radius in world space)
             if (transform_gizmos.mode === "scale") {
                 start_pos_2 = start_pos;
                 start_pos = cur_selection.pos;
@@ -288,6 +291,7 @@ view2.window.addEventListener("mousedown", (e) => {
     }
 });
 
+// Camera movement state management
 view2.window.addEventListener("mouseup", e => {
     if (e.button === 1 || e.shiftKey) {
         pan_camera = false;
@@ -296,6 +300,7 @@ view2.window.addEventListener("mouseup", e => {
     }
 });
 
+// Camera movement + gizmo interaction
 view2.window.addEventListener("mousemove", e => {
     const mouse_x = e.offsetX;
     const mouse_y = e.offsetY;
@@ -391,10 +396,11 @@ view2.window.addEventListener("mousemove", e => {
         }
 
         // update UI
-        setTransformUI(transform_ui, cur_selection);
+        ui.setTransformUI(transform_ui, cur_selection);
     }
 });
 
+// Camera movement
 view2.window.addEventListener("wheel", e => {
     view2.camera.zoom(e.deltaY);
     current_ray.origin = view2.camera.pos; // need to adjust origin whenever camera pos changes
@@ -408,6 +414,7 @@ view2.window.addEventListener("wheel", e => {
     }
 });
 
+// Gizmo state management
 document.addEventListener("keydown", (e) => {
     if (e.key === "t") {
         transform_gizmos.setMode("translate");
@@ -419,12 +426,8 @@ document.addEventListener("keydown", (e) => {
 });
 
 
-
-
-
-
-
-
+//
+//
 // UI elements
 const sceneobject_list = document.getElementById("sceneobjects_list");
 const model_grid = document.getElementById("model_grid");
@@ -449,11 +452,12 @@ const transform_ui = {
 };
 const file_input = document.getElementById("file_input");
 
+ui.loadSceneObjectsToList(sceneobject_list, objects);
 
+// 
+// event listeners for UI elements
 
-loadSceneObjectsToList(sceneobject_list, objects);
-
-// UI event listeners
+// Interacting with the Scene Hierarchy
 sceneobject_list.addEventListener("click", e => {
 
     const list_object = e.target.closest("p");
@@ -478,13 +482,14 @@ sceneobject_list.addEventListener("click", e => {
                 transform_gizmos.updateGizmosPos(cur_selection);
                 transform_gizmos.main_gizmo.center = Interactions.calculateObjectCenterScreenCoord(view2.width, view2.height, cur_selection, view2.proj_matrix, view2.camera.view_matrix);
                 
-                setTransformUI(transform_ui, cur_selection);
+                ui.setTransformUI(transform_ui, cur_selection);
                 return;
             }
         });
     }
 });
 
+// Interacting with the model previews
 model_grid.addEventListener("click", e => {
     const model_card = e.target.closest("div");
     if (!model_card) return;
@@ -494,13 +499,15 @@ model_grid.addEventListener("click", e => {
             const new_object = new SceneObject(mesh.name, mesh.mesh)
             objects.push(new_object);
             game_objects.push(new_object);
-            addSceneObjectToList(sceneobject_list, new_object);
+            ui.addSceneObjectToList(sceneobject_list, new_object);
 
             return;
         }
     })
 })
 
+
+// Interacting with model section file input
 file_input.addEventListener("change", (e) => {
     const file = file_input.files[0];
     if (!file) {
@@ -532,7 +539,7 @@ file_input.addEventListener("change", (e) => {
 
         const model_preview_url = renderer.modelPreviewThing(new_object, view_matrix);
 
-        addModelCardToGrid(model_grid, name, model_preview_url);
+        ui.addModelCardToGrid(model_grid, name, model_preview_url);
         new_meshes.push(mesh_item);
     }
     reader.onerror = () => {
@@ -540,56 +547,3 @@ file_input.addEventListener("change", (e) => {
     }
     reader.readAsText(file);
 });
-
-// UI functions
-function loadSceneObjectsToList(list, objects) {
-    objects.forEach(object => {
-        addSceneObjectToList(list, object);
-    });
-}
-
-function addSceneObjectToList(list, object) {
-    const p = document.createElement("p");
-    p.textContent = object.name;
-    list.appendChild(p);
-}
-
-function setTransformUI(transform_ui, object) {
-    setPositionUI(transform_ui.position, object);
-    setScaleUI(transform_ui.scale, object);
-    setRotationUI(transform_ui.rotation, object);
-}
-
-function setPositionUI(position_ui, object) {
-    position_ui.x.value = object.pos[0];
-    position_ui.y.value = object.pos[1];
-    position_ui.z.value = object.pos[2];
-}
-
-function setScaleUI(scale_ui, object) {
-    scale_ui.x.value = object.scale[0];
-    scale_ui.y.value = object.scale[1];
-    scale_ui.z.value = object.scale[2];    
-}
-
-function setRotationUI(rotation_ui, object) {
-    rotation_ui.x.value = object.rotation_angles[0];
-    rotation_ui.y.value = object.rotation_angles[1];
-    rotation_ui.z.value = object.rotation_angles[2];
-}
-
-function addModelCardToGrid(grid, name, model_preview_url) {
-    const div = document.createElement("div");
-    const img = document.createElement("img");
-    const p = document.createElement("p");
-
-    div.dataset.model_name = name;
-    p.textContent = name;
-    img.className = "model_preview";
-    img.src = model_preview_url;
-
-    div.appendChild(img);
-    div.appendChild(p);
-
-    grid.appendChild(div);
-}
