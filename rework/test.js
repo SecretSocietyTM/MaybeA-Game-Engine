@@ -297,31 +297,13 @@ view2.window.addEventListener("mouseup", e => {
 });
 
 view2.window.addEventListener("mousemove", e => {
-    const mouse_x = e.clientX - view2.rect.left;
-    const mouse_y = e.clientY - view2.rect.top;
+    const mouse_x = e.offsetX;
+    const mouse_y = e.offsetY;
 
+    current_ray.dir = Interactions.generateRayDir(view2.width, view2.height, mouse_x, mouse_y, view2.proj_matrix, view2.camera.view_matrix);
 
     // Handle hover color change
-    if (transform_gizmos.display_gizmos && !transform_gizmos.is_interacting) {
-        if (transform_gizmos.isIntersectingGizmo([mouse_x, view2.height - mouse_y], view2)) {
-            transform_gizmos.main_gizmo.color = [1.0, 1.0, 1.0];
-        } else {
-            transform_gizmos.main_gizmo.color = [0.9, 0.9, 0.9];
-        }
-
-        current_ray.dir = Interactions.generateRayDir(view2.width, view2.height, mouse_x, mouse_y, view2.proj_matrix, view2.camera.view_matrix);
-        transform_gizmos.active_objects.forEach(object => {
-            if (object.aabb.isIntersecting(current_ray)) {
-                if (object.name.includes("x")) object.assignColor(transform_gizmos.RED_HOVER);
-                else if (object.name.includes("y")) object.assignColor(transform_gizmos.GREEN_HOVER);
-                else if (object.name.includes("z")) object.assignColor(transform_gizmos.BLUE_HOVER);
-            } else {
-                if (object.name.includes("x")) object.assignColor(transform_gizmos.RED);
-                else if (object.name.includes("y")) object.assignColor(transform_gizmos.GREEN);
-                else if (object.name.includes("z")) object.assignColor(transform_gizmos.BLUE);
-            }
-        });
-    }
+    transform_gizmos.hoverColorChange([mouse_x, view2.height - mouse_y], current_ray);
     
     if (pan_camera || orbit_camera) {
         prev_x = cur_x;
@@ -356,7 +338,6 @@ view2.window.addEventListener("mousemove", e => {
     if (transform_gizmos.is_interacting) {
 
         const interaction_with = transform_gizmos.interaction_with;
-        current_ray.dir = Interactions.generateRayDir(view2.width, view2.height, mouse_x, mouse_y, view2.proj_matrix, view2.camera.view_matrix);
         const new_pos = Interactions.calculatePlaneIntersectionPoint(current_ray, view2.camera.dir, cur_selection.pos);
         
         if (transform_gizmos.mode === "translate") {
@@ -372,12 +353,10 @@ view2.window.addEventListener("mousemove", e => {
             }
 
             cur_selection.updatePos(translate_vector);
-            setTransformUI(transform_ui, cur_selection);
             // update gizmos positions and rescale
             transform_gizmos.updateGizmosPos(cur_selection);
             transform_gizmos.main_gizmo.center = Interactions.calculateObjectCenterScreenCoord(view2.width, view2.height, cur_selection, view2.proj_matrix, view2.camera.view_matrix);
             transform_gizmos.updateGizmosScale(vec3.distance(view2.camera.pos, cur_selection.pos));
-
         } else if (transform_gizmos.mode === "scale") {
             let scale_vector = [...cur_selection.scale];
 
@@ -392,8 +371,6 @@ view2.window.addEventListener("mousemove", e => {
             }
             
             cur_selection.updateScale(scale_vector);
-            setTransformUI(transform_ui, cur_selection);
-
         } else if (transform_gizmos.mode === "rotate") {
             let rotate_vector2 = [...cur_selection.rotation_angles];
 
@@ -411,8 +388,10 @@ view2.window.addEventListener("mousemove", e => {
             }
             
             cur_selection.updateRot(rotate_vector2);
-            setTransformUI(transform_ui, cur_selection);
         }
+
+        // update UI
+        setTransformUI(transform_ui, cur_selection);
     }
 });
 

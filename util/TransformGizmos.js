@@ -18,15 +18,17 @@ export default class TransformGizmos {
         this.RED =    [1.0, 0.3, 0.2];
         this.GREEN =  [0.35, 0.8, 0.46];
         this.BLUE =   [0.2, 0.56, 0.85];
+        this.WHITE =  [0.85, 0.85, 0.85];
 
         this.RED_HOVER = [1.0, 0.5, 0.5];
         this.GREEN_HOVER = [0.5, 1.0, 0.5];
         this.BLUE_HOVER = [0.7, 0.7, 1.0];
+        this.WHITE_HOVER = [1.0, 1.0, 1.0];
 
         this.main_gizmo = {
             center: null,
             radius: null,
-            color: [0.9, 0.9, 0.9],
+            color: this.WHITE
         }
 
         this.interaction_with = null;
@@ -130,7 +132,7 @@ export default class TransformGizmos {
         this.objects.forEach(object => object.updateScale([scale, scale, scale]));
     }
 
-    isIntersectingGizmo(mouse_pos, view) {
+    isIntersectingGizmo(mouse_pos) {
         const dist = vec2.length(vec2.subtract([], mouse_pos, this.main_gizmo.center));
 
         if (this.mode === "translate") {
@@ -140,6 +142,25 @@ export default class TransformGizmos {
             if (dist >= this.main_gizmo.radius - 5 - 2 && 
                 dist <= this.main_gizmo.radius + 5 ) return true;
             return false
+        }
+    }
+
+    hoverColorChange(mouse_pos, ray) {
+        if (this.display_gizmos && !this.is_interacting) {
+
+            this.main_gizmo.color = this.isIntersectingGizmo(mouse_pos) ? this.WHITE_HOVER : this.WHITE;
+
+            this.active_objects.forEach(object => {
+                if (object.aabb.isIntersecting(ray)) {
+                    if (object.name.includes("x")) object.assignColor(this.RED_HOVER);
+                    else if (object.name.includes("y")) object.assignColor(this.GREEN_HOVER);
+                    else if (object.name.includes("z")) object.assignColor(this.BLUE_HOVER);                    
+                } else {
+                    if (object.name.includes("x")) object.assignColor(this.RED);
+                    else if (object.name.includes("y")) object.assignColor(this.GREEN);
+                    else if (object.name.includes("z")) object.assignColor(this.BLUE);    
+                }
+            })
         }
     }
 }
