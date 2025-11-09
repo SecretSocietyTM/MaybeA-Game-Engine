@@ -25,6 +25,7 @@ export function addModelCardToGrid(grid, name, model_preview_url) {
     p.textContent = name;
     img.className = "model_preview";
     img.src = model_preview_url;
+    img.style.transform = "scaleY(-1)";
 
     div.appendChild(img);
     div.appendChild(p);

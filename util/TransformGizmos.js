@@ -106,6 +106,22 @@ export default class TransformGizmos {
                           x_scale, y_scale, z_scale);
     }
 
+    // TODO: new function, not sure if it will stick
+    updateGizmos(screen_center, object_aabb_center, distance) {
+        this.update2DGizmoCenter(screen_center);
+        if (object_aabb_center) this.updateGizmoPos2(object_aabb_center); // change function to take just the pos
+        if (distance) this.updateGizmosScale(distance);
+
+    }
+
+    update2DGizmoCenter(screen_center) {
+        this.main_gizmo.center = screen_center;
+    }
+
+    updateGizmoPos2(position) {
+        this.objects.forEach(object => object.updatePos(position));
+    }
+
     updateGizmosPos(selected_object) {
        this.objects.forEach(object => object.updatePos(selected_object.pos)); 
     }
@@ -119,6 +135,9 @@ export default class TransformGizmos {
     isIntersectingGizmo(mouse_pos) {
         const dist = vec2.length(vec2.subtract([], mouse_pos, this.main_gizmo.center));
 
+        // the magic number 5 is the "extra area" around the 2d gizmo that still counts as 
+        // interacting with the gizmo, this way you don't have to be extremely accurate when
+        // trying to click on the small circle outline
         if (this.mode === "translate") {
             if (dist <= this.main_gizmo.radius + 5) return true;
             return false;

@@ -228,13 +228,19 @@ view2.window.addEventListener("click", e => {
 
             cur_selection = object;
             transform_gizmos.display_gizmos = true;
+
+            if (true) {
+                const object_aabb_center = cur_selection.aabb.center;
+                const object_center_world_to_screen = Interactions.coordsWorldToScreen(object_aabb_center, view2.width, view2.height, view2.proj_matrix, view2.camera.view_matrix);
+                transform_gizmos.updateGizmos(object_center_world_to_screen, object_aabb_center, vec3.distance(view2.camera.pos, object_aabb_center));
+            }
             
-            // position 2D gizmo at object center
+            /* // position 2D gizmo at object center
             transform_gizmos.main_gizmo.center = Interactions.coordsWorldToScreen(cur_selection.pos, view2.width, view2.height, view2.proj_matrix, view2.camera.view_matrix);
             // poisition 3D gizmos at object center
             transform_gizmos.updateGizmosPos(cur_selection);
             // rescale 3D gizmos
-            transform_gizmos.updateGizmosScale(vec3.distance(view2.camera.pos, cur_selection.pos));
+            transform_gizmos.updateGizmosScale(vec3.distance(view2.camera.pos, cur_selection.pos)); */
 
             ui.setTransformUI(transform_ui, cur_selection);
             return
@@ -336,6 +342,16 @@ view2.window.addEventListener("mousemove", e => {
         view2.camera.recalculateViewMatrix();
 
         if (transform_gizmos.display_gizmos) {
+
+            /* if (true) {
+                const object_aabb_center = cur_selection.aabb.center;
+                const object_center_world_to_screen = Interactions.coordsWorldToScreen(object_aabb_center, view2.width, view2.height, view2.proj_matrix, view2.camera.view_matrix);
+                transform_gizmos.updateGizmos(object_center_world_to_screen, undefined, vec3.distance(view2.camera.pos, object_aabb_center));
+            } */
+
+            // SAVE: unity allows for transformations about both the PIVOT POINT and CENTER POINT (CENTER OF AABB);
+            // PIVOT POINT: the point around which the object was centered in the modeling phase (0,0,0);
+            // CENTER POINT: the center point of the AABB assigned to the object AFTER importing
             // position 2d gizmo at object center
             transform_gizmos.main_gizmo.center = Interactions.coordsWorldToScreen(cur_selection.pos, view2.width, view2.height, view2.proj_matrix, view2.camera.view_matrix);
             transform_gizmos.updateGizmosScale(vec3.distance(view2.camera.pos, cur_selection.pos));
@@ -361,6 +377,12 @@ view2.window.addEventListener("mousemove", e => {
 
             cur_selection.updatePos(translate_vector);
             // update gizmos positions and rescale
+            /* if (true) {
+                const object_aabb_center = cur_selection.aabb.center;
+                const object_center_world_to_screen = Interactions.coordsWorldToScreen(object_aabb_center, view2.width, view2.height, view2.proj_matrix, view2.camera.view_matrix);
+                transform_gizmos.updateGizmos(object_center_world_to_screen, object_aabb_center, vec3.distance(view2.camera.pos, object_aabb_center));
+            } */
+            
             transform_gizmos.updateGizmosPos(cur_selection);
             transform_gizmos.main_gizmo.center = Interactions.calculateObjectCenterScreenCoord(view2.width, view2.height, cur_selection, view2.proj_matrix, view2.camera.view_matrix);
             transform_gizmos.updateGizmosScale(vec3.distance(view2.camera.pos, cur_selection.pos));
@@ -409,6 +431,12 @@ view2.window.addEventListener("wheel", e => {
     view2.camera.recalculateViewMatrix();
 
     if (transform_gizmos.display_gizmos) {
+
+        /* if (true) {
+            const object_aabb_center = cur_selection.aabb.center;
+            const object_center_world_to_screen = Interactions.coordsWorldToScreen(object_aabb_center, view2.width, view2.height, view2.proj_matrix, view2.camera.view_matrix);
+            transform_gizmos.updateGizmos(object_center_world_to_screen, undefined, vec3.distance(view2.camera.pos, object_aabb_center));
+        } */
         // keeps main gizmo in correct place
         transform_gizmos.main_gizmo.center = Interactions.coordsWorldToScreen(cur_selection.pos, view2.width, view2.height, view2.proj_matrix, view2.camera.view_matrix);
         // rescales 3d gizmos
@@ -473,7 +501,8 @@ sceneobject_list.addEventListener("click", e => {
                 const distance2 = cur_selection.aabb.sphere_radius / Math.tan(glm.glMatrix.toRadian(45) / 2) * 1.2;
                 const new_distance = vec3.scale([], view2.camera.dir, distance2);
                 view2.camera.pos = vec3.add([], cur_selection.aabb.center, new_distance);
-                view2.camera.target = cur_selection.pos;
+                /* view2.camera.target = cur_selection.aabb.center; */ // TODO: implement better using CENTER 
+                view2.camera.target = cur_selection.pos; // TODO: this also depends on where the Transform gizmos are (PIVOT OR CENTER);
                 // since the camera snaps to the cur_selection's bounding sphere the zoom_val may have changed
                 view2.camera.zoom_val = vec3.length(vec3.subtract([], view2.camera.pos, view2.camera.target));
                 view2.camera.recalculateViewMatrix();
@@ -481,8 +510,15 @@ sceneobject_list.addEventListener("click", e => {
                 transform_gizmos.updateGizmosScale(vec3.distance(view2.camera.pos, cur_selection.pos));
 
                 transform_gizmos.display_gizmos = true;
-                transform_gizmos.updateGizmosPos(cur_selection);
+                
+                /* if (true) {
+                    const object_aabb_center = cur_selection.aabb.center;
+                    const object_center_world_to_screen = Interactions.coordsWorldToScreen(object_aabb_center, view2.width, view2.height, view2.proj_matrix, view2.camera.view_matrix);
+                    transform_gizmos.updateGizmos(object_center_world_to_screen, object_aabb_center, vec3.distance(view2.camera.pos, object_aabb_center));
+                } */
+
                 transform_gizmos.main_gizmo.center = Interactions.calculateObjectCenterScreenCoord(view2.width, view2.height, cur_selection, view2.proj_matrix, view2.camera.view_matrix);
+                transform_gizmos.updateGizmosPos(cur_selection);
                 
                 ui.setTransformUI(transform_ui, cur_selection);
                 return;
@@ -508,7 +544,7 @@ model_grid.addEventListener("click", e => {
     })
 })
 
-// Interacting with model section file input
+// Adding new models to the editor
 file_input.addEventListener("change", (e) => {
     const file = file_input.files[0];
     if (!file) {
@@ -525,7 +561,6 @@ file_input.addEventListener("change", (e) => {
         // splice the file name to name the object
         const name = file.name.split(".")[0];
 
-        // add the mesh to a list // TODO: for previews, will need to assign the mesh to a SceneObject for rendering
         const mesh_item = {
             name: name,
             mesh: mesh
@@ -536,7 +571,7 @@ file_input.addEventListener("change", (e) => {
         const distance2 = new_object.aabb.sphere_radius / Math.tan(glm.glMatrix.toRadian(45) / 2) * 1.2;
         const new_distance = vec3.scale([], vec3.normalize([], [1,0.5,1]), distance2);
         const view_matrix = mat4.create();
-        mat4.lookAt(view_matrix, vec3.add([], new_object.aabb.center, new_distance), [0,0,0], [0,-1,0]);
+        mat4.lookAt(view_matrix, vec3.add([], new_object.aabb.center, new_distance), new_object.aabb.center, [0,1,0]);
 
         const model_preview_url = renderer.modelPreviewThing(new_object, view_matrix);
 
