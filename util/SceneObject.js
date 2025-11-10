@@ -131,3 +131,16 @@ export default class SceneObject {
         this.setLastStaticTransform();
     }
 }
+
+
+
+// distinctions in objects
+/* 
+objects may have colors assigned
+objects may be collidable
+objects may be game cameras
+objects may be visible
+
+all objects MUST have an AABB.
+
+*/

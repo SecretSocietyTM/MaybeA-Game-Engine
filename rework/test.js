@@ -78,9 +78,9 @@ view1.camera.pos = camera.pos;
 view1.camera.recalculateViewMatrix();
 
 objects.push(camera, 
-    unit_cube, apple, weird_cube, wall, floor);
+    /* unit_cube, apple, weird_cube, wall, floor */);
 game_objects.push(
-    unit_cube, apple, weird_cube, wall, floor);
+    /* unit_cube, apple, weird_cube, wall, floor */);
 collision_objects.push(wall, floor);
 view2.objects = objects;
 view1.objects = game_objects;
@@ -481,6 +481,8 @@ const transform_ui = {
     }
 };
 const file_input = document.getElementById("file_input");
+const json_file_input = document.getElementById("load_json");
+const json_file_save = document.getElementById("save_json");
 
 ui.loadSceneObjectsToList(sceneobject_list, objects);
 
@@ -582,4 +584,46 @@ file_input.addEventListener("change", (e) => {
         alert("Error reading the file.");
     }
     reader.readAsText(file);
+});
+
+json_file_input.addEventListener("change", e => {
+    const file = json_file_input.files[0];
+    if (!file) {
+        alert("No file selected");
+        return;
+    }
+    console.log(file);
+
+    const reader = new FileReader();
+    reader.onload = () => {
+        const raw_json_string = reader.result;
+        const obj_list = JSON.parse(raw_json_string);
+
+        console.log(obj_list);
+
+        obj_list.forEach(object => {
+            let color = null;
+            if (JSON.stringify(object.color) !== JSON.stringify([0.8,0.8,0.8])) color = object.color;
+            const new_object = new SceneObject(object.name, object.mesh, object.pos, object.scale, object.rotation_angles, color);
+            objects.push(new_object);
+
+            ui.addSceneObjectToList(sceneobject_list, new_object);
+        })
+    }
+    reader.onerror = () => {
+        alert("Error reading the file.");
+    }
+    reader.readAsText(file);
+});
+
+json_file_save.addEventListener("click", e => {
+    const json = JSON.stringify(objects, null, 2);
+    const blob = new Blob([json], {type: "application/json"});
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "scene.json";
+    a.click();
+    URL.revokeObjectURL(url);
 });

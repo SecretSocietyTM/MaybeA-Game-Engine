@@ -51,18 +51,20 @@
          <div class="debug_section">
             <button type="button" id="toggle_AABB" class="toggle">Toggle AABB</button>
             <button type="button" id="toggle_GameLoop" class="toggle">Toggle Game Loop</button>
-            
             <div>
                 <button type="button" id="w_pressed" class="toggle">W</button>
                 <button type="button" id="a_pressed" class="toggle">A</button>
                 <button type="button" id="s_pressed" class="toggle">S</button>
                 <button type="button" id="d_pressed" class="toggle">D</button>
+                <button type="button" id="toggle_TransformPoint" class="toggle">Toggle Transform Point</button>
             </div>
          </div>
     </div>
     <div class="models_section section">
         <p class="section_title">Models</p>
         <input id="file_input" type="file" accept=".ply">
+        <input type="file" id="load_json" accept=".json">
+        <button type="button" id="save_json">Save JSON</button>
         <div id="model_grid" class="model_grid">
         </div>
     </div>
