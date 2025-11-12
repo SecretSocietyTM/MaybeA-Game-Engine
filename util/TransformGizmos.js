@@ -155,13 +155,13 @@ export default class TransformGizmos {
 
             this.active_objects.forEach(object => {
                 if (object.aabb.isIntersecting(ray)) {
-                    if (object.name.includes("x")) object.assignColor(this.RED_HOVER);
-                    else if (object.name.includes("y")) object.assignColor(this.GREEN_HOVER);
-                    else if (object.name.includes("z")) object.assignColor(this.BLUE_HOVER);                    
+                    if (object.name.includes("x")) object.color = this.RED_HOVER;
+                   else if (object.name.includes("y")) object.color = this.GREEN_HOVER;
+                    else if (object.name.includes("z")) object.color = this.BLUE_HOVER;
                 } else {
-                    if (object.name.includes("x")) object.assignColor(this.RED);
-                    else if (object.name.includes("y")) object.assignColor(this.GREEN);
-                    else if (object.name.includes("z")) object.assignColor(this.BLUE);    
+                    if (object.name.includes("x")) object.color = this.RED;
+                    else if (object.name.includes("y")) object.color = this.GREEN;
+                    else if (object.name.includes("z")) object.color = this.BLUE;    
                 }
             })
         }

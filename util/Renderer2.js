@@ -153,7 +153,7 @@ export default class Renderer2 {
         objects.forEach(object => {
             this.gl.uniformMatrix4fv(this.u_model_location, this.gl.FALSE, object.model_matrix);
             this.gl.uniform1i(this.u_useClr_location, object.use_color);
-            this.gl.uniform4fv(this.u_clr_location, [object.color[0], object.color[1], object.color[2], object.alpha]);
+            this.gl.uniform4fv(this.u_clr_location, [object.color[0], object.color[1], object.color[2], 1]);
 
             this.gl.bindVertexArray(this.getVAO(object.mesh));
             this.gl.drawElements(this.gl.TRIANGLES, object.mesh.indices.length, this.gl.UNSIGNED_SHORT, 0);
@@ -259,7 +259,7 @@ export default class Renderer2 {
         // use object properties
         this.gl.uniformMatrix4fv(this.u_model_location, this.gl.FALSE, object.model_matrix);
         this.gl.uniform1i(this.u_useClr_location, object.use_color);
-        this.gl.uniform4fv(this.u_clr_location, [object.color[0], object.color[1], object.color[2], object.alpha]);
+        this.gl.uniform4fv(this.u_clr_location, [object.color[0], object.color[1], object.color[2], 1]);
 
         this.gl.bindVertexArray(this.getVAO(object.mesh));
         this.gl.drawElements(this.gl.TRIANGLES, object.mesh.indices.length, this.gl.UNSIGNED_SHORT, 0);

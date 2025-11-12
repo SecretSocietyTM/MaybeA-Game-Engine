@@ -37,22 +37,8 @@ export default class SceneObject {
             this.use_color = true;
             this.color = color;
         }
-        this.alpha = 1.0;
     }
 
-    useColor(bool) {
-        this.use_color = bool;
-    }
-
-    assignColor(color) {
-        this.color = color;
-    }
-
-    assignAlpha(alpha) {
-        this.alpha = alpha;
-    }
-
-    // TODO: need to NORMALIZE the position of the object at (0,0,0) so that imported models that are offcenter, like weird_cube have their actual model positioned at (0,0,0);
     transform(pos = [0, 0, 0], 
               scale = [1, 1, 1], 
               rotation_angles = [0,0,0]) {
@@ -131,16 +117,3 @@ export default class SceneObject {
         this.setLastStaticTransform();
     }
 }
-
-
-
-// distinctions in objects
-/* 
-objects may have colors assigned
-objects may be collidable
-objects may be game cameras
-objects may be visible
-
-all objects MUST have an AABB.
-
-*/

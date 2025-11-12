@@ -617,6 +617,8 @@ json_file_input.addEventListener("change", e => {
 });
 
 json_file_save.addEventListener("click", e => {
+    // Ideally only store the following properties of the object:
+    // name, mesh, pos, scale, rotation_angle, color, 
     const json = JSON.stringify(objects, null, 2);
     const blob = new Blob([json], {type: "application/json"});
     const url = URL.createObjectURL(blob);
