@@ -78,9 +78,9 @@ view1.camera.pos = camera.pos;
 view1.camera.recalculateViewMatrix();
 
 objects.push(camera, 
-    /* unit_cube, apple, weird_cube, wall, floor */);
+    unit_cube, apple, weird_cube, wall, floor);
 game_objects.push(
-    /* unit_cube, apple, weird_cube, wall, floor */);
+    unit_cube, apple, weird_cube, wall, floor);
 collision_objects.push(wall, floor);
 view2.objects = objects;
 view1.objects = game_objects;
