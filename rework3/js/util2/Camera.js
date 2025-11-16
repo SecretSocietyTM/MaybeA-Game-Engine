@@ -13,6 +13,14 @@ export default class Camera {
 
         this.view_matrix = mat4.create();
         mat4.lookAt(this.view_matrix, this.pos, this.dir, this.up);
+
+
+        // TODO: use defineProperty to detect changes
+        // three.js uses the render function within the render function withn the render function to
+        // update all matrices?? To be fair that could be a good method, save all the calculations for
+        // when they are actually needed (aka for rendering) though I don't know how that will go down for
+        // SceneObjects which need to have their AABB updated constantly.
+
     }
 
     recalculateViewMatrix() {

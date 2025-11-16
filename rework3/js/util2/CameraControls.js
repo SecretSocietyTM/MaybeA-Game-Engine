@@ -7,7 +7,7 @@ import EventDispatcher from "./EventDispatcher.js";
 
 export class CameraControls extends EventDispatcher {
 
-    // class fields
+    // private fields
     #dom_element = null;
     #cur_x;
     #prev_x;
@@ -73,6 +73,7 @@ export class CameraControls extends EventDispatcher {
         this.dispatchEvent(this.change_event);
     }
 
+    // TODO - Issue #7
     zoom(dy) {
         const camera = this.camera;
 
@@ -89,27 +90,7 @@ export class CameraControls extends EventDispatcher {
         this.dispatchEvent(this.change_event);
     }
 
-    connect(dom_element) {
-        if (this.#dom_element !== null) this.disconnect();
-
-        this.#dom_element = dom_element;
-
-        this.#dom_element.addEventListener("mousedown", this.mouseDown);
-        this.#dom_element.addEventListener("wheel", this.mouseWheel);
-    }
-
-    disconnect() {
-        this.#dom_element.removeEventListener("mousedown", this.mouseDown);
-        this.#dom_element.removeEventListener("wheel", this.mouseWheel);
-
-        this.#dom_element = null
-    }
-
-
-    // have to bind functions using arrow functions
-    doNothing() {
-        return;
-    }
+    // Have to bind functions using arrow functions to use proper "this"
 
     mouseDown = (event) => {
         this.#dom_element.addEventListener("mousemove", this.mouseMove);
@@ -167,5 +148,23 @@ export class CameraControls extends EventDispatcher {
 
     mouseWheel = (event) => {
         this.zoom(event.deltaY);
+    }
+
+    // connect and disconnect dom element to create event listeners
+
+    connect(dom_element) {
+        if (this.#dom_element !== null) this.disconnect();
+
+        this.#dom_element = dom_element;
+
+        this.#dom_element.addEventListener("mousedown", this.mouseDown);
+        this.#dom_element.addEventListener("wheel", this.mouseWheel);
+    }
+
+    disconnect() {
+        this.#dom_element.removeEventListener("mousedown", this.mouseDown);
+        this.#dom_element.removeEventListener("wheel", this.mouseWheel);
+
+        this.#dom_element = null
     }
 }

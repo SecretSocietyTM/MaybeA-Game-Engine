@@ -11,7 +11,17 @@ const editor = new Editor(canvas);
 
 // add objects directly.
 const unit_cube = new SceneObject("unit_cube", MeshesObj.unit_cube);
+const apple = new SceneObject("apple", MeshesObj.apple, [-10,0,-10], [9,9,9], [0,0,0]);
+const weird_cube = new SceneObject("weird cube", MeshesObj.weird_cube);
+
+const wall = new SceneObject("wall", MeshesObj.unit_cube, [0,0,-15], [10,10,1], [0,0,0], [1.0,0.5,0.0]);
+const floor = new SceneObject("floor", MeshesObj.unit_cube, [0,-2.2,0], [15,1,15], [0,0,0], [0.2,0.2,0.2]);
+
 editor.addObject(unit_cube);
+editor.addObject(apple);
+editor.addObject(weird_cube);
+editor.addObject(wall);
+editor.addObject(floor);
 
 const scene_view = new ViewWindow(
     editor, 
