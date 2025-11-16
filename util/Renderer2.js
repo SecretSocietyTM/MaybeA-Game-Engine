@@ -149,6 +149,32 @@ export default class Renderer2 {
         });
     }
 
+    renderToView(view) {
+        this.gl.viewport(view.left, view.bottom, view.width, view.height);
+        this.gl.scissor(view.left, view.bottom, view.width, view.height);
+        this.gl.clearColor(0.3, 0.3, 0.3, 1.0);
+
+        // constant uniforms
+        this.gl.useProgram(this.program);
+        this.gl.uniformMatrix4fv(this.u_proj_location, this.gl.FALSE, view.proj_matrix);
+        this.gl.uniformMatrix4fv(this.u_view_location, this.gl.FALSE, view.camera.view_matrix);
+
+        // 3D pass
+        this.gl.enable(this.gl.DEPTH_TEST);
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+        this.pass3D(view.objects, view.show_AABB);
+
+        // UI pass
+        if (view.show_gizmos && view.transform_gizmos.display_gizmos) {
+            this.gl.disable(this.gl.DEPTH_TEST);
+            this.pass3D(view.transform_gizmos.active_objects, view.show_AABB);
+
+            this.gl.useProgram(this.ui_program);
+            this.gl.uniform2fv(this.ui_pass_windowBotLeft_uniform, [view.left, view.bottom]);
+            this.passUI(view.transform_gizmos.main_gizmo);  
+        }   
+    }
+
     pass3D(objects, show_AABB) {
         objects.forEach(object => {
             this.gl.uniformMatrix4fv(this.u_model_location, this.gl.FALSE, object.model_matrix);
