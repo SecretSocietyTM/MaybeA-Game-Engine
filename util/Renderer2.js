@@ -149,6 +149,7 @@ export default class Renderer2 {
         });
     }
 
+    // TODO: created for new rework. Lots of property name changes, not the way to do things!
     renderToView(view) {
         this.gl.viewport(view.left, view.bottom, view.width, view.height);
         this.gl.scissor(view.left, view.bottom, view.width, view.height);
@@ -165,13 +166,13 @@ export default class Renderer2 {
         this.pass3D(view.objects, view.show_AABB);
 
         // UI pass
-        if (view.show_gizmos && view.transform_gizmos.display_gizmos) {
+        if (view.show_gizmos && view.transform_controls.display_gizmos) {
             this.gl.disable(this.gl.DEPTH_TEST);
-            this.pass3D(view.transform_gizmos.active_objects, view.show_AABB);
+            this.pass3D(view.transform_controls.active_gizmos, view.show_AABB);
 
             this.gl.useProgram(this.ui_program);
             this.gl.uniform2fv(this.ui_pass_windowBotLeft_uniform, [view.left, view.bottom]);
-            this.passUI(view.transform_gizmos.main_gizmo);  
+            this.passUI(view.transform_controls.main_gizmo);  
         }   
     }
 
