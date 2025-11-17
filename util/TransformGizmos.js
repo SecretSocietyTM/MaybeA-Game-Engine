@@ -139,7 +139,9 @@ export default class TransformGizmos {
         // interacting with the gizmo, this way you don't have to be extremely accurate when
         // trying to click on the small circle outline
         if (this.mode === "translate") {
-            if (dist <= this.main_gizmo.radius + 5) return true;
+            if (dist <= this.main_gizmo.radius + 5) {
+                return true;
+            }
             return false;
         } else {
             if (dist >= this.main_gizmo.radius - 5 - 2 && 

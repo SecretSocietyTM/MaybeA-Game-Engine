@@ -60,12 +60,11 @@ export class ViewWindow {
         camera_controls.addEventListener("change", () => {
             if (this.transform_controls.display_gizmos) {
                 // TODO: repeated code #1
-                const obj_center = this.editor.current_selection.aabb.center;
-                const obj_center_screen = Interactions.coordsWorldToScreen(
-                    obj_center, this.width, this.height, 
-                    this.camera.proj_matrix, this.camera.view_matrix
+                this.transform_controls.updateGizmosPos(editor.current_selection);
+                this.transform_controls.main_gizmo.center = Interactions.calculateObjectCenterScreenCoord(
+                    this.width, this.height, editor.current_selection, this.camera.proj_matrix, this.camera.view_matrix
                 );
-                this.transform_controls.updateGizmos(obj_center_screen, obj_center, vec3.distance(this.camera.pos, obj_center));
+                this.transform_controls.updateGizmosScale(vec3.distance(this.camera.pos, editor.current_selection.pos));
             }
 
             // TODO: might want to improve the way this is handled. Ideally only update when needed (whenever a click occurs)
@@ -79,6 +78,13 @@ export class ViewWindow {
 
 
     mouseClick = (event) => {
+
+        if (this.transform_controls.is_interacting) {
+            this.transform_controls.is_interacting = false;
+            this.editor.current_selection.setLastStaticTransform();
+            return;
+        }
+
         const mouse_x = event.offsetX;
         const mouse_y = event.offsetY;
 
@@ -97,16 +103,16 @@ export class ViewWindow {
                 ray_hit = true;
                 if (object === this.editor.current_selection) break;
                 this.editor.current_selection = object;
+                this.transform_controls.attachObject(object);
 
 
                 // TODO: repeated code #1
                 this.transform_controls.display_gizmos = true;
-                const obj_center = this.editor.current_selection.aabb.center;
-                const obj_center_screen = Interactions.coordsWorldToScreen(
-                    obj_center, this.width, this.height, 
-                    camera.proj_matrix, camera.view_matrix
+                this.transform_controls.updateGizmosPos(object);
+                this.transform_controls.main_gizmo.center = Interactions.calculateObjectCenterScreenCoord(
+                    this.width, this.height, object, camera.proj_matrix, camera.view_matrix
                 );
-                this.transform_controls.updateGizmos(obj_center_screen, obj_center, vec3.distance(camera.pos, obj_center));
+                this.transform_controls.updateGizmosScale(vec3.distance(camera.pos, object.pos));
 
                 break;
             }

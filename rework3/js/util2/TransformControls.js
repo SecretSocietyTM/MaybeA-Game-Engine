@@ -54,6 +54,10 @@ export class TransformControls extends EventDispatcher {
         this.reference_scale = ref_scale;
         this.reference_distance = ref_distance;
 
+        this.start_pos;
+        this.start_pos2;
+
+
         // events
         this.change_event = {type: "change"};
 
@@ -186,18 +190,131 @@ export class TransformControls extends EventDispatcher {
 
 
     mouseDown = (event) => {
+        const mouse_x = event.offsetX;
+        const mouse_y = event.offsetY;
+
+        const camera = this.camera;
+        const object = this.object;
+        const rect = this.#dom_element.getBoundingClientRect();
+
+        raycaster.origin = camera.pos;
+        raycaster.dir = Interactions.generateRayDir(
+            rect.width, rect.height, 
+            mouse_x, mouse_y, 
+            camera.proj_matrix, camera.view_matrix
+        );
+
+        if (event.button === 0 && this.display_gizmos) {
+
+            if (this.isIntersectingGizmo([mouse_x, rect.height - mouse_y])) {
+                this.start_pos = Interactions.calculatePlaneIntersectionPoint(
+                    raycaster, camera.dir, object.pos
+                );
+
+                if (this.mode === "scale") {
+                    this.start_pos2 = this.start_pos;
+                    this.start_pos = object.pos;
+                }
+
+                this.is_interacting = true;
+                this.interacting_with = "2d_gizmo";
+            } else {
+                this.active_gizmos.forEach(object => {
+                    if (object.aabb.isIntersecting(raycaster)) {
+                        this.start_pos = Interactions.calculatePlaneIntersectionPoint(
+                            raycaster, camera.dir, object.pos
+                        );
+
+                        this.is_interacting = true;
+                        this.interacting_with = object.name;
+                    }
+                })
+            }
+        }
+
         this.#dom_element.addEventListener("mouseup", this.mouseUp);
         this.#dom_element.addEventListener("mousemove", this.mouseMove);
-
-        
     }
 
     mouseUp = (event) => {
         this.#dom_element.removeEventListener("mouseup", this.mouseUp);
+        this.#dom_element.removeEventListener("mousemove", this.mouseMove);
     }
 
     mouseMove = (event) => {
+        const mouse_x = event.offsetX;
+        const mouse_y = event.offsetY;
 
+        const camera = this.camera;
+        const object = this.object;
+        const rect = this.#dom_element.getBoundingClientRect();
+
+        raycaster.origin = camera.pos;
+        raycaster.dir = Interactions.generateRayDir(
+            rect.width, rect.height, 
+            mouse_x, mouse_y, 
+            camera.proj_matrix, camera.view_matrix
+        );
+
+        if (this.is_interacting) {
+            const target = this.interacting_with;
+            const new_pos = Interactions.calculatePlaneIntersectionPoint(raycaster, camera.dir, object.pos);
+
+            if (this.mode === "translate") {
+                let translate_vector = [...object.pos];
+
+                if (target === "2d_gizmo") {
+                    const pos_offset = vec3.subtract([], new_pos, this.start_pos);
+                    translate_vector = vec3.add([], object.last_static_transform.pos, pos_offset);
+                } else {
+                    const axis_map = {x_trans: 0, y_trans: 1, z_trans: 2};
+                    const axis = axis_map[target];
+                    translate_vector[axis] = object.last_static_transform.pos[axis] + new_pos[axis] - this.start_pos[axis];
+                }
+
+                object.updatePos(translate_vector);
+
+                this.updateGizmosPos(object);
+                this.main_gizmo.center = Interactions.calculateObjectCenterScreenCoord(
+                    rect.width, rect.height, object, camera.proj_matrix, camera.view_matrix
+                );
+                this.updateGizmosScale(vec3.distance(camera.pos, object.pos));
+            } else if (this.mode === "scale") {
+                let scale_vector = [...object.scale];
+
+                if (target === "2d_gizmo") {
+                    const circle_radius = vec3.distance(this.start_pos2, this.start_pos); 
+                    const scaling_factor = vec3.distance(this.start_pos, new_pos) / circle_radius;
+                    scale_vector = vec3.scale([], object.last_static_transform.scale, scaling_factor);
+                } else {
+                    const axis_map = {x_scale: 0, y_scale: 1, z_scale: 2};
+                    const axis = axis_map[target];
+                    scale_vector[axis] = object.last_static_transform.scale[axis] + (new_pos[axis] - this.start_pos[axis]) * object.last_static_transform.scale[axis];
+                }
+                
+                object.updateScale(scale_vector);
+            } else if (this.mode === "rotate") {
+                let rotate_vector2 = [...object.rotation_angles];
+
+                if (target === "2d_gizmo") {
+                    // TODO - Issue #4: the object will snap to a different angle if rotated after moving the camera after an initial rotation
+                    const angle = Math.atan2(vec3.dot(camera.dir, 
+                        vec3.cross([], this.start_pos, new_pos)), vec3.dot(this.start_pos, new_pos)) * 180 / Math.PI;  
+
+                    object.rotateOnAxis(angle, camera.dir);
+                    return;
+                } else {
+                    const axis_map = {x_rotate: 0, y_rotate: 1, z_rotate: 2};
+                    const axis = axis_map[target];
+                    rotate_vector2[axis] = object.last_static_transform.rotation[axis] + (new_pos[axis] - this.start_pos[axis]) * 180 / Math.PI
+                }
+                
+                object.updateRot(rotate_vector2);
+            }
+
+
+            this.dispatchEvent(this.change_event);
+        }
     }
 
     mouseHover = (event) => {
@@ -207,7 +324,7 @@ export class TransformControls extends EventDispatcher {
         const camera = this.camera;
         const rect = this.#dom_element.getBoundingClientRect();
 
-        raycaster.origin = this.camera.pos;
+        raycaster.origin = camera.pos;
         raycaster.dir = Interactions.generateRayDir(
             rect.width, rect.height, 
             mouse_x, mouse_y, 
@@ -220,6 +337,10 @@ export class TransformControls extends EventDispatcher {
         this.dispatchEvent(this.change_event);
     }
 
+    attachObject(object) {
+        this.object = object;
+    }
+
 
 
     connect(dom_element) {
@@ -229,6 +350,19 @@ export class TransformControls extends EventDispatcher {
 
         this.#dom_element.addEventListener("mousedown", this.mouseDown);
         this.#dom_element.addEventListener("mousemove", this.mouseHover);
+
+        // TODO: remove
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "t") {
+                this.setMode("translate");
+            } else if (e.key === "r") {
+                this.setMode("rotate");
+            } else if (e.key === "s") {
+                this.setMode("scale");
+            }
+
+            this.dispatchEvent(this.change_event);
+        });
     }
 
     disconnect() {
