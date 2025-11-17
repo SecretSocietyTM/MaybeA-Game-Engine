@@ -4,7 +4,7 @@ const vec4 = glm.vec4;
 const mat4 = glm.mat4;
 
 export default class Camera {
-    constructor(pos, target, up) {
+    constructor(pos, target, up, aspect, vert_fov, z_near, z_far) {
         this.pos = pos;
         this.target = target;
         this.up = up;
@@ -13,6 +13,9 @@ export default class Camera {
 
         this.view_matrix = mat4.create();
         mat4.lookAt(this.view_matrix, this.pos, this.dir, this.up);
+
+        this.proj_matrix = mat4.create();
+        mat4.perspective(this.proj_matrix, glm.glMatrix.toRadian(vert_fov), aspect, z_near, z_far);
 
 
         // TODO: use defineProperty to detect changes

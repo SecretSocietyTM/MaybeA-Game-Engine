@@ -26,17 +26,9 @@ export class ViewWindow {
         this.width = width;
         this.height = height;
 
-        this.camera = new Camera([30,0,0], [0,0,0], [0,1,0]);
+        // TODO: find better way to create camera object
+        this.camera = new Camera([30,0,0], [0,0,0], [0,1,0], (this.width / this.height), 45, 0.1, 1000);
         this.editor.current_ray.origin = this.camera.pos;
-
-        // TODO: ideally view_mat and proj_mat are combined, aka proj mat is applied within the camera object
-        this.proj_matrix = mat4.create();
-        mat4.perspective(
-            this.proj_matrix, 
-            glm.glMatrix.toRadian(45), 
-            (this.width / this.height), 
-            0.1, 1000
-        );
 
         this.objects = editor.scene_objects;
 
@@ -51,7 +43,12 @@ export class ViewWindow {
 
         // transform gizmo controls
 
-        this.transform_controls = new TransformControls(0.8, 10);
+        this.transform_controls = new TransformControls(this.camera);
+        this.transform_controls.addEventListener("change", () => {
+            
+            // want to see hover highlight
+            this.render();
+        })
         this.transform_controls.connect(this.dom_element);
 
 
@@ -66,7 +63,7 @@ export class ViewWindow {
                 const obj_center = this.editor.current_selection.aabb.center;
                 const obj_center_screen = Interactions.coordsWorldToScreen(
                     obj_center, this.width, this.height, 
-                    this.proj_matrix, this.camera.view_matrix
+                    this.camera.proj_matrix, this.camera.view_matrix
                 );
                 this.transform_controls.updateGizmos(obj_center_screen, obj_center, vec3.distance(this.camera.pos, obj_center));
             }
@@ -85,12 +82,13 @@ export class ViewWindow {
         const mouse_x = event.offsetX;
         const mouse_y = event.offsetY;
 
+        const camera = this.camera;
         const raycast = this.editor.current_ray
 
         raycast.dir = Interactions.generateRayDir(
             this.width, this.height, 
             mouse_x, mouse_y, 
-            this.proj_matrix, this.camera.view_matrix
+            camera.proj_matrix, camera.view_matrix
         );
 
         let ray_hit = false;
@@ -106,9 +104,9 @@ export class ViewWindow {
                 const obj_center = this.editor.current_selection.aabb.center;
                 const obj_center_screen = Interactions.coordsWorldToScreen(
                     obj_center, this.width, this.height, 
-                    this.proj_matrix, this.camera.view_matrix
+                    camera.proj_matrix, camera.view_matrix
                 );
-                this.transform_controls.updateGizmos(obj_center_screen, obj_center, vec3.distance(this.camera.pos, obj_center));
+                this.transform_controls.updateGizmos(obj_center_screen, obj_center, vec3.distance(camera.pos, obj_center));
 
                 break;
             }

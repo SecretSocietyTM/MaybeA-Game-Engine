@@ -1,19 +1,27 @@
 const glm = glMatrix; // shorten math library name,
+const vec2 = glm.vec2;
 const vec3 = glm.vec3;
 const vec4 = glm.vec4;
 const mat4 = glm.mat4;
 
 import MeshesObj from "../../../mimp/models/meshes_index.js";
 import SceneObject from "../../../util/SceneObject.js";
-
+import * as Interactions from "../../../util/interactions.js";
 import EventDispatcher from "./EventDispatcher.js";
+
+const raycaster = {
+    origin: null,
+    dir: null
+}
 
 export class TransformControls extends EventDispatcher {
 
     #dom_element = null;
 
-    constructor(ref_scale, ref_distance) {
+    constructor(camera, ref_scale = 0.8, ref_distance = 10) {
         super();
+
+        this.camera = camera;
 
         this.gizmos = [];
         this.translate_gizmos = [];
@@ -45,6 +53,9 @@ export class TransformControls extends EventDispatcher {
 
         this.reference_scale = ref_scale;
         this.reference_distance = ref_distance;
+
+        // events
+        this.change_event = {type: "change"};
 
         this.initGizmoObjects(MeshesObj);
         this.setMode();
@@ -193,7 +204,20 @@ export class TransformControls extends EventDispatcher {
         const mouse_x = event.offsetX;
         const mouse_y = event.offsetY;
 
-        // need access to currently cast ray
+        const camera = this.camera;
+        const rect = this.#dom_element.getBoundingClientRect();
+
+        raycaster.origin = this.camera.pos;
+        raycaster.dir = Interactions.generateRayDir(
+            rect.width, rect.height, 
+            mouse_x, mouse_y, 
+            camera.proj_matrix, camera.view_matrix
+        );
+        
+        this.hoverColorChange([mouse_x, rect.height - mouse_y], raycaster);
+        
+        // TODO: not the best way to do this, remove after some consideration
+        this.dispatchEvent(this.change_event);
     }
 
 

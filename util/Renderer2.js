@@ -157,7 +157,7 @@ export default class Renderer2 {
 
         // constant uniforms
         this.gl.useProgram(this.program);
-        this.gl.uniformMatrix4fv(this.u_proj_location, this.gl.FALSE, view.proj_matrix);
+        this.gl.uniformMatrix4fv(this.u_proj_location, this.gl.FALSE, view.camera.proj_matrix);
         this.gl.uniformMatrix4fv(this.u_view_location, this.gl.FALSE, view.camera.view_matrix);
 
         // 3D pass

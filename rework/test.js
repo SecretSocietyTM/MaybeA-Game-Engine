@@ -217,6 +217,21 @@ view2.window.addEventListener("click", e => {
         return;
     }
 
+    // TODO: remove
+    const rect = view2.window.getBoundingClientRect();
+
+/*     console.log("e.clientX", e.clientX);
+    console.log("e.clientY", e.clientY);
+    console.log("rect.left", rect.left);
+    console.log("rect.top", rect.top); */
+
+    console.log("x", e.clientX - rect.left);
+    console.log("y", e.clientY - rect.top);
+
+    console.log("x after", ( e.clientX - rect.left ) / rect.width * 2 - 1);
+    console.log("y after", - ( e.clientY - rect.top ) / rect.height * 2 + 1)
+
+
     const mouse_x = e.offsetX;
     const mouse_y = e.offsetY;
     
