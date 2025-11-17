@@ -339,6 +339,47 @@ export class TransformControls extends EventDispatcher {
 
     attachObject(object) {
         this.object = object;
+        this.display_gizmos = true;
+
+
+        // TODO: might not want to do this here as its quite janky.
+        // three.js updates all of these things on each render call
+        // with the use of a function updateMatrixWorld
+        const camera = this.camera;
+        const rect = this.#dom_element.getBoundingClientRect();
+
+        const obj_center_screen = Interactions.calculateObjectCenterScreenCoord(
+            rect.width, rect.height, object, camera.proj_matrix, camera.view_matrix
+        );
+        this.updateGizmos(obj_center_screen, object.pos, vec3.distance(camera.pos, object.pos));
+
+    }
+
+    // TODO: again, ideally this isnt here
+    cameraMoved(camera) {
+
+        if (!this.display_gizmos) return;
+
+        const rect = this.#dom_element.getBoundingClientRect();
+
+        // TODO: after further testing update2DGizmoCenter is not the thing 
+        // causing the lag.
+        // updateGizmoPos2 was causing a lot of lag (it wasnt supposed to be here)
+        // updateGizmosScale causes some lag if moving the camera quickly.
+        // This wasn't a problem before because the render loop limited how many 
+        // times something needed to be rendered, but with calling
+        // render on an action, render() may be called more often that needed.
+
+        const obj_center_screen = Interactions.calculateObjectCenterScreenCoord(
+            rect.width, rect.height, this.object, camera.proj_matrix, camera.view_matrix
+        );
+        this.update2DGizmoCenter(obj_center_screen);
+        this.updateGizmosScale(vec3.distance(camera.pos, this.object.pos));
+    }
+
+    detachObject() {
+        this.object = null;
+        this.display_gizmos = false;
     }
 
 

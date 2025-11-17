@@ -132,6 +132,45 @@ export default class AxisAlignedBoundingBox {
         return true;
     }
 
+    // TODO: make this the default
+    isIntersecting2(ray) {
+        let tmin = (this.extrema.min.x - ray.origin[0]) / ray.direction[0];
+        let tmax = (this.extrema.max.x - ray.origin[0]) / ray.direction[0];
+
+        if (tmin > tmax) {
+            let temp = tmax;
+            tmax = tmin;
+            tmin = temp;
+        }
+
+        let tymin = (this.extrema.min.y - ray.origin[1]) / ray.direction[1];
+        let tymax = (this.extrema.max.y - ray.origin[1]) / ray.direction[1];
+
+        if (tymin > tymax) {
+            let temp = tymax;
+            tymax = tymin;
+            tymin = temp;
+        }
+
+        if ((tmin > tymax) || (tymin > tmax)) return false;
+
+        if (tymin > tmin) tmin = tymin; 
+        if (tymax < tmax) tmax = tymax;
+
+        let tzmin = (this.extrema.min.z - ray.origin[2]) / ray.direction[2];
+        let tzmax = (this.extrema.max.z - ray.origin[2]) / ray.direction[2];
+
+        if (tzmin > tzmax) {
+            let temp = tzmax;
+            tzmax = tzmin;
+            tzmin = temp;
+        }
+
+        if ((tmin > tzmax) || (tzmin > tmax)) return false;
+
+        return true;
+    }
+
     // This function is used to check whether two SceneObjects are colliding
     // Credit: https://developer.mozilla.org/en-US/docs/Games/Techniques/3D_collision_detection
     isColliding(object) {

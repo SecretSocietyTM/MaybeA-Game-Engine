@@ -5,6 +5,8 @@ const mat4 = glm.mat4;
 
 import EventDispatcher from "./EventDispatcher.js";
 
+// TODO: add way to disable the controls when interacting with transform controls
+
 export class CameraControls extends EventDispatcher {
 
     // private fields
