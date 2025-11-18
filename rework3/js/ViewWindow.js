@@ -9,8 +9,6 @@ import { Raycaster } from "./util2/Raycaster.js";
 import { TransformControls } from "./util2/TransformControls.js";
 import { CameraControls } from "./util2/CameraControls.js";
 
-import * as Interactions from "../../util/interactions.js";
-
 // global variables
 const raycaster = new Raycaster();
 
@@ -38,23 +36,20 @@ export class ViewWindow {
         this.show_gizmos = true;
         this.show_AABB = false;
 
-        // ViewWindow controls
-
+        // 
+        // view controls
         this.dom_element.addEventListener("click", this.mouseClick);
 
-
-        // transform gizmo controls
-
+        // 
+        // transform controls
         this.transform_controls = new TransformControls(this.camera);
         this.transform_controls.addEventListener("change", () => {
-            
-            // want to see hover highlight
             this.render();
         })
         this.transform_controls.connect(this.dom_element);
 
+        // 
         // camera controls
-
         const camera_controls = new CameraControls(this.camera);
         camera_controls.addEventListener("change", () => {
 
@@ -63,13 +58,9 @@ export class ViewWindow {
 
             this.render();
         });
-
         camera_controls.connect(this.dom_element);
     }
 
-    // TODO: Below code is nice but still need to resolve updating transform gizmos
-    // for each call to render. This will also solve some problems with
-    // objects but might be complicated....
     mouseClick = (event) => {
 
         if (this.transform_controls.is_interacting) {
@@ -85,12 +76,12 @@ export class ViewWindow {
         const mouse_y_ndc = 1 - (2 * mouse_y) / this.height;
         const point_ndc = {x: mouse_x_ndc, y: mouse_y_ndc};
 
-        const intersections = raycaster.getIntersections(point_ndc, this.camera, this.objects);
+        raycaster.setFromCamera(point_ndc, this.camera);
+        const intersections = raycaster.getIntersections(this.objects);
 
         const object = this.select(this.editor.selected_object, intersections);
         this.editor.current_selection = object;
 
-        // TODO: need to update gizmos when an object is attached
         if (object === null) this.transform_controls.detachObject();
         else this.transform_controls.attachObject(object);
 

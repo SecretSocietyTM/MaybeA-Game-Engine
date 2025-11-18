@@ -14,9 +14,8 @@ export class Raycaster {
         };
     }
 
-    getIntersections(point, camera, objects) {
-        this.setFromCamera(point, camera);
-
+    // maybe have a separate function for a single intersection
+    getIntersections(objects) {
         const intersections = [];
 
         objects.forEach(object => {
@@ -27,6 +26,7 @@ export class Raycaster {
     }
 
     // point must be in NDC space
+    // sets both the direction and origin
     setFromCamera(point, camera) {
         const point_clip = [point.x, point.y, -1.0, 1.0];
 

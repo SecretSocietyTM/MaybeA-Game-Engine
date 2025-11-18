@@ -4,15 +4,13 @@ const vec3 = glm.vec3;
 const vec4 = glm.vec4;
 const mat4 = glm.mat4;
 
+import { Raycaster } from "../util2/Raycaster.js";
 import MeshesObj from "../../../mimp/models/meshes_index.js";
 import SceneObject from "../../../util/SceneObject.js";
 import * as Interactions from "../../../util/interactions.js";
 import EventDispatcher from "./EventDispatcher.js";
 
-const raycaster = {
-    origin: null,
-    dir: null
-}
+const raycaster = new Raycaster();
 
 export class TransformControls extends EventDispatcher {
 
@@ -83,7 +81,20 @@ export class TransformControls extends EventDispatcher {
         default:
             this.mode = "translate";
             console.error("No valid mode provided");
-            return;
+        }
+
+        // TODO: again, dont like this since certain things aren't assigned
+        // when this is called but this.display_gizmos is the saving grace
+        if (this.display_gizmos) {
+            const camera = this.camera;
+            const object = this.object;
+            const rect = this.#dom_element.getBoundingClientRect();
+
+            const obj_center_screen = Interactions.calculateObjectCenterScreenCoord(
+                rect.width, rect.height, object, camera.proj_matrix, camera.view_matrix
+            );
+
+            this.updateGizmos(obj_center_screen, object.pos, vec3.distance(camera.pos, object.pos));
         }
     }
 
@@ -140,17 +151,17 @@ export class TransformControls extends EventDispatcher {
     }
 
     updateGizmoPos2(position) {
-        this.gizmos.forEach(object => object.updatePos(position));
+        this.active_gizmos.forEach(object => object.updatePos(position));
     }
 
     updateGizmosPos(selected_object) {
-       this.gizmos.forEach(object => object.updatePos(selected_object.pos)); 
+       this.active_gizmos.forEach(object => object.updatePos(selected_object.pos)); 
     }
 
     // distance from camera to selected object
     updateGizmosScale(distance) {
         const scale = (distance / this.reference_distance) * this.reference_scale;
-        this.gizmos.forEach(object => object.updateScale([scale, scale, scale]));
+        this.active_gizmos.forEach(object => object.updateScale([scale, scale, scale]));
     }
 
     isIntersectingGizmo(mouse_pos) {
@@ -169,13 +180,15 @@ export class TransformControls extends EventDispatcher {
         }
     }
 
-    hoverColorChange(mouse_pos, ray) {
+    hoverColorChange(mouse_pos, raycaster) {
         if (this.display_gizmos && !this.is_interacting) {
+
+            const ray = raycaster.ray;
 
             this.main_gizmo.color = this.isIntersectingGizmo(mouse_pos) ? this.WHITE_HOVER : this.WHITE;
 
             this.active_gizmos.forEach(object => {
-                if (object.aabb.isIntersecting(ray)) {
+                if (object.aabb.isIntersecting2(ray)) {
                     if (object.name.includes("x")) object.color = this.RED_HOVER;
                    else if (object.name.includes("y")) object.color = this.GREEN_HOVER;
                     else if (object.name.includes("z")) object.color = this.BLUE_HOVER;
@@ -184,51 +197,50 @@ export class TransformControls extends EventDispatcher {
                     else if (object.name.includes("y")) object.color = this.GREEN;
                     else if (object.name.includes("z")) object.color = this.BLUE;    
                 }
-            })
+            });
         }
     }
 
 
     mouseDown = (event) => {
-        const mouse_x = event.offsetX;
-        const mouse_y = event.offsetY;
+
+        if (!this.display_gizmos || event.button !== 0) return;
 
         const camera = this.camera;
         const object = this.object;
         const rect = this.#dom_element.getBoundingClientRect();
 
-        raycaster.origin = camera.pos;
-        raycaster.dir = Interactions.generateRayDir(
-            rect.width, rect.height, 
-            mouse_x, mouse_y, 
-            camera.proj_matrix, camera.view_matrix
-        );
+        const mouse_x = event.offsetX;
+        const mouse_y = event.offsetY;
 
-        if (event.button === 0 && this.display_gizmos) {
+        const mouse_x_ndc = (2 * mouse_x) / rect.width - 1;
+        const mouse_y_ndc = 1 - (2 * mouse_y) / rect.height;
+        const point_ndc = {x: mouse_x_ndc, y: mouse_y_ndc};
 
-            if (this.isIntersectingGizmo([mouse_x, rect.height - mouse_y])) {
-                this.start_pos = Interactions.calculatePlaneIntersectionPoint(
-                    raycaster, camera.dir, object.pos
+        raycaster.setFromCamera(point_ndc, camera);
+
+        if (this.isIntersectingGizmo([mouse_x, rect.height - mouse_y])) {
+            this.start_pos = Interactions.calculatePlaneIntersectionPoint2(
+                raycaster.ray, camera.dir, object.pos
+            );
+
+            if (this.mode === "scale") {
+                this.start_pos2 = this.start_pos;
+                this.start_pos = object.pos;
+            }
+
+            this.is_interacting = true;
+            this.interacting_with = "2d_gizmo";
+        } else {
+            const intersections = raycaster.getIntersections(this.active_gizmos);
+
+            if (intersections.length > 0) {
+                this.start_pos = Interactions.calculatePlaneIntersectionPoint2(
+                    raycaster.ray, camera.dir, object.pos
                 );
 
-                if (this.mode === "scale") {
-                    this.start_pos2 = this.start_pos;
-                    this.start_pos = object.pos;
-                }
-
                 this.is_interacting = true;
-                this.interacting_with = "2d_gizmo";
-            } else {
-                this.active_gizmos.forEach(object => {
-                    if (object.aabb.isIntersecting(raycaster)) {
-                        this.start_pos = Interactions.calculatePlaneIntersectionPoint(
-                            raycaster, camera.dir, object.pos
-                        );
-
-                        this.is_interacting = true;
-                        this.interacting_with = object.name;
-                    }
-                })
+                this.interacting_with = intersections[0].name;
             }
         }
 
@@ -242,23 +254,23 @@ export class TransformControls extends EventDispatcher {
     }
 
     mouseMove = (event) => {
-        const mouse_x = event.offsetX;
-        const mouse_y = event.offsetY;
-
         const camera = this.camera;
         const object = this.object;
         const rect = this.#dom_element.getBoundingClientRect();
 
-        raycaster.origin = camera.pos;
-        raycaster.dir = Interactions.generateRayDir(
-            rect.width, rect.height, 
-            mouse_x, mouse_y, 
-            camera.proj_matrix, camera.view_matrix
-        );
+        const mouse_x = event.offsetX;
+        const mouse_y = event.offsetY;
+
+
+        const mouse_x_ndc = (2 * mouse_x) / rect.width - 1;
+        const mouse_y_ndc = 1 - (2 * mouse_y) / rect.height;
+        const point_ndc = {x: mouse_x_ndc, y: mouse_y_ndc};
+
+        raycaster.setFromCamera(point_ndc, camera);
 
         if (this.is_interacting) {
             const target = this.interacting_with;
-            const new_pos = Interactions.calculatePlaneIntersectionPoint(raycaster, camera.dir, object.pos);
+            const new_pos = Interactions.calculatePlaneIntersectionPoint2(raycaster.ray, camera.dir, object.pos);
 
             if (this.mode === "translate") {
                 let translate_vector = [...object.pos];
@@ -318,18 +330,17 @@ export class TransformControls extends EventDispatcher {
     }
 
     mouseHover = (event) => {
-        const mouse_x = event.offsetX;
-        const mouse_y = event.offsetY;
-
         const camera = this.camera;
         const rect = this.#dom_element.getBoundingClientRect();
 
-        raycaster.origin = camera.pos;
-        raycaster.dir = Interactions.generateRayDir(
-            rect.width, rect.height, 
-            mouse_x, mouse_y, 
-            camera.proj_matrix, camera.view_matrix
-        );
+        const mouse_x = event.offsetX;
+        const mouse_y = event.offsetY;
+
+        const mouse_x_ndc = (2 * mouse_x) / rect.width - 1;
+        const mouse_y_ndc = 1 - (2 * mouse_y) / rect.height;
+        const point_ndc = {x: mouse_x_ndc, y: mouse_y_ndc};
+
+        raycaster.setFromCamera(point_ndc, camera);
         
         this.hoverColorChange([mouse_x, rect.height - mouse_y], raycaster);
         
@@ -361,14 +372,6 @@ export class TransformControls extends EventDispatcher {
         if (!this.display_gizmos) return;
 
         const rect = this.#dom_element.getBoundingClientRect();
-
-        // TODO: after further testing update2DGizmoCenter is not the thing 
-        // causing the lag.
-        // updateGizmoPos2 was causing a lot of lag (it wasnt supposed to be here)
-        // updateGizmosScale causes some lag if moving the camera quickly.
-        // This wasn't a problem before because the render loop limited how many 
-        // times something needed to be rendered, but with calling
-        // render on an action, render() may be called more often that needed.
 
         const obj_center_screen = Interactions.calculateObjectCenterScreenCoord(
             rect.width, rect.height, this.object, camera.proj_matrix, camera.view_matrix

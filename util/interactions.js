@@ -82,3 +82,21 @@ export function calculatePlaneIntersectionPoint(ray, plane_normal, plane_p0) {
 
     return p;
 }
+
+// TODO: replace original with this one
+export function calculatePlaneIntersectionPoint2(ray, plane_normal, plane_p0) {
+    let d = -vec3.dot(plane_normal, plane_p0);
+
+    let numerator = vec3.dot(ray.origin, plane_normal) + d;
+    let denominator = vec3.dot(ray.direction, plane_normal);
+    if (denominator === 0) {
+        console.log("ray missed plane with normal = ", plane_normal);
+        return;
+    }
+
+    let t = -(numerator / denominator);
+
+    let p = vec3.scaleAndAdd([], ray.origin, ray.direction, t);
+
+    return p;
+}

@@ -31,3 +31,9 @@ export class Editor {
         this.scene_objects.push(object);
     }
 }
+
+
+
+
+// TODO: need to figure out a way to call some universal functions only when rendering
+// to update objects / camera matrices and what not.
