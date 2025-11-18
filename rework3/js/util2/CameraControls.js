@@ -70,6 +70,7 @@ export class CameraControls extends EventDispatcher {
         }
 
         // TODO: this should update on its own whenever any part of the object changes
+        // For now its ok 
         camera.updateViewMatrix();
 
         this.dispatchEvent(this.change_event);

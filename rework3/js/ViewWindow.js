@@ -37,10 +37,6 @@ export class ViewWindow {
         this.show_AABB = false;
 
         // 
-        // view controls
-        this.dom_element.addEventListener("click", this.mouseClick);
-
-        // 
         // transform controls
         this.transform_controls = new TransformControls(this.camera);
         this.transform_controls.addEventListener("change", () => {
@@ -53,12 +49,32 @@ export class ViewWindow {
         const camera_controls = new CameraControls(this.camera);
         camera_controls.addEventListener("change", () => {
 
-            // TODO: still don't want to do this here
+            // TODO: still don't want to do this here - would prefer that the 
+            // gizmos are updated on render to avoid doing this but that requires:
+            // universal updateModelMatrix function 
             this.transform_controls.cameraMoved(this.camera);
 
             this.render();
         });
         camera_controls.connect(this.dom_element);
+
+        // 
+        // view controls
+        this.dom_element.addEventListener("click", this.mouseClick);
+        // TODO: remove
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "t") {
+                this.transform_controls.setMode("translate");
+            } else if (e.key === "r") {
+                this.transform_controls.setMode("rotate");
+            } else if (e.key === "s") {
+                this.transform_controls.setMode("scale");
+            } else if (e.key === "1") {
+                this.show_AABB = !this.show_AABB;
+            }
+
+            this.render();
+        });
     }
 
     mouseClick = (event) => {
@@ -86,12 +102,12 @@ export class ViewWindow {
 
     render() {
 
-        this.renderer._setViewport(this.left, this.bottom, this.width, this.height);
-        this.renderer._render3D(this.objects, this.camera, this.show_AABB);
+        this.renderer.setViewport(this.left, this.bottom, this.width, this.height);
+        this.renderer.render3D(this.objects, this.camera, this.show_AABB);
 
         if (this.transform_controls.display_gizmos) {
-            this.renderer._render3D(this.transform_controls.active_gizmos, this.camera, false);
-            this.renderer._renderUI(this.transform_controls.main_gizmo, [this.left, this.bottom]);
+            this.renderer.render3D(this.transform_controls.active_gizmos, this.camera, false);
+            this.renderer.renderUI(this.transform_controls.main_gizmo, [this.left, this.bottom]);
         }
 
     }

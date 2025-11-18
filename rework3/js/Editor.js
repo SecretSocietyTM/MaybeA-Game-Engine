@@ -1,4 +1,4 @@
-import Renderer2 from "../../util/Renderer2.js";
+import Renderer3 from "../../util/Renderer3.js";
 import SceneObject from "../../util/SceneObject.js";
 
 import MeshesObj from "../../mimp/models/meshes_index.js";
@@ -7,7 +7,7 @@ export class Editor {
     constructor(canvas) {
 
         this.canvas = canvas;
-        this.renderer = new Renderer2(this.canvas);
+        this.renderer = new Renderer3(this.canvas);
         this.renderer.addAABBMesh(MeshesObj.aabb_wireframe);
         this.views = [];
 
@@ -31,9 +31,3 @@ export class Editor {
         this.scene_objects.push(object);
     }
 }
-
-
-
-
-// TODO: need to figure out a way to call some universal functions only when rendering
-// to update objects / camera matrices and what not.

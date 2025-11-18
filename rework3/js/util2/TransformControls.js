@@ -182,6 +182,38 @@ export class TransformControls extends EventDispatcher {
         }
     }
 
+    // TODO: requires more code than needed because of the way I name things.
+    // Ideally just do this.axis = object.name.
+    handleHover(raycaster) {
+        const intersections = raycaster.getIntersections(this.active_gizmos);
+
+        let object;
+
+        if (intersections.length > 0) {
+            object = intersections[0];
+            this.prev_axis = this.axis;
+
+            if (object.name.includes("x")) {
+                this.axis = "x";
+                object.color = this.RED_HOVER;
+            }
+            else if (object.name.includes("y")) {
+                this.axis = "y";
+                object.color = this.GREEN_HOVER;
+            }
+            else if (object.name.includes("z")) {
+                this.axis = "z";
+                object.color = this.BLUE_HOVER;
+            }
+        } else {
+            this.active_gizmos[0].color = this.RED;
+            this.active_gizmos[1].color = this.GREEN;
+            this.active_gizmos[2].color = this.BLUE;
+            this.prev_axis = this.axis;
+            this.axis = null;
+        }
+    }
+
     mouseDown = (event) => {
 
         if (!this.display_gizmos || event.button !== 0) return;
@@ -313,37 +345,9 @@ export class TransformControls extends EventDispatcher {
 
         if (!this.display_gizmos || this.is_interacting) return;
 
-        // TODO: 2D gizmo is causing me issues, probably going to change how it
-        // works in the future.
+        // TODO: couldn't get 2D gizmo to work
         raycaster.setFromCamera(point_ndc, camera);
-
-        const intersections = raycaster.getIntersections(this.active_gizmos);
-
-        let object;
-
-        if (intersections.length > 0) {
-            object = intersections[0];
-            this.prev_axis = this.axis;
-
-            if (object.name.includes("x")) {
-                this.axis = "x";
-                object.color = this.RED_HOVER;
-            }
-            else if (object.name.includes("y")) {
-                this.axis = "y";
-                object.color = this.GREEN_HOVER;
-            }
-            else if (object.name.includes("z")) {
-                this.axis = "z";
-                object.color = this.BLUE_HOVER;
-            }
-        } else {
-            this.active_gizmos[0].color = this.RED;
-            this.active_gizmos[1].color = this.GREEN;
-            this.active_gizmos[2].color = this.BLUE;
-            this.prev_axis = this.axis;
-            this.axis = null;
-        }
+        this.handleHover(raycaster); // Not a big fan of this implementation
 
         if (this.prev_axis !== this.axis) {
             this.dispatchEvent(this.change_event);
@@ -396,19 +400,6 @@ export class TransformControls extends EventDispatcher {
 
         this.#dom_element.addEventListener("mousedown", this.mouseDown);
         this.#dom_element.addEventListener("mousemove", this.mouseHover);
-
-        // TODO: remove
-        document.addEventListener("keydown", (e) => {
-            if (e.key === "t") {
-                this.setMode("translate");
-            } else if (e.key === "r") {
-                this.setMode("rotate");
-            } else if (e.key === "s") {
-                this.setMode("scale");
-            }
-
-            this.dispatchEvent(this.change_event);
-        });
     }
 
     disconnect() {
