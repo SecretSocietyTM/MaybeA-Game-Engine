@@ -12,13 +12,13 @@ export default class Camera {
         this.right = vec3.normalize([], vec3.cross([], this.up, this.dir));
 
         this.view_matrix = mat4.create();
-        mat4.lookAt(this.view_matrix, this.pos, this.dir, this.up);
+        this.updateViewMatrix();
 
         this.proj_matrix = mat4.create();
         mat4.perspective(this.proj_matrix, glm.glMatrix.toRadian(fovy), aspect, near, far);
     }
 
-    recalculateViewMatrix() {
+    updateViewMatrix() {
         mat4.lookAt(this.view_matrix, this.pos, this.target, this.up);
     }
 }

@@ -16,6 +16,7 @@ export default class SceneObject {
         rotation_angles = [0,0,0],
         
         color,
+        depth_test = true
     ) {         
         if(!mesh) {
             throw new Error("Please provide the constructor with a mesh");
@@ -37,6 +38,8 @@ export default class SceneObject {
             this.use_color = true;
             this.color = color;
         }
+        this.depth_test = depth_test;
+        this.show_AABB = false;
     }
 
     transform(pos = [0, 0, 0], 
@@ -115,5 +118,27 @@ export default class SceneObject {
 
         this.updatePos(vec3.add([], this.last_static_transform.pos, move));
         this.setLastStaticTransform();
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+    // TODO: consider implementing this...
+    // extra stuff, might replace transform, or at least use transform
+    // three.js has a function called updateMatrixWorld, called on each 
+    // call to render()
+
+    // however
+
+    updateProperties() {
+
     }
 }

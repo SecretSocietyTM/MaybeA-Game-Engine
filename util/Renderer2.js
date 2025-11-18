@@ -311,4 +311,104 @@ export default class Renderer2 {
         this.gl.enable(this.gl.SCISSOR_TEST);
         return url;
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // new functions
+
+    // ( 1 ) 
+    _setViewport(left, bottom, width, height) { // call before!
+        this.gl.viewport(left, bottom, width, height);
+        this.gl.scissor(left, bottom, width, height);
+        this.gl.clearColor(0.3, 0.3, 0.3, 1.0);
+        // TODO: not a huge fan of this but can't call 
+        // this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT)
+        // for each call to _renderToView3D
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+    }
+
+
+    // ( 2 ) call x many times for all instances of separate objects (scene_objets, gizmo_objects)
+    _render3D(objects, camera, show_all_AABB = false) {
+        // set up
+        this.gl.useProgram(this.program);
+        this.gl.uniformMatrix4fv(this.u_proj_location, this.gl.FALSE, camera.proj_matrix);
+        this.gl.uniformMatrix4fv(this.u_view_location, this.gl.FALSE, camera.view_matrix);
+
+        this._pass3D(objects, show_all_AABB);
+    }
+
+    // ( 3 ) call to render the UI overlay pass for 2D elements
+    // currently just the single circle, so parameter is object not objectS
+    _renderUI(object, bottom_left) {
+        // set up
+        this.gl.useProgram(this.ui_program);
+        this.gl.uniform2fv(this.ui_pass_windowBotLeft_uniform, bottom_left);
+
+        this._passUI(object);
+    }
+
+    _pass3D(objects, force_AABB) {
+        objects.forEach(object => {
+            this.gl.uniformMatrix4fv(this.u_model_location, this.gl.FALSE, object.model_matrix);
+            this.gl.uniform1i(this.u_useClr_location, object.use_color);
+            this.gl.uniform4fv(this.u_clr_location, [object.color[0], object.color[1], object.color[2], 1]);
+
+            // set depth test for each object
+            object.depth_test ? this.gl.enable(this.gl.DEPTH_TEST) : this.gl.disable(this.gl.DEPTH_TEST);
+
+            this.gl.bindVertexArray(this.getVAO(object.mesh));
+            this.gl.drawElements(this.gl.TRIANGLES, object.mesh.indices.length, this.gl.UNSIGNED_SHORT, 0);
+            this.gl.bindVertexArray(null);
+
+            // if force_AABB, the ViewWindow wants to show all AABBs, render all
+            // if object.show_AABB, render regardless of force_AABB
+            if (force_AABB || object.show_AABB) {
+                this.gl.uniform1i(this.u_useClr_location, false);
+                if (object.aabb !== null) {
+                    if (!this.aabb_mesh) throw new Error("AABB mesh not set!");
+                    const aabb = object.aabb;
+                    this.gl.uniformMatrix4fv(this.u_model_location, this.gl.FALSE, aabb.model_matrix);
+
+                    this.gl.bindVertexArray(this.getVAO(this.aabb_mesh));
+                    this.gl.drawElements(this.gl.LINES, 24, this.gl.UNSIGNED_SHORT, 0);
+                    this.gl.bindVertexArray(null);
+                }
+            }
+        });
+    }
+
+    _passUI(main_gizmo) {
+        // fullscreen quad vertices
+        const vertices = new Float32Array([
+            -1, -1, // bot-left
+             1, -1, // bot-right
+            -1,  1, // top-left
+             1,  1  // top-right
+        ]);
+
+        const pos_buffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, pos_buffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices, this.gl.STATIC_DRAW);
+        this.gl.enableVertexAttribArray(this.ui_pass_pos_attrib);
+        this.gl.vertexAttribPointer(this.ui_pass_pos_attrib, 2, this.gl.FLOAT, this.gl.FALSE, 0, 0);
+
+        this.gl.uniform2fv(this.ui_pass_circle_center_uniform, main_gizmo.center);
+        this.gl.uniform1f(this.ui_pass_circle_radius, main_gizmo.radius);
+        this.gl.uniform3fv(this.ui_pass_clr_uniform, main_gizmo.color);
+        this.gl.uniform1i(this.ui_pass_draw2DGizmo, true);
+
+        this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+    }
 }

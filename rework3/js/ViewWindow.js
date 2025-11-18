@@ -85,7 +85,15 @@ export class ViewWindow {
     }
 
     render() {
-        this.renderer.renderToView(this);
+
+        this.renderer._setViewport(this.left, this.bottom, this.width, this.height);
+        this.renderer._render3D(this.objects, this.camera, this.show_AABB);
+
+        if (this.transform_controls.display_gizmos) {
+            this.renderer._render3D(this.transform_controls.active_gizmos, this.camera, false);
+            this.renderer._renderUI(this.transform_controls.main_gizmo, [this.left, this.bottom]);
+        }
+
     }
 }
 

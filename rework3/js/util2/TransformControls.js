@@ -55,6 +55,8 @@ export class TransformControls extends EventDispatcher {
         this.start_pos;
         this.start_pos2;
 
+        this.axis = null;
+        this.prev_axis = this.axis;
 
         // events
         this.change_event = {type: "change"};
@@ -101,33 +103,33 @@ export class TransformControls extends EventDispatcher {
     initGizmoObjects(meshes) {
         // translate
         const x_trans = new SceneObject("x_trans", meshes.translate_gizmo, [0,0,0],
-            Array(3).fill(this.reference_scale), [0,0,-90], this.RED);
+            Array(3).fill(this.reference_scale), [0,0,-90], this.RED, false);
 
         const y_trans = new SceneObject("y_trans", meshes.translate_gizmo, [0,0,0], 
-            Array(3).fill(this.reference_scale), [0,0,0], this.GREEN);
+            Array(3).fill(this.reference_scale), [0,0,0], this.GREEN, false);
 
         const z_trans = new SceneObject("z_trans", meshes.translate_gizmo, [0,0,0],
-            Array(3).fill(this.reference_scale), [90,0,0], this.BLUE);
+            Array(3).fill(this.reference_scale), [90,0,0], this.BLUE, false);
 
         // rotate
         const x_rotate = new SceneObject("x_rotate", meshes.rotate_gizmo3, [0,0,0], 
-            Array(3).fill(this.reference_scale), [0,0,-90], this.RED);
+            Array(3).fill(this.reference_scale), [0,0,-90], this.RED, false);
 
         const y_rotate = new SceneObject("y_rotate", meshes.rotate_gizmo3, [0,0,0], 
-            Array(3).fill(this.reference_scale), [0,0,0], this.GREEN);
+            Array(3).fill(this.reference_scale), [0,0,0], this.GREEN, false);
     
         const z_rotate = new SceneObject("z_rotate", meshes.rotate_gizmo3, [0,0,0], 
-            Array(3).fill(this.reference_scale), [90,0,0], this.BLUE)
+            Array(3).fill(this.reference_scale), [90,0,0], this.BLUE, false)
 
         // scale
         const x_scale = new SceneObject("x_scale", meshes.scale_gizmo2, [0,0,0], 
-            Array(3).fill(this.reference_scale), [0, 0, -90], this.RED)
+            Array(3).fill(this.reference_scale), [0, 0, -90], this.RED, false)
     
         const y_scale = new SceneObject("y_scale", meshes.scale_gizmo2, [0,0,0], 
-            Array(3).fill(this.reference_scale), [0,0,0], this.GREEN);
+            Array(3).fill(this.reference_scale), [0,0,0], this.GREEN, false);
 
         const z_scale = new SceneObject("z_scale", meshes.scale_gizmo2, [0,0,0], 
-            Array(3).fill(this.reference_scale), [90,0,0], this.BLUE)
+            Array(3).fill(this.reference_scale), [90,0,0], this.BLUE, false)
 
         this.translate_gizmos.push(x_trans, y_trans, z_trans);
         this.rotate_gizmos.push(x_rotate, y_rotate, z_rotate);
@@ -179,29 +181,6 @@ export class TransformControls extends EventDispatcher {
             return false
         }
     }
-
-    // TODO: cleanup in the future.
-    hoverColorChange(mouse_pos, raycaster) {
-        if (this.display_gizmos && !this.is_interacting) {
-
-            const ray = raycaster.ray;
-
-            this.main_gizmo.color = this.isIntersectingGizmo(mouse_pos) ? this.WHITE_HOVER : this.WHITE;
-
-            this.active_gizmos.forEach(object => {
-                if (object.aabb.isIntersecting2(ray)) {
-                    if (object.name.includes("x")) object.color = this.RED_HOVER;
-                   else if (object.name.includes("y")) object.color = this.GREEN_HOVER;
-                    else if (object.name.includes("z")) object.color = this.BLUE_HOVER;
-                } else {
-                    if (object.name.includes("x")) object.color = this.RED;
-                    else if (object.name.includes("y")) object.color = this.GREEN;
-                    else if (object.name.includes("z")) object.color = this.BLUE;    
-                }
-            });
-        }
-    }
-
 
     mouseDown = (event) => {
 
@@ -326,19 +305,49 @@ export class TransformControls extends EventDispatcher {
         const camera = this.camera;
         const rect = this.#dom_element.getBoundingClientRect();
 
-
-        // TODO: ideally dont need this
+        // TODO: ideally dont need this but needed for call to isIntersectingGizmo
         const mouse_x = event.offsetX;
         const mouse_y = event.offsetY;
 
         const point_ndc = getMousePositionNDC(this.#dom_element, mouse_x, mouse_y);
 
+        if (!this.display_gizmos || this.is_interacting) return;
+
+        // TODO: 2D gizmo is causing me issues, probably going to change how it
+        // works in the future.
         raycaster.setFromCamera(point_ndc, camera);
-        
-        this.hoverColorChange([mouse_x, rect.height - mouse_y], raycaster);
-        
-        // TODO: not the best way to do this, remove after some consideration
-        this.dispatchEvent(this.change_event);
+
+        const intersections = raycaster.getIntersections(this.active_gizmos);
+
+        let object;
+
+        if (intersections.length > 0) {
+            object = intersections[0];
+            this.prev_axis = this.axis;
+
+            if (object.name.includes("x")) {
+                this.axis = "x";
+                object.color = this.RED_HOVER;
+            }
+            else if (object.name.includes("y")) {
+                this.axis = "y";
+                object.color = this.GREEN_HOVER;
+            }
+            else if (object.name.includes("z")) {
+                this.axis = "z";
+                object.color = this.BLUE_HOVER;
+            }
+        } else {
+            this.active_gizmos[0].color = this.RED;
+            this.active_gizmos[1].color = this.GREEN;
+            this.active_gizmos[2].color = this.BLUE;
+            this.prev_axis = this.axis;
+            this.axis = null;
+        }
+
+        if (this.prev_axis !== this.axis) {
+            this.dispatchEvent(this.change_event);
+        }
     }
 
     attachObject(object) {
@@ -419,4 +428,29 @@ function getMousePositionNDC(dom_element, x, y) {
     const y_ndc = 1 - (2 * y) / rect.height;
 
     return {x: x_ndc, y: y_ndc}; 
+}
+
+
+
+
+// deprecated but useful to have
+function hoverColorChange(mouse_pos, raycaster) {
+    if (this.display_gizmos && !this.is_interacting) {
+
+        const ray = raycaster.ray;
+
+        this.main_gizmo.color = this.isIntersectingGizmo(mouse_pos) ? this.WHITE_HOVER : this.WHITE;
+
+        this.active_gizmos.forEach(object => {
+            if (object.aabb.isIntersecting2(ray)) {
+                if (object.name.includes("x")) object.color = this.RED_HOVER;
+                else if (object.name.includes("y")) object.color = this.GREEN_HOVER;
+                else if (object.name.includes("z")) object.color = this.BLUE_HOVER;
+            } else {
+                if (object.name.includes("x")) object.color = this.RED;
+                else if (object.name.includes("y")) object.color = this.GREEN;
+                else if (object.name.includes("z")) object.color = this.BLUE;    
+            }
+        });
+    }
 }

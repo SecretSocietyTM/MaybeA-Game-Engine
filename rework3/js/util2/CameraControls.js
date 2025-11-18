@@ -47,7 +47,7 @@ export class CameraControls extends EventDispatcher {
         camera.target = vec3.add([], camera.pos, vec3.scale([], camera.dir, -this.#zoom_val));
 
         // TODO: this should update on its own whenever any part of the object changes
-        camera.recalculateViewMatrix();
+        camera.updateViewMatrix();
 
         this.dispatchEvent(this.change_event)
     }
@@ -70,7 +70,7 @@ export class CameraControls extends EventDispatcher {
         }
 
         // TODO: this should update on its own whenever any part of the object changes
-        camera.recalculateViewMatrix();
+        camera.updateViewMatrix();
 
         this.dispatchEvent(this.change_event);
     }
@@ -87,7 +87,7 @@ export class CameraControls extends EventDispatcher {
             camera.pos = vec3.subtract([], camera.pos, vec3.normalize([], camera.dir));
         }
 
-        camera.recalculateViewMatrix();
+        camera.updateViewMatrix();
 
         this.dispatchEvent(this.change_event);
     }
