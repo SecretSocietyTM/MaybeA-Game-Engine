@@ -180,6 +180,7 @@ export class TransformControls extends EventDispatcher {
         }
     }
 
+    // TODO: cleanup in the future.
     hoverColorChange(mouse_pos, raycaster) {
         if (this.display_gizmos && !this.is_interacting) {
 
@@ -213,9 +214,7 @@ export class TransformControls extends EventDispatcher {
         const mouse_x = event.offsetX;
         const mouse_y = event.offsetY;
 
-        const mouse_x_ndc = (2 * mouse_x) / rect.width - 1;
-        const mouse_y_ndc = 1 - (2 * mouse_y) / rect.height;
-        const point_ndc = {x: mouse_x_ndc, y: mouse_y_ndc};
+        const point_ndc = getMousePositionNDC(this.#dom_element, mouse_x, mouse_y);
 
         raycaster.setFromCamera(point_ndc, camera);
 
@@ -258,13 +257,7 @@ export class TransformControls extends EventDispatcher {
         const object = this.object;
         const rect = this.#dom_element.getBoundingClientRect();
 
-        const mouse_x = event.offsetX;
-        const mouse_y = event.offsetY;
-
-
-        const mouse_x_ndc = (2 * mouse_x) / rect.width - 1;
-        const mouse_y_ndc = 1 - (2 * mouse_y) / rect.height;
-        const point_ndc = {x: mouse_x_ndc, y: mouse_y_ndc};
+        const point_ndc = getMousePositionNDC(this.#dom_element, event.offsetX, event.offsetY);
 
         raycaster.setFromCamera(point_ndc, camera);
 
@@ -333,12 +326,12 @@ export class TransformControls extends EventDispatcher {
         const camera = this.camera;
         const rect = this.#dom_element.getBoundingClientRect();
 
+
+        // TODO: ideally dont need this
         const mouse_x = event.offsetX;
         const mouse_y = event.offsetY;
 
-        const mouse_x_ndc = (2 * mouse_x) / rect.width - 1;
-        const mouse_y_ndc = 1 - (2 * mouse_y) / rect.height;
-        const point_ndc = {x: mouse_x_ndc, y: mouse_y_ndc};
+        const point_ndc = getMousePositionNDC(this.#dom_element, mouse_x, mouse_y);
 
         raycaster.setFromCamera(point_ndc, camera);
         
@@ -415,4 +408,15 @@ export class TransformControls extends EventDispatcher {
 
         this.#dom_element = null;
     }
+}
+
+
+// helper functions
+
+function getMousePositionNDC(dom_element, x, y) {
+    const rect = dom_element.getBoundingClientRect();
+    const x_ndc = (2 * x) / rect.width - 1;
+    const y_ndc = 1 - (2 * y) / rect.height;
+
+    return {x: x_ndc, y: y_ndc}; 
 }

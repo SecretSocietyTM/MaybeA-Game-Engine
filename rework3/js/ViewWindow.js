@@ -63,47 +63,52 @@ export class ViewWindow {
 
     mouseClick = (event) => {
 
+        // prevents clicking off of object while using transform handles
         if (this.transform_controls.is_interacting) {
             this.transform_controls.is_interacting = false;
             this.editor.current_selection.setLastStaticTransform();
             return;
         }
 
-        const mouse_x = event.offsetX;
-        const mouse_y = event.offsetY;
-
-        const mouse_x_ndc = (2 * mouse_x) / this.width - 1;
-        const mouse_y_ndc = 1 - (2 * mouse_y) / this.height;
-        const point_ndc = {x: mouse_x_ndc, y: mouse_y_ndc};
+        const point_ndc = getMousePositionNDC(this.dom_element, event.offsetX, event.offsetY);
 
         raycaster.setFromCamera(point_ndc, this.camera);
         const intersections = raycaster.getIntersections(this.objects);
 
-        const object = this.select(this.editor.selected_object, intersections);
+        const object = select(this.editor.selected_object, intersections);
         this.editor.current_selection = object;
 
         if (object === null) this.transform_controls.detachObject();
         else this.transform_controls.attachObject(object);
 
-
         this.render();
     }
-
-    // just a helper function
-    select(selected_object, objects) {
-
-        if (objects.length > 0) {
-            const object = objects[0];
-
-            if (selected_object === object) return;
-            return object;
-        } 
-
-        return null;
-    }
-
 
     render() {
         this.renderer.renderToView(this);
     }
+}
+
+
+// helper functions
+
+function getMousePositionNDC(dom_element, x, y) {
+    const rect = dom_element.getBoundingClientRect();
+    const x_ndc = (2 * x) / rect.width - 1;
+    const y_ndc = 1 - (2 * y) / rect.height;
+
+    return {x: x_ndc, y: y_ndc};
+}
+
+
+function select(selected_object, objects) {
+
+    if (objects.length > 0) {
+        const object = objects[0];
+
+        if (selected_object === object) return;
+        return object;
+    } 
+
+    return null;
 }
