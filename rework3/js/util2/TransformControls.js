@@ -41,6 +41,8 @@ export class TransformControls extends EventDispatcher {
         this.main_gizmo = {
             center: null,
             radius: null,
+            thickness: 2,
+            click_area: 5,
             color: this.WHITE,
 
             // TODO: find better way, doing this as work around for updating
@@ -102,20 +104,6 @@ export class TransformControls extends EventDispatcher {
             this.mode = "translate";
             console.error("No valid mode provided");
         }
-
-        // TODO: again, dont like this since certain things aren't assigned
-        // when this is called but this.display_gizmos is the saving grace
-        if (this.display_gizmos) {
-            const camera = this.camera;
-            const object = this.object;
-            const rect = this.#dom_element.getBoundingClientRect();
-
-            const obj_center_screen = Interactions.calculateObjectCenterScreenCoord(
-                rect.width, rect.height, object, camera.proj_matrix, camera.view_matrix
-            );
-
-            this.updateGizmos(obj_center_screen, object.pos, vec3.distance(camera.pos, object.pos));
-        }
     }
 
     initGizmoObjects(meshes) {
@@ -158,44 +146,16 @@ export class TransformControls extends EventDispatcher {
                           x_scale, y_scale, z_scale);
     }
 
-    // TODO: new function, not sure if it will stick
-    updateGizmos(screen_center, obj_center, distance) {
-        this.update2DGizmoCenter(screen_center);
-        if (obj_center) this.updateGizmoPos2(obj_center); // change function to take just the pos
-        if (distance) this.updateGizmosScale(distance);
-
-    }
-
-    update2DGizmoCenter(screen_center) {
-        this.main_gizmo.center = screen_center;
-    }
-
-    updateGizmoPos2(position) {
-        this.active_gizmos.forEach(object => object.updatePos(position));
-    }
-
-    updateGizmosPos(selected_object) {
-       this.active_gizmos.forEach(object => object.updatePos(selected_object.pos)); 
-    }
-
-    // distance from camera to selected object
-    updateGizmosScale(distance) {
-        const scale = (distance / this.reference_distance) * this.reference_scale;
-        this.active_gizmos.forEach(object => object.updateScale([scale, scale, scale]));
-    }
 
     isIntersectingGizmo(mouse_pos) {
         const dist = vec2.length(vec2.subtract([], mouse_pos, this.main_gizmo.center));
 
-        // the magic number 5 is the "extra area" around the 2d gizmo that still counts as 
-        // interacting with the gizmo, this way you don't have to be extremely accurate when
-        // trying to click on the small circle outline
         if (this.mode === "translate") {
-            if (dist <= this.main_gizmo.radius + 5) return true;
+            if (dist <= this.main_gizmo.radius + this.main_gizmo.click_area) return true;
             return false;
         } else {
-            if (dist >= this.main_gizmo.radius - 5 - 2 && 
-                dist <= this.main_gizmo.radius + 5 ) return true;
+            if (dist >= this.main_gizmo.radius - this.main_gizmo.click_area - this.main_gizmo.thickness && 
+                dist <= this.main_gizmo.radius + this.main_gizmo.click_area ) return true;
             return false
         }
     }
@@ -378,23 +338,22 @@ export class TransformControls extends EventDispatcher {
         this.display_gizmos = true;
 
 
-        // TODO: might not want to do this here as its quite janky.
-        // three.js updates all of these things on each render call
-        // with the use of a function updateMatrixWorld
-        const camera = this.camera;
-        const rect = this.#dom_element.getBoundingClientRect();
-
         // TODO: part of the jank for the gizmos, this is 
         // the best place to set all properties needed
         // until I find a better way to do it.
-        this.main_gizmo.camera = camera;
-        this.main_gizmo.object = object;
-        this.main_gizmo.rect = rect;
+        if (true) {
+            const camera = this.camera;
+            const rect = this.#dom_element.getBoundingClientRect();
 
-        this.gizmos.forEach(gizmo => {
-            gizmo.object = object;
-            gizmo.camera = camera;
-        });
+            this.main_gizmo.camera = camera;
+            this.main_gizmo.object = object;
+            this.main_gizmo.rect = rect;
+
+            this.gizmos.forEach(gizmo => {
+                gizmo.object = object;
+                gizmo.camera = camera;
+            });
+        }
     }
 
     detachObject() {

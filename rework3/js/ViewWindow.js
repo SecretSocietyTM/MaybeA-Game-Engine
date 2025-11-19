@@ -90,7 +90,7 @@ export class ViewWindow {
         const object = select(this.editor.selected_object, intersections);
         this.editor.current_selection = object;
 
-        // TODO: clicking on the same thing should not cause a rerender
+        // TODO: Priority (LOW) clicking on the same thing should not cause a rerender
         if (object === null) this.transform_controls.detachObject();
         else this.transform_controls.attachObject(object);
 

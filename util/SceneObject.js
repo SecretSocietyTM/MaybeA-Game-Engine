@@ -95,6 +95,7 @@ export default class SceneObject {
     }
 
     updatePos(pos) {
+        // TODO: uncomment for rework2 test.js to work
         /* this.transform(pos, this.scale, this.rotation_angles); */
 
         // TODO: testing something
