@@ -158,12 +158,16 @@ export default class Renderer2 {
 
     pass3D(objects, force_AABB) {
         objects.forEach(object => {
+            // set depth test for each object
+            object.depth_test ? this.gl.enable(this.gl.DEPTH_TEST) : this.gl.disable(this.gl.DEPTH_TEST);
+
+            // TODO: need to flag changes so that 
+            // model matrix isnt recomputed EVERY SINGLE TIME RENDER IS CALLEd
+            object.updateModelMatrix();
+
             this.gl.uniformMatrix4fv(this.u_model_location, this.gl.FALSE, object.model_matrix);
             this.gl.uniform1i(this.u_useClr_location, object.use_color);
             this.gl.uniform4fv(this.u_clr_location, [object.color[0], object.color[1], object.color[2], 1]);
-
-            // set depth test for each object
-            object.depth_test ? this.gl.enable(this.gl.DEPTH_TEST) : this.gl.disable(this.gl.DEPTH_TEST);
 
             this.gl.bindVertexArray(this.getVAO(object.mesh));
             this.gl.drawElements(this.gl.TRIANGLES, object.mesh.indices.length, this.gl.UNSIGNED_SHORT, 0);
@@ -186,6 +190,7 @@ export default class Renderer2 {
         });
     }
 
+    // TODO - Issue #9
     passUI(main_gizmo) {
         // fullscreen quad vertices
         const vertices = new Float32Array([
@@ -194,6 +199,8 @@ export default class Renderer2 {
             -1,  1, // top-left
              1,  1  // top-right
         ]);
+
+        // can do some really janky shit here
 
         const pos_buffer = this.gl.createBuffer();
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, pos_buffer);

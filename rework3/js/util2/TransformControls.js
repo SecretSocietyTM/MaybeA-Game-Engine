@@ -30,13 +30,14 @@ export class TransformControls extends EventDispatcher {
         this.RED =    [1.0, 0.3, 0.2];
         this.GREEN =  [0.35, 0.8, 0.46];
         this.BLUE =   [0.2, 0.56, 0.85];
-        this.WHITE =  [0.85, 0.85, 0.85];
+        this.WHITE =  [0.8, 0.8, 0.8];
 
         this.RED_HOVER = [1.0, 0.5, 0.5];
         this.GREEN_HOVER = [0.5, 1.0, 0.5];
         this.BLUE_HOVER = [0.7, 0.7, 1.0];
         this.WHITE_HOVER = [1.0, 1.0, 1.0];
     
+        // TODO - Issue #9
         this.main_gizmo = {
             center: null,
             radius: null,
@@ -184,13 +185,22 @@ export class TransformControls extends EventDispatcher {
 
     // TODO: requires more code than needed because of the way I name things.
     // Ideally just do this.axis = object.name.
-    handleHover(raycaster) {
+    handleHover(raycaster, point) {
+
+        if (this.isIntersectingGizmo(point)) {
+            this.prev_axis = this.axis;
+            this.axis = "xyz";
+            this.main_gizmo.color = this.WHITE_HOVER;
+            return;
+        } else {
+            this.main_gizmo.color = this.WHITE;
+        }
+
         const intersections = raycaster.getIntersections(this.active_gizmos);
 
-        let object;
-
+        // TODO - Issue #6: Should only highlight the closest handle
         if (intersections.length > 0) {
-            object = intersections[0];
+            const object = intersections[0];
             this.prev_axis = this.axis;
 
             if (object.name.includes("x")) {
@@ -303,6 +313,7 @@ export class TransformControls extends EventDispatcher {
                     const scaling_factor = vec3.distance(this.start_pos, new_pos) / circle_radius;
                     scale_vector = vec3.scale([], object.last_static_transform.scale, scaling_factor);
                 } else {
+                    // TODO - Issue #5: Scaling along an axis after a rotation does not scale in the "expected" direction
                     const axis_map = {x_scale: 0, y_scale: 1, z_scale: 2};
                     const axis = axis_map[target];
                     scale_vector[axis] = object.last_static_transform.scale[axis] + (new_pos[axis] - this.start_pos[axis]) * object.last_static_transform.scale[axis];
@@ -337,7 +348,6 @@ export class TransformControls extends EventDispatcher {
         const camera = this.camera;
         const rect = this.#dom_element.getBoundingClientRect();
 
-        // TODO: ideally dont need this but needed for call to isIntersectingGizmo
         const mouse_x = event.offsetX;
         const mouse_y = event.offsetY;
 
@@ -345,9 +355,8 @@ export class TransformControls extends EventDispatcher {
 
         if (!this.display_gizmos || this.is_interacting) return;
 
-        // TODO: couldn't get 2D gizmo to work
         raycaster.setFromCamera(point_ndc, camera);
-        this.handleHover(raycaster); // Not a big fan of this implementation
+        this.handleHover(raycaster, [mouse_x, rect.height - mouse_y]);
 
         if (this.prev_axis !== this.axis) {
             this.dispatchEvent(this.change_event);
@@ -419,29 +428,4 @@ function getMousePositionNDC(dom_element, x, y) {
     const y_ndc = 1 - (2 * y) / rect.height;
 
     return {x: x_ndc, y: y_ndc}; 
-}
-
-
-
-
-// deprecated but useful to have
-function hoverColorChange(mouse_pos, raycaster) {
-    if (this.display_gizmos && !this.is_interacting) {
-
-        const ray = raycaster.ray;
-
-        this.main_gizmo.color = this.isIntersectingGizmo(mouse_pos) ? this.WHITE_HOVER : this.WHITE;
-
-        this.active_gizmos.forEach(object => {
-            if (object.aabb.isIntersecting2(ray)) {
-                if (object.name.includes("x")) object.color = this.RED_HOVER;
-                else if (object.name.includes("y")) object.color = this.GREEN_HOVER;
-                else if (object.name.includes("z")) object.color = this.BLUE_HOVER;
-            } else {
-                if (object.name.includes("x")) object.color = this.RED;
-                else if (object.name.includes("y")) object.color = this.GREEN;
-                else if (object.name.includes("z")) object.color = this.BLUE;    
-            }
-        });
-    }
 }

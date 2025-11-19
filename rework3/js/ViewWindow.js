@@ -71,6 +71,8 @@ export class ViewWindow {
                 this.transform_controls.setMode("scale");
             } else if (e.key === "1") {
                 this.show_AABB = !this.show_AABB;
+            } else if (e.key === "2") {
+                // Nothing yet
             }
 
             this.render();

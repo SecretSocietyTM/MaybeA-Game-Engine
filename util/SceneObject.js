@@ -95,15 +95,23 @@ export default class SceneObject {
     }
 
     updatePos(pos) {
-        this.transform(pos, this.scale, this.rotation_angles);
+        /* this.transform(pos, this.scale, this.rotation_angles); */
+
+        // TODO: testing something
+        this.pos = pos;
+
     }
 
     updateRot(rotation_angles) {
-        this.transform(this.pos, this.scale, rotation_angles);
+        /* this.transform(this.pos, this.scale, rotation_angles); */
+
+        this.rotation_angles = rotation_angles;
     }
 
     updateScale(scale) {
-        this.transform(this.pos, scale, this.rotation_angles);
+        /* this.transform(this.pos, scale, this.rotation_angles); */
+
+        this.scale = scale;
     }
 
     repelFrom(object) {
@@ -138,7 +146,17 @@ export default class SceneObject {
 
     // however
 
-    updateProperties() {
+    updateModelMatrix() {
+        const m = mat4.create();
+        
+        mat4.translate(m, m, this.pos);
+        mat4.rotateX(m, m, glm.glMatrix.toRadian(this.rotation_angles[0]));
+        mat4.rotateY(m, m, glm.glMatrix.toRadian(this.rotation_angles[1]));
+        mat4.rotateZ(m, m, glm.glMatrix.toRadian(this.rotation_angles[2]));
+        mat4.scale(m, m, this.scale);
 
+        if ("aabb" in this) this.aabb.updateAABB(m);
+
+        this.model_matrix = m;
     }
 }
