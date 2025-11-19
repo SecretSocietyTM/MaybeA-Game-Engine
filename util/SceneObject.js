@@ -139,13 +139,8 @@ export default class SceneObject {
 
 
 
-    // TODO: consider implementing this...
-    // extra stuff, might replace transform, or at least use transform
-    // three.js has a function called updateMatrixWorld, called on each 
-    // call to render()
-
-    // however
-
+    // TODO: add way to determine if the object's transforms have changed
+    // if not DO NOT execute this function as it is pretty calc heavy
     updateModelMatrix() {
         const m = mat4.create();
         

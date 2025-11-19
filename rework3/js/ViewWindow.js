@@ -48,12 +48,6 @@ export class ViewWindow {
         // camera controls
         const camera_controls = new CameraControls(this.camera);
         camera_controls.addEventListener("change", () => {
-
-            // TODO: still don't want to do this here - would prefer that the 
-            // gizmos are updated on render to avoid doing this but that requires:
-            // universal updateModelMatrix function 
-            this.transform_controls.cameraMoved(this.camera);
-
             this.render();
         });
         camera_controls.connect(this.dom_element);
@@ -96,6 +90,7 @@ export class ViewWindow {
         const object = select(this.editor.selected_object, intersections);
         this.editor.current_selection = object;
 
+        // TODO: clicking on the same thing should not cause a rerender
         if (object === null) this.transform_controls.detachObject();
         else this.transform_controls.attachObject(object);
 
@@ -103,6 +98,8 @@ export class ViewWindow {
     }
 
     render() {
+
+        const start_time = performance.now();
 
         this.renderer.setViewport(this.left, this.bottom, this.width, this.height);
         this.renderer.render3D(this.objects, this.camera, this.show_AABB);
@@ -112,6 +109,8 @@ export class ViewWindow {
             this.renderer.renderUI(this.transform_controls.main_gizmo, [this.left, this.bottom]);
         }
 
+        const end_time = performance.now();
+        console.log("render time", end_time - start_time);
     }
 }
 

@@ -200,7 +200,8 @@ export default class Renderer2 {
              1,  1  // top-right
         ]);
 
-        // can do some really janky shit here
+        // update similar to pass3D() object.updateModelMatrix
+        main_gizmo.updateCenter();
 
         const pos_buffer = this.gl.createBuffer();
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, pos_buffer);

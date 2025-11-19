@@ -41,7 +41,24 @@ export class TransformControls extends EventDispatcher {
         this.main_gizmo = {
             center: null,
             radius: null,
-            color: this.WHITE
+            color: this.WHITE,
+
+            // TODO: find better way, doing this as work around for updating
+            // transform gizmos on render. Probably want to create a class for
+            // 2D elements
+            camera: null,
+            object: null,
+            rect: null,
+
+            updateCenter() {
+                const camera = this.camera;
+                const object = this.object;
+                const rect = this.rect;
+
+                this.center = Interactions.calculateObjectCenterScreenCoord(
+                    rect.width, rect.height, object, camera.proj_matrix, camera.view_matrix
+                );
+            }
         };
 
         this.interacting_with = null;
@@ -103,33 +120,33 @@ export class TransformControls extends EventDispatcher {
 
     initGizmoObjects(meshes) {
         // translate
-        const x_trans = new SceneObject("x_trans", meshes.translate_gizmo, [0,0,0],
+        const x_trans = new TransformControlsObjects("x_trans", meshes.translate_gizmo, [0,0,0],
             Array(3).fill(this.reference_scale), [0,0,-90], this.RED, false);
 
-        const y_trans = new SceneObject("y_trans", meshes.translate_gizmo, [0,0,0], 
+        const y_trans = new TransformControlsObjects("y_trans", meshes.translate_gizmo, [0,0,0], 
             Array(3).fill(this.reference_scale), [0,0,0], this.GREEN, false);
 
-        const z_trans = new SceneObject("z_trans", meshes.translate_gizmo, [0,0,0],
+        const z_trans = new TransformControlsObjects("z_trans", meshes.translate_gizmo, [0,0,0],
             Array(3).fill(this.reference_scale), [90,0,0], this.BLUE, false);
 
         // rotate
-        const x_rotate = new SceneObject("x_rotate", meshes.rotate_gizmo3, [0,0,0], 
+        const x_rotate = new TransformControlsObjects("x_rotate", meshes.rotate_gizmo3, [0,0,0], 
             Array(3).fill(this.reference_scale), [0,0,-90], this.RED, false);
 
-        const y_rotate = new SceneObject("y_rotate", meshes.rotate_gizmo3, [0,0,0], 
+        const y_rotate = new TransformControlsObjects("y_rotate", meshes.rotate_gizmo3, [0,0,0], 
             Array(3).fill(this.reference_scale), [0,0,0], this.GREEN, false);
     
-        const z_rotate = new SceneObject("z_rotate", meshes.rotate_gizmo3, [0,0,0], 
+        const z_rotate = new TransformControlsObjects("z_rotate", meshes.rotate_gizmo3, [0,0,0], 
             Array(3).fill(this.reference_scale), [90,0,0], this.BLUE, false)
 
         // scale
-        const x_scale = new SceneObject("x_scale", meshes.scale_gizmo2, [0,0,0], 
+        const x_scale = new TransformControlsObjects("x_scale", meshes.scale_gizmo2, [0,0,0], 
             Array(3).fill(this.reference_scale), [0, 0, -90], this.RED, false)
     
-        const y_scale = new SceneObject("y_scale", meshes.scale_gizmo2, [0,0,0], 
+        const y_scale = new TransformControlsObjects("y_scale", meshes.scale_gizmo2, [0,0,0], 
             Array(3).fill(this.reference_scale), [0,0,0], this.GREEN, false);
 
-        const z_scale = new SceneObject("z_scale", meshes.scale_gizmo2, [0,0,0], 
+        const z_scale = new TransformControlsObjects("z_scale", meshes.scale_gizmo2, [0,0,0], 
             Array(3).fill(this.reference_scale), [90,0,0], this.BLUE, false)
 
         this.translate_gizmos.push(x_trans, y_trans, z_trans);
@@ -299,12 +316,6 @@ export class TransformControls extends EventDispatcher {
                 }
 
                 object.updatePos(translate_vector);
-
-                this.updateGizmosPos(object);
-                this.main_gizmo.center = Interactions.calculateObjectCenterScreenCoord(
-                    rect.width, rect.height, object, camera.proj_matrix, camera.view_matrix
-                );
-                this.updateGizmosScale(vec3.distance(camera.pos, object.pos));
             } else if (this.mode === "scale") {
                 let scale_vector = [...object.scale];
 
@@ -338,7 +349,6 @@ export class TransformControls extends EventDispatcher {
                 
                 object.updateRot(rotate_vector2);
             }
-
 
             this.dispatchEvent(this.change_event);
         }
@@ -374,25 +384,17 @@ export class TransformControls extends EventDispatcher {
         const camera = this.camera;
         const rect = this.#dom_element.getBoundingClientRect();
 
-        const obj_center_screen = Interactions.calculateObjectCenterScreenCoord(
-            rect.width, rect.height, object, camera.proj_matrix, camera.view_matrix
-        );
-        this.updateGizmos(obj_center_screen, object.pos, vec3.distance(camera.pos, object.pos));
+        // TODO: part of the jank for the gizmos, this is 
+        // the best place to set all properties needed
+        // until I find a better way to do it.
+        this.main_gizmo.camera = camera;
+        this.main_gizmo.object = object;
+        this.main_gizmo.rect = rect;
 
-    }
-
-    // TODO: again, ideally this isnt here
-    cameraMoved(camera) {
-
-        if (!this.display_gizmos) return;
-
-        const rect = this.#dom_element.getBoundingClientRect();
-
-        const obj_center_screen = Interactions.calculateObjectCenterScreenCoord(
-            rect.width, rect.height, this.object, camera.proj_matrix, camera.view_matrix
-        );
-        this.update2DGizmoCenter(obj_center_screen);
-        this.updateGizmosScale(vec3.distance(camera.pos, this.object.pos));
+        this.gizmos.forEach(gizmo => {
+            gizmo.object = object;
+            gizmo.camera = camera;
+        });
     }
 
     detachObject() {
@@ -428,4 +430,48 @@ function getMousePositionNDC(dom_element, x, y) {
     const y_ndc = 1 - (2 * y) / rect.height;
 
     return {x: x_ndc, y: y_ndc}; 
+}
+
+
+// TESTING SOMETHING OUT
+
+// The way three.js does it is way different, im essentially creating
+// a wrapper object where it seems like they create a 
+// parent object
+class TransformControlsObjects extends SceneObject {
+
+    constructor(
+        name = "object",
+        mesh,
+        pos = [0,0,0],
+        scale = [1,1,1],
+        rotation_angles = [0,0,0],
+        
+        color,
+        depth_test = true
+    ) {
+        super(name, mesh, pos, scale, rotation_angles, color, depth_test);
+
+        // references to the target object and camera
+        // use these to update the model matrix
+        this.reference_distance = 10;
+        this.reference_scale = 0.8;
+
+        this.camera = null;
+        this.object = null;
+    }
+
+    updateModelMatrix() {
+        const camera = this.camera;
+        const object = this.object;
+
+        const distance_to_object = vec3.distance(camera.pos, object.pos);
+        const scale = (distance_to_object / this.reference_distance) * this.reference_scale;
+
+        this.updatePos(object.pos);
+        this.updateScale([scale, scale, scale]);
+
+        super.updateModelMatrix();
+    }
+
 }
