@@ -1,9 +1,3 @@
-const glm = glMatrix;
-const vec2 = glm.vec2;
-const vec3 = glm.vec3;
-const vec4 = glm.vec4;
-const mat4 = glm.mat4;
-
 import Camera from "./util2/Camera.js";
 import { Raycaster } from "./util2/Raycaster.js";
 import { TransformControls } from "./util2/TransformControls.js";
@@ -29,7 +23,6 @@ export class ViewWindow {
         this.height = height;
 
         this.camera = new Camera([30,0,0], [0,0,0], [0,1,0], 45, (this.width / this.height), 0.1, 1000);
-        this.editor.current_ray.origin = this.camera.pos;
 
         this.objects = editor.scene_objects;
 

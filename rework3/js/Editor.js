@@ -1,6 +1,4 @@
 import Renderer3 from "../../util/Renderer3.js";
-import SceneObject from "../../util/SceneObject.js";
-
 import MeshesObj from "../../mimp/models/meshes_index.js";
 
 export class Editor {
@@ -9,18 +7,11 @@ export class Editor {
         this.canvas = canvas;
         this.renderer = new Renderer3(this.canvas);
         this.renderer.addAABBMesh(MeshesObj.aabb_wireframe);
+
+        // essentially just state 
         this.views = [];
-
-        // temp
-        this.MeshesObj = MeshesObj;
-
         this.scene_objects = [];
-
         this.cur_selection = null;
-        this.current_ray = {
-            origin: null,
-            dir: null
-        };
     }
 
     addView(view) {

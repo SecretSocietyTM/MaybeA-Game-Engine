@@ -1,6 +1,6 @@
 import { Editor } from "./js/Editor.js";
 import { ViewWindow } from "./js/ViewWindow.js"
-import SceneObject from "../util/SceneObject.js";
+import SceneObject from "./js/util2/SceneObjects.js";
 import MeshesObj from "../mimp/models/meshes_index.js";
 
 const canvas = document.getElementById("canvas");
