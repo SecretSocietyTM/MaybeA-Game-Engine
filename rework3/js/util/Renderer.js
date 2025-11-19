@@ -1,7 +1,7 @@
-import vs_src from "../shaders/3d_pass/vertexshader.js";
-import fs_src from "../shaders/3d_pass/fragmentshader.js";
-import ui_pass_vs_src from "../shaders/ui_pass/vertexshader.js";
-import ui_pass_fs_src from "../shaders/ui_pass/fragmentshader.js";
+import vs_src from "../../shaders/3d_pass/vertexshader.js"
+import fs_src from "../../shaders/3d_pass/fragmentshader.js";
+import ui_pass_vs_src from "../../shaders/ui_pass/vertexshader.js";
+import ui_pass_fs_src from "../../shaders/ui_pass/fragmentshader.js";
 
 const glm = glMatrix; // shorten math library name,
 const mat4 = glm.mat4; // should not need this...

@@ -1,7 +1,7 @@
-import Camera from "./util2/Camera.js";
-import { Raycaster } from "./util2/Raycaster.js";
-import { TransformControls } from "./util2/TransformControls.js";
-import { CameraControls } from "./util2/CameraControls.js";
+import Camera from "./util/Camera.js";
+import { Raycaster } from "./util/Raycaster.js";
+import { TransformControls } from "./util/TransformControls.js";
+import { CameraControls } from "./util/CameraControls.js";
 
 // global variables
 const raycaster = new Raycaster();
@@ -103,7 +103,7 @@ export class ViewWindow {
         }
 
         const end_time = performance.now();
-        console.log("render time", end_time - start_time);
+        /* console.log("render time", end_time - start_time); */
     }
 }
 

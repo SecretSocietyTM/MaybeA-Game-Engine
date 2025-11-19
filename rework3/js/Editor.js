@@ -1,5 +1,5 @@
-import Renderer3 from "../../util/Renderer3.js";
-import MeshesObj from "../../mimp/models/meshes_index.js";
+import Renderer3 from "./util/Renderer.js";
+import MeshesObj from "../../models/meshes_index.js";
 
 export class Editor {
     constructor(canvas) {

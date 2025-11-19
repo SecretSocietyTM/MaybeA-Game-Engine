@@ -9,15 +9,15 @@ const canvas = document.getElementById("canvas");
 canvas.width = canvas.clientWidth;
 canvas.height = canvas.clientHeight;
 
-import Renderer2 from "../util/Renderer2.js";
-import ViewWindow from "../util/ViewWindow.js";
-import SceneObject from "../util/SceneObject.js";
-import TransformGizmos from "../util/TransformGizmos.js";
+import Renderer2 from "./util/Renderer2.js";
+import ViewWindow from "./util/ViewWindow.js";
+import SceneObject from "./util/SceneObject.js";
+import TransformGizmos from "./util/TransformGizmos.js";
 
-import * as Interactions from "../util/interactions.js";
-import * as ui from "../extra/ui.js";
-import MeshesObj from "../mimp/models/meshes_index.js";
-import { parsePLY } from "../mimp/parse_ply.js";
+import * as Interactions from "./util/interactions.js";
+import * as ui from "./util/ui.js";
+import MeshesObj from "../models/meshes_index.js";
+import { parsePLY } from "./mimp/parse_ply.js";
 
 //
 // global variables from rework/main.js

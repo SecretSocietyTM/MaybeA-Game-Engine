@@ -25,7 +25,7 @@ export class Raycaster {
         return intersections;
     }
 
-    // add function for plane intersections given an object and the direction (camera's dir)
+    // TODO: add function for plane intersections given an object and the direction (camera's dir)
 
     // point must be in NDC space
     // sets both the direction and origin

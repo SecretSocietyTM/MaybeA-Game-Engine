@@ -1,7 +1,7 @@
 import { Editor } from "./js/Editor.js";
 import { ViewWindow } from "./js/ViewWindow.js"
-import SceneObject from "./js/util2/SceneObjects.js";
-import MeshesObj from "../mimp/models/meshes_index.js";
+import SceneObject from "./js/util/SceneObjects.js";
+import MeshesObj from "../models/meshes_index.js";
 
 const canvas = document.getElementById("canvas");
 canvas.width = canvas.clientWidth;

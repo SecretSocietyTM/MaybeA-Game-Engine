@@ -4,12 +4,12 @@ const vec3 = glm.vec3;
 const vec4 = glm.vec4;
 const mat4 = glm.mat4;
 
-import { Raycaster } from "../util2/Raycaster.js";
-import MeshesObj from "../../../mimp/models/meshes_index.js";
+import { Raycaster } from "./Raycaster.js";
+import MeshesObj from "../../../models/meshes_index.js";
 import SceneObject from "./SceneObjects.js";
 import EventDispatcher from "./EventDispatcher.js";
 
-import * as Interactions from "../../../util/interactions.js";
+import * as Interactions from "./interactions.js";
 
 const raycaster = new Raycaster();
 
