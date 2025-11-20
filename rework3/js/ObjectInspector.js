@@ -31,7 +31,6 @@ export class ObjectInspector {
         };
 
         this.signals.objectSelected.addListener(object => {
-
             this.object = object;
 
             this.updateUI(object);
@@ -46,14 +45,14 @@ export class ObjectInspector {
 
     // TODO: need some QOL changes for input changes
     // Pressing enter should unfocus
-    // Clicknig should highlight the whole value
+    // Clicking should highlight the whole value
     connect() {
         const scope = this;
 
         scope.ui.name.addEventListener("change", e => {
             scope.object.name = e.target.value
 
-            scope.signals.objectChanged.dispatch();
+            scope.signals.objectChanged.dispatch(scope.object);
         });
 
         const ui_position = scope.ui.position;
@@ -71,7 +70,7 @@ export class ObjectInspector {
                 // TODO: this should not function like this... 
                 scope.object.setLastStaticTransform();
 
-                scope.signals.objectChanged.dispatch();
+                scope.signals.objectChanged.dispatch(scope.object);
             });
         }
 
@@ -90,7 +89,7 @@ export class ObjectInspector {
                 // TODO: this should not function like this... 
                 scope.object.setLastStaticTransform();
 
-                scope.signals.objectChanged.dispatch();
+                scope.signals.objectChanged.dispatch(scope.object);
             });
         }
 
@@ -109,35 +108,46 @@ export class ObjectInspector {
                 // TODO: this should not function like this... 
                 scope.object.setLastStaticTransform();
 
-                scope.signals.objectChanged.dispatch();
+                scope.signals.objectChanged.dispatch(scope.object);
             });
         }
 
-        scope.ui.color.addEventListener("change", e => {
-            // TODO: figure out how to get color as 
-            // RGB with range 0.0 - 1.0
-            console.log(e.target.value);
-            /* scope.object.color = e.target.value;
+        scope.ui.color.addEventListener("input", e => {
 
-            scope.signals.objectChanged.dispatch(); */
+            let clr = hexToRGB(e.target.value);
+            clr = rgbToFloat(clr);
+
+            scope.object.color = [clr.r, clr.g, clr.b];
+
+            scope.signals.objectChanged.dispatch(scope.object);
+        });
+
+        scope.ui.color.addEventListener("change", e => {
+
+            let clr = hexToRGB(e.target.value);
+            clr = rgbToFloat(clr);
+
+            scope.object.color = [clr.r, clr.g, clr.b];
+
+            scope.signals.objectChanged.dispatch(scope.object);
         });
 
         scope.ui.use_color.addEventListener("change", e => {
             scope.object.use_color = e.target.checked;
 
-            scope.signals.objectChanged.dispatch();
+            scope.signals.objectChanged.dispatch(scope.object);
         });        
 
         scope.ui.is_visible.addEventListener("change", e => {
             scope.object.visible = e.target.checked;
 
-            scope.signals.objectChanged.dispatch();
+            scope.signals.objectChanged.dispatch(scope.object);
         });
 
         scope.ui.show_AABB.addEventListener("change", e => {
             scope.object.show_AABB = e.target.checked;
 
-            scope.signals.objectChanged.dispatch()
+            scope.signals.objectChanged.dispatch(scope.object)
 
         });
     }
@@ -154,7 +164,6 @@ export class ObjectInspector {
         // set name
         this.ui.name.value = object.name;
 
-        // TODO: for pos / scale want to show 2 decimal values
         // set position
         this.ui.position.x.value = object.pos[0].toFixed(2);
         this.ui.position.y.value = object.pos[1].toFixed(2);
@@ -171,12 +180,52 @@ export class ObjectInspector {
         this.ui.scale.z.value = object.scale[2].toFixed(2);
 
         // set color
-        // TODO: need a function to convert from 0.0 - 1.0 to 0 - 255
-        // this.ui.color // . . . .
+        let clr = object.color;
+        clr = {r: clr[0], g: clr[1], b: clr[2]};
+        clr = rgbFromFloat(clr);
+        this.ui.color.value = rgbToHex(clr);
 
         // set checkboxes
         this.ui.use_color.checked = object.use_color;
         this.ui.is_visible.checked = object.visible;
         this.ui.show_AABB.checked = object.show_AABB;
     }
+}
+
+
+function rgbToFloat({r, g, b}) {
+    return {
+        r: r / 255,
+        g: g / 255,
+        b: b / 255
+    };
+}
+
+function rgbFromFloat({r, g, b}) {
+    return {
+        r: r * 255,
+        g: g * 255,
+        b: b * 255
+    };
+}
+
+function hexToRGB(hex) {
+    hex = hex.replace("#", "");
+
+    const r = parseInt(hex.substring(0,2), 16);
+    const g = parseInt(hex.substring(2,4), 16);
+    const b = parseInt(hex.substring(4,6), 16);
+
+    return {r,g,b};
+}
+
+// TODO: issues with certain colors
+// Courtesy of ChatGPT...
+function rgbToHex({r, g, b}) {
+    return (
+        "#" +
+        [r, g, b].map(v => Math.max(0, Math.min(255, v))) // clamp
+                 .map(v => v.toString(16).padStart(2, "0"))
+                 .join("")
+    );
 }

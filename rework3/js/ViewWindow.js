@@ -43,7 +43,9 @@ export class ViewWindow {
         // transform controls
         this.transform_controls = new TransformControls(this.camera);
         this.transform_controls.addEventListener("change", () => {
-            this.signals.objectChanged.dispatch();
+
+            // TODO: objectChanged should not trigger just for hovering over the transform gizmos
+            this.signals.objectChanged.dispatch(this.editor.cur_selection);
 
             this.render();
         })
@@ -68,7 +70,7 @@ export class ViewWindow {
                 this.transform_controls.setMode("rotate");
             } else if (e.key === "s") {
                 this.transform_controls.setMode("scale");
-            } else if (e.key === "1") {
+            } else if (e.key === "+") {
                 this.show_AABB = !this.show_AABB;
             } else if (e.key === "2") {
                 // Nothing yet
@@ -107,7 +109,7 @@ export class ViewWindow {
         // prevents clicking off of object while using transform handles
         if (this.transform_controls.is_interacting) {
             this.transform_controls.is_interacting = false;
-            this.editor.current_selection.setLastStaticTransform();
+            this.editor.cur_selection.setLastStaticTransform();
             return;
         }
 
@@ -118,21 +120,12 @@ export class ViewWindow {
 
         if (intersections.length > 0) {
             const object = intersections[0];
-            this.select(object);
+            this.editor.select(object);
 
         } else {
-            this.select(null);
+            this.editor.select(null);
         }
 
-    }
-
-
-    select(object) {
-        if (this.editor.current_selection === object) return;
-
-        this.editor.current_selection = object;
-
-        this.signals.objectSelected.dispatch(object);
     }
 
 

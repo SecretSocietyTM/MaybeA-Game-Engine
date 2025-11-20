@@ -2,8 +2,7 @@ const glm = glMatrix; // shorten math library name,
 const vec3 = glm.vec3;
 const mat4 = glm.mat4;
 import SceneObject from "./util/SceneObjects.js";
-// TODO: not a huge fan of the above... perhaps find a better
-// place to do this...
+// TODO: not a huge fan of having to import the above... perhaps find a better place to create the modelPreviewThing()
 
 import { Signal } from "./util/ui_signals/Signals.js"
 
@@ -44,6 +43,7 @@ export class Editor {
         this.views.push(view);
     }
 
+    // TODO: when adding an object to the scene I want the transform gizmos to show up on it
     addObject(object) {
         this.scene_objects.push(object);
 
@@ -54,10 +54,18 @@ export class Editor {
         this.signals.objectAdded.dispatch(object);
     }
 
+    select(object) {
+        if (this.cur_selection === object) return;
+
+        this.cur_selection = object;
+
+        this.signals.objectSelected.dispatch(object);
+    }
+
     selectObjectByName(object_name) {
         const object = this.name_to_object.get(object_name);
 
-        this.signals.objectSelected.dispatch(object);
+        this.select(object);
     }
 
     addObjectFromModel(model_name) {

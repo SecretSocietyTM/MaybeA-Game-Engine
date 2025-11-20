@@ -254,7 +254,6 @@ export class TransformControls extends EventDispatcher {
     mouseMove = (event) => {
         const camera = this.camera;
         const object = this.object;
-        const rect = this.#dom_element.getBoundingClientRect();
 
         const point_ndc = getMousePositionNDC(this.#dom_element, event.offsetX, event.offsetY);
 

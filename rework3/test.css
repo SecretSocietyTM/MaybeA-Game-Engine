@@ -125,7 +125,7 @@ body {
 }
 
 .scene_list_li {
-    padding: 0.4rem 1rem;
+    padding: 0.2rem 1rem;
 
     font-size: 0.9rem;
 
@@ -135,11 +135,11 @@ body {
 }
 
 .selected {
-    background-color: rgb(43, 68, 114);
+    background-color: rgb(38, 88, 182);
 }
 
 .scene_list_li:hover {
-    background-color: rgb(43, 68, 114);
+    background-color: rgba(38, 88, 182, 0.5);
 }
 
 
