@@ -41,21 +41,25 @@ export class MenuBar {
 
         scope.ui.add_model_input.addEventListener("change", e => {
 
+            // TODO: trying to add the same file back to back
+            // does not trigger the "change"
+
             const file = e.target.files[0];
             if (!file) return;
-
 
             const reader = new FileReader();
 
             reader.readAsText(file);
 
             reader.onload = () => {
+
                 // TODO: in future parser should separate things like
                 // mesh, textures, etc
                 // model = {mesh: xxx, material: yyyy, texture: zzzz}
                 const model = parsePLY(reader.result);
                 const model_name = file.name.split(".")[0];
 
+                // TODO: make async??? If model exists, onload doesn't finish executing
                 // naming conflict
                 scope.editor.addModel2(model_name, model);
             }

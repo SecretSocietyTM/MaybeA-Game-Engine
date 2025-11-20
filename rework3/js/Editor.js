@@ -1,7 +1,5 @@
 const glm = glMatrix; // shorten math library name,
-const vec2 = glm.vec2;
 const vec3 = glm.vec3;
-const vec4 = glm.vec4;
 const mat4 = glm.mat4;
 import SceneObject from "./util/SceneObjects.js";
 // TODO: not a huge fan of the above... perhaps find a better
@@ -22,14 +20,10 @@ export class Editor {
         // essentially just state 
         this.views = [];
         this.scene_objects = [];
-
-        this.model_to_name = new Map();
-        this.name_to_model = new Map();
+        this.model_map = new Map();
 
         // TODO: improve, temp solution to select from SceneHierarchy
         this.name_to_object = new Map();
-
-        this.model_map = new Map();
 
         this.cur_selection = null;
 
@@ -42,6 +36,7 @@ export class Editor {
             /* objectRemoved: new Signal(), */
 
             modelAdded: new Signal(),
+            modelRemoved: new Signal()
         };
     }
 
@@ -91,35 +86,50 @@ export class Editor {
         this.signals.modelAdded.dispatch( {name: model_name, url: model_url} );
     }
 
-    // Perhaps use a class for this
-    // testing new approach using name lookup (model_to_name (Map), name_to_model (Map))
+    removeModel2(model_name) {
+
+        if (!this.removeModel(model_name)) return;
+
+        // TODO: need to find way to remove all objects that have this model applied to them
+
+        this.signals.modelRemoved.dispatch(model_name)
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // Map functions
+    
+    // TODO: maybe make a class for this
     addModel(model_name, model) {
-        
-        if (this.model_to_name.has(model)) {
-            const name = this.model_to_name.get(model);
-            alert("Model data already exists under the name ", name);
+        if (this.model_map.has(model_name)) {
+            alert(`A model with the name ${model_name} already exists. Rename or delete the model`);
             return false;
         }
 
-        this.name_to_model.set(model_name, model);
-        this.model_to_name.set(model, model_name);
+        this.model_map.set(model_name, model);
         return true;
     }
 
+    removeModel(model_name) {
+        return this.model_map.delete(model_name);
+    }
+
     getModel(model_name) {
-        if (this.name_to_model.has(model_name)) {
-            return this.name_to_model.get(model_name);
+        if (this.model_map.has(model_name)) {
+            return this.model_map.get(model_name);
         }
     }
 }
-
-
-// Note distinction between model and mesh
-// Mesh: the structural framework of a 3D object. This includes vertices, faces, indices, vertex_colors, normals. Things that make up the wireframe.
-// Model is a more comprehensive representation of a 3D object including the mesh, but also textures, animations and more.
-
-// Mesh is a subset of a Model
-
-
-// all models with same mesh / data should only exist once regardless of name
-// the name matters though
