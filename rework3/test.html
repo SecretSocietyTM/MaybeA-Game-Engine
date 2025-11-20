@@ -10,6 +10,116 @@
 </head>
 <body>
 <canvas id="canvas" class="canvas"></canvas>
-<div id="view"></div>
+<div id="view" class="view"></div>
+
+<div class="whole_content">
+    <div class="menubar">
+        <button type="button" id="open_json" class="button_menubar">OPEN</button> <!-- Need to replace for <input> -->
+        <button type="button" id="save_json" class="button_menubar">SAVE</button>
+        <button type="button" id="add_model" class="button_menubar">ADD MODEL</button>
+    </div>
+    <div class="content">
+        <div class="render_context__models">
+            <div id="view1" class="render_context"></div>
+            <div class="models">
+                <p class="section_title">Models</p>
+                <div class="models_grid">
+                    <div class="example"></div>
+                    <div class="example"></div>
+                    <div class="example"></div>
+                    <div class="example"></div>
+                    <div class="example"></div>
+                    <div class="example"></div>
+                    <div class="example"></div>
+                    <div class="example"></div>
+                    <div class="example"></div>
+                    <div class="example"></div>
+                    <div class="example"></div>
+                    <div class="example"></div>
+                    <div class="example"></div>
+                    <div class="example"></div>
+                    <div class="example"></div>
+                    <div class="example"></div>
+                    <div class="example"></div>
+                </div>
+            </div>
+        </div>
+        <div class="sidebar">
+            <div class="scene">
+                <p class="section_title">Scene Hierarchy</p>
+                <ul class="scene_list">
+                    <li data-name="name" class="scene_list_li">Item</li>
+                    <li data-name="name" class="scene_list_li">Item</li>
+                    <li data-name="name" class="scene_list_li">Item</li>
+                    <li data-name="name" class="scene_list_li">Item</li>
+                    <li data-name="name" class="scene_list_li">Item</li>
+                    <li data-name="name" class="scene_list_li">Item</li>
+                    <li data-name="name" class="scene_list_li">Item</li>
+                    <li data-name="name" class="scene_list_li">Item</li>
+                    <li data-name="name" class="scene_list_li">Item</li>
+                    <li data-name="name" class="scene_list_li">Item</li>
+                    <li data-name="name" class="scene_list_li">Item</li>
+                    <li data-name="name" class="scene_list_li">Item</li>
+                    <li data-name="name" class="scene_list_li">Item</li>
+                    <li data-name="name" class="scene_list_li">Item</li>
+                    <li data-name="name" class="scene_list_li">Item</li>
+                    <li data-name="name" class="scene_list_li">Item</li>
+                    <li data-name="name" class="scene_list_li">Item</li>
+                    <li data-name="name" class="scene_list_li">Item</li>
+                </ul>
+            </div>
+            <div class="inspector">
+                <p class="section_title">Object Inspector</p>
+                <div class="object_props_container">
+                    <div class="object_prop">
+                        <p class="prop_name">Name</p>
+                        <input id="obj_name" type="text" class="prop_value">
+                    </div>
+                    <div class="object_prop">
+                        <p class="prop_name">Position</p>
+                        <div class="prop_value_3_set">
+                            <input id="obj_position_x" type="number" step="0.01" placeholder="0.00" class="prop_value_number">
+                            <input id="obj_position_y" type="number" step="0.01" placeholder="0.00" class="prop_value_number">
+                            <input id="obj_position_z" type="number" step="0.01" placeholder="0.00" class="prop_value_number">
+                        </div>
+
+                    </div>
+                    <div class="object_prop">
+                        <p class="prop_name">Rotation</p>
+                        <div class="prop_value_3_set">
+                            <input id="obj_rotation_x" type="number" step="0.01" placeholder="0" class="prop_value_number">
+                            <input id="obj_rotation_y" type="number" step="0.01" placeholder="0" class="prop_value_number"> <!-- &deg -->
+                            <input id="obj_rotation_z" type="number" step="0.01" placeholder="0" class="prop_value_number">
+                        </div>
+                    </div>
+                    <div class="object_prop">
+                        <p class="prop_name">Scale</p>
+                        <div class="prop_value_3_set">
+                            <input id="obj_scale_x" type="number" step="0.01" placeholder="0.00" class="prop_value_number">
+                            <input id="obj_scale_y" type="number" step="0.01" placeholder="0.00" class="prop_value_number">
+                            <input id="obj_scale_z" type="number" step="0.01" placeholder="0.00" class="prop_value_number">
+                        </div>
+                    </div>
+                    <div class="object_prop">
+                        <p class="prop_name">Color</p>
+                        <input id="obj_color" type="color" class="prop_value">
+                    </div>
+                    <div class="object_prop">
+                        <p class="prop_name">Use Color</p>
+                        <input id="obj_use-color" type="checkbox" class="prop_value">
+                    </div>
+                   <div class="object_prop">
+                        <p class="prop_name">Visible</p>
+                        <input id="obj_is-visible" type="checkbox" class="prop_value">
+                    </div>
+                    <div class="object_prop">
+                        <p class="prop_name">Show AABB</p>
+                        <input id="obj_show-AABB" type="checkbox" class="prop_value">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>

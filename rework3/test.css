@@ -7,6 +7,12 @@
     padding: 0;
 }
 
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
 
 html {
     width: 100vw;
@@ -20,9 +26,207 @@ body {
 
 #canvas {
     display: block;
-    position: absolute;
+    position: fixed;
 
     width: 100%;
     height: 100%;
     z-index: -1; /* TODO: consider removing */
+}
+
+.view {
+    display: block;
+    position: fixed;
+}
+
+
+.whole_content {
+    display: grid;
+    grid-template-rows: max-content auto;
+
+    width: 100%;
+    height: 100%;
+}
+
+
+.content {
+    display: grid;
+    grid-template-columns: 82% auto;
+
+    width: 100%;
+    height: 100%;
+}
+
+.section_title {
+    font-size: 1.2rem;
+    color: rgb(236, 236, 236);
+    margin-block-end: 0.5rem;
+}
+
+.render_context__models {
+    display: grid;
+    grid-template-rows: 75% auto;
+}
+
+
+.menubar {
+    display: flex;
+    gap: 1rem;
+
+    padding-inline-start: 1rem;
+
+    width: 100%;
+    height: 2rem;
+
+    background-color: #1a1a1a;
+}
+
+.button_menubar {
+    padding-inline: 0.5rem;
+
+    background-color: #1a1a1a;
+    color: rgb(190, 190, 190);
+
+    border: none;
+
+    cursor: pointer;
+}
+
+.button_menubar:hover {
+    transition: 0.5s;
+
+    background-color: white;
+    color: #1a1a1a;
+}
+
+.models {
+    background-color: #1a1a1a;
+}
+
+.sidebar {
+    display: grid;
+    grid-template-rows: max-content auto;
+    gap: 1rem;
+
+    padding: 0.75rem;
+
+    background-color: #111;;
+}
+
+.scene_list {
+    min-height: 15rem;
+    max-height: 22rem;
+
+    overflow-y: scroll;
+
+    list-style: none;
+
+    scrollbar-color: white transparent;
+    background-color: #2e2e2e;
+}
+
+.scene_list_li {
+    padding: 0.4rem 1rem;
+
+    font-size: 0.9rem;
+
+    color: rgb(190, 190, 190);
+
+    cursor: pointer;
+}
+
+.scene_list_li:hover {
+    background-color: rgb(43, 68, 114);
+}
+
+
+.object_props_container {
+    display: grid;
+    gap: 0.75rem;
+
+    padding-inline: 0.5rem;
+
+    color: rgb(190, 190, 190);
+}
+
+.object_prop {
+    display: flex;
+    align-items: center;
+    gap: 2.5%; /* Connected - ( 1 ) */
+}
+
+.prop_name {
+    width: 35%; /* Connected - ( 1 ) */
+
+    font-size: 0.9rem;
+}
+
+/* I FUCKING HATE WORKING WITH FLEX AND GRID
+IS THERE NO PROPERTY THAT JUST FILLS????
+*/
+.prop_value_3_set {
+    display: grid;
+
+    width: 62.5%; /* Connected - ( 1 ) */
+    grid-template-columns: repeat(3, auto);
+
+    .prop_value_number {
+        width: 75%;
+
+        background-color: transparent;
+    }
+
+    .prop_value_number::placeholder {
+        color: rgb(83, 143, 255);
+    }
+}
+
+.object_prop input {
+    padding: 0.2rem;
+
+    background-color: rgb(39, 39, 39);
+    color: rgb(83, 143, 255);
+    
+    border: none;
+}
+
+.object_prop input:focus {
+    outline: 1px solid rgb(117, 117, 117);
+}
+
+/* Set to "" to show object's properties */
+.inspector {
+    /* display: none; */
+}
+
+.models {
+    display: flex;
+    flex-direction: column;
+    padding: 0.75rem;
+}
+
+.models_grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 150px);
+    /* grid-template-columns: repeat(9, 150px); */
+    gap: 1.2rem;
+
+    /* TODO: so jank... have fun resizing */
+    height: 180px;
+    /* flex-grow: 1; THIS ACTUALLY FILLS IT OUT TO FIT PARENT BUT IT DOESN"T CONFINE IT TO THE AVAILABLE SPACE*/
+
+    margin-inline-start: 0.5rem;
+    padding-block: 1rem;
+
+    overflow-y: scroll;
+
+    list-style: none;
+
+    scrollbar-color: white transparent;
+}
+
+.example {
+    width: 150px;
+    height: 150px;
+
+    background-color: rgb(37, 37, 37);
 }

@@ -13,14 +13,22 @@ export class ViewWindow {
         this.renderer = editor.renderer;
         this.canvas = editor.canvas;
         
-        this.dom_element.style.width = `${width}px`;
+        // TODO: (1) uncomment, old way of doing things
+        /* this.dom_element.style.width = `${width}px`;
         this.dom_element.style.height = `${height}px`;
-
         const rect = this.dom_element.getBoundingClientRect();
         this.left = rect.left;
         this.bottom = this.canvas.clientHeight - rect.bottom;
         this.width = width;
-        this.height = height;
+        this.height = height; */
+
+        // TODO: implement new method
+        // this method assumes the div already has a size assigned
+        const rect = this.dom_element.getBoundingClientRect();
+        this.left = rect.left;
+        this.bottom = this.canvas.clientHeight - rect.bottom;
+        this.width = rect.width;
+        this.height = rect.height;
 
         this.camera = new Camera([30,0,0], [0,0,0], [0,1,0], 45, (this.width / this.height), 0.1, 1000);
 

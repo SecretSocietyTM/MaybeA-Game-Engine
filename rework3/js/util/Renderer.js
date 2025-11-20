@@ -126,12 +126,10 @@ export default class Renderer2 {
 
     // ( 1 ) 
     setViewport(left, bottom, width, height) { // call before!
-        this.gl.viewport(left, bottom, width, height);
-        this.gl.scissor(left, bottom, width, height);
+        this.gl.viewport(left, bottom, width + 1, height + 1); // + 1 because it leaves a bit of empty space caused by width / height not being an integer
+        this.gl.scissor(left, bottom, width + 1, height + 1);
         this.gl.clearColor(0.3, 0.3, 0.3, 1.0);
-        // TODO: not a huge fan of this but can't call 
-        // this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT)
-        // for each call to _renderToView3D
+
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
     }
 

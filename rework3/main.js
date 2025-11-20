@@ -22,11 +22,16 @@ editor.addObject(apple);
 editor.addObject(weird_cube);
 editor.addObject(wall);
 editor.addObject(floor);
+;
 
-const scene_view = new ViewWindow(
+// TODO: new method
+const scene_view = new ViewWindow(editor, document.getElementById("view1"));
+
+// TODO: (1) Uncomment for OG
+/* const scene_view = new ViewWindow(
     editor, 
     document.getElementById("view"),
     canvas.width, canvas.height
-);
+); */
 
 scene_view.render();
