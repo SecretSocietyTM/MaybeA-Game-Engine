@@ -156,6 +156,8 @@ export default class Renderer2 {
 
     pass3D(objects, force_AABB) {
         objects.forEach(object => {
+            if (!object.visible) return;
+
             // set depth test for each object
             object.depth_test ? this.gl.enable(this.gl.DEPTH_TEST) : this.gl.disable(this.gl.DEPTH_TEST);
 

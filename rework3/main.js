@@ -1,5 +1,11 @@
+// State manager
 import { Editor } from "./js/Editor.js";
+
+// UI
 import { ViewWindow } from "./js/ViewWindow.js"
+import { ObjectInspector } from "./js/ObjectInspector.js";
+
+// Extra
 import SceneObject from "./js/util/SceneObjects.js";
 import MeshesObj from "../models/meshes_index.js";
 
@@ -22,7 +28,7 @@ editor.addObject(apple);
 editor.addObject(weird_cube);
 editor.addObject(wall);
 editor.addObject(floor);
-;
+
 
 // TODO: new method
 const scene_view = new ViewWindow(editor, document.getElementById("view1"));
@@ -35,3 +41,6 @@ const scene_view = new ViewWindow(editor, document.getElementById("view1"));
 ); */
 
 scene_view.render();
+
+const object_inspector = new ObjectInspector(editor);
+console.log(object_inspector);

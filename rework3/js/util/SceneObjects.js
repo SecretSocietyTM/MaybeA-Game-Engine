@@ -38,6 +38,8 @@ export default class SceneObject {
             this.use_color = true;
             this.color = color;
         }
+
+        this.visible = true;
         this.depth_test = depth_test;
         this.show_AABB = false;
     }

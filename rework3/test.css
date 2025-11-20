@@ -195,7 +195,7 @@ IS THERE NO PROPERTY THAT JUST FILLS????
 
 /* Set to "" to show object's properties */
 .inspector {
-    /* display: none; */
+    display: none;
 }
 
 .models {

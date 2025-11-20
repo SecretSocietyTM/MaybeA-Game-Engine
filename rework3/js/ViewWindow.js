@@ -95,6 +95,8 @@ export class ViewWindow {
         if (object === null) this.transform_controls.detachObject();
         else this.transform_controls.attachObject(object);
 
+        this.editor.signals.objectSelected.dispatch(object);
+
         this.render();
     }
 

@@ -1,3 +1,5 @@
+import { Signal } from "./util/ui_signals/Signals.js"
+
 import Renderer3 from "./util/Renderer.js";
 import MeshesObj from "../../models/meshes_index.js";
 
@@ -12,6 +14,13 @@ export class Editor {
         this.views = [];
         this.scene_objects = [];
         this.cur_selection = null;
+
+        // signals
+        this.signals = {
+            objectSelected: new Signal(),
+        }
+
+        console.log(this.signals);
     }
 
     addView(view) {
