@@ -9,6 +9,8 @@ const raycaster = new Raycaster();
 export class ViewWindow {
     constructor(editor, dom_element, width = 800, height = 600) {
         this.editor = editor;
+        this.signals = editor.signals;
+
         this.dom_element = dom_element;
         this.renderer = editor.renderer;
         this.canvas = editor.canvas;
@@ -41,6 +43,8 @@ export class ViewWindow {
         // transform controls
         this.transform_controls = new TransformControls(this.camera);
         this.transform_controls.addEventListener("change", () => {
+            this.signals.objectChanged.dispatch();
+
             this.render();
         })
         this.transform_controls.connect(this.dom_element);
@@ -74,10 +78,28 @@ export class ViewWindow {
         });
 
 
-        // TODO: not sure this is the best way to do this
-        this.editor.signals.objectChanged.addListener( () => {
+        // signals
+
+        this.signals.objectAdded.addListener(object => {
+            this.objects.push(object);
+
             this.render();
-        })
+        });
+
+        // TODO: not sure this is the best way to do this
+        this.signals.objectChanged.addListener( () => {
+            this.render();
+        });
+
+        this.signals.objectSelected.addListener(object => {
+            this.transform_controls.detachObject();
+
+            if (object !== null) {
+                this.transform_controls.attachObject(object);
+            }
+
+            this.render();
+        });
     }
 
     mouseClick = (event) => {
@@ -94,17 +116,25 @@ export class ViewWindow {
         raycaster.setFromCamera(point_ndc, this.camera);
         const intersections = raycaster.getIntersections(this.objects);
 
-        const object = select(this.editor.selected_object, intersections);
+        if (intersections.length > 0) {
+            const object = intersections[0];
+            this.select(object);
+
+        } else {
+            this.select(null);
+        }
+
+    }
+
+
+    select(object) {
+        if (this.editor.current_selection === object) return;
+
         this.editor.current_selection = object;
 
-        // TODO: Priority (LOW) clicking on the same thing should not cause a rerender
-        if (object === null) this.transform_controls.detachObject();
-        else this.transform_controls.attachObject(object);
-
-        this.editor.signals.objectSelected.dispatch(object);
-
-        this.render();
+        this.signals.objectSelected.dispatch(object);
     }
+
 
     render() {
 
@@ -132,17 +162,4 @@ function getMousePositionNDC(dom_element, x, y) {
     const y_ndc = 1 - (2 * y) / rect.height;
 
     return {x: x_ndc, y: y_ndc};
-}
-
-
-function select(selected_object, objects) {
-
-    if (objects.length > 0) {
-        const object = objects[0];
-
-        if (selected_object === object) return;
-        return object;
-    } 
-
-    return null;
 }

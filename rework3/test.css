@@ -134,6 +134,10 @@ body {
     cursor: pointer;
 }
 
+.selected {
+    background-color: rgb(43, 68, 114);
+}
+
 .scene_list_li:hover {
     background-color: rgb(43, 68, 114);
 }
@@ -206,7 +210,7 @@ IS THERE NO PROPERTY THAT JUST FILLS????
 
 .models_grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, 150px);
+    grid-template-columns: repeat(auto-fill, 100px);
     /* grid-template-columns: repeat(9, 150px); */
     gap: 1.2rem;
 
@@ -214,7 +218,7 @@ IS THERE NO PROPERTY THAT JUST FILLS????
     height: 180px;
     /* flex-grow: 1; THIS ACTUALLY FILLS IT OUT TO FIT PARENT BUT IT DOESN"T CONFINE IT TO THE AVAILABLE SPACE*/
 
-    margin-inline-start: 0.5rem;
+    margin-inline-start: 1rem;
     padding-block: 1rem;
 
     overflow-y: scroll;
@@ -224,9 +228,23 @@ IS THERE NO PROPERTY THAT JUST FILLS????
     scrollbar-color: white transparent;
 }
 
-.example {
-    width: 150px;
-    height: 150px;
+.models_card {
+    max-height: max-content;
 
-    background-color: rgb(37, 37, 37);
+    cursor: pointer;
+
+    text-align: center;
+
+    color: rgb(190, 190, 190);
+}
+
+.models_card:hover {
+    transition: 0.2s;
+
+    color: rgb(255, 255, 255);
+}
+
+.models_card__img {
+    border-radius: 2px;
+    transform: scaleY(-1);
 }

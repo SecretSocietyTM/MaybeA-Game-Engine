@@ -4,6 +4,9 @@ import { Editor } from "./js/Editor.js";
 // UI
 import { ViewWindow } from "./js/ViewWindow.js"
 import { ObjectInspector } from "./js/ObjectInspector.js";
+import { MenuBar } from "./js/MenuBar.js";
+import { ModelsGrid } from "./js/ModelsGrid.js";
+import { SceneHierarchy } from "./js/SceneHierarchy.js";
 
 // Extra
 import SceneObject from "./js/util/SceneObjects.js";
@@ -15,7 +18,20 @@ canvas.height = canvas.clientHeight;
 
 const editor = new Editor(canvas);
 
-// add objects directly.
+// components
+const scene_view = new ViewWindow(editor, document.getElementById("view1"));
+const object_inspector = new ObjectInspector(editor);
+const menubar = new MenuBar(editor);
+const models_grid = new ModelsGrid(editor);
+const scene_hierarchy = new SceneHierarchy(editor);
+
+// render manually
+
+scene_view.render();
+
+
+// add objects manually.
+
 const unit_cube = new SceneObject("unit_cube", MeshesObj.unit_cube);
 const apple = new SceneObject("apple", MeshesObj.apple, [-10,0,-10], [9,9,9], [0,0,0]);
 const weird_cube = new SceneObject("weird cube", MeshesObj.weird_cube);
@@ -28,18 +44,3 @@ editor.addObject(apple);
 editor.addObject(weird_cube);
 editor.addObject(wall);
 editor.addObject(floor);
-
-
-// TODO: new method
-const scene_view = new ViewWindow(editor, document.getElementById("view1"));
-
-// TODO: (1) Uncomment for OG
-/* const scene_view = new ViewWindow(
-    editor, 
-    document.getElementById("view"),
-    canvas.width, canvas.height
-); */
-
-scene_view.render();
-
-const object_inspector = new ObjectInspector(editor);

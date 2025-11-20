@@ -60,7 +60,6 @@ export class Signal {
         return -1;
     }
 
-    // TODO: actual lib turns args into an array
     dispatch(data) {
         this.bindings.forEach(binding => {
             binding.execute(data);

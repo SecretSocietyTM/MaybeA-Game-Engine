@@ -13,60 +13,25 @@
 <div id="view" class="view"></div>
 
 <div class="whole_content">
-    <div class="menubar">
-        <button type="button" id="open_json" class="button_menubar">OPEN</button> <!-- Need to replace for <input> -->
-        <button type="button" id="save_json" class="button_menubar">SAVE</button>
-        <button type="button" id="add_model" class="button_menubar">ADD MODEL</button>
+    <div id="menubar" class="menubar">
+        <button id="open_json" type="button" class="button_menubar">OPEN</button>
+        <button id="save_json" type="button" class="button_menubar">SAVE</button>
+        <button id="add_model" type="button" class="button_menubar">ADD MODEL</button>
+        <input id="open_json_input" type="file" accept=".json" style="display: none;">
+        <input id="add_model_input" type="file" accept=".ply" style="display: none"> 
     </div>
     <div class="content">
         <div class="render_context__models">
             <div id="view1" class="render_context"></div>
-            <div class="models">
+            <div id="models" class="models">
                 <p class="section_title">Models</p>
-                <div class="models_grid">
-                    <div class="example"></div>
-                    <div class="example"></div>
-                    <div class="example"></div>
-                    <div class="example"></div>
-                    <div class="example"></div>
-                    <div class="example"></div>
-                    <div class="example"></div>
-                    <div class="example"></div>
-                    <div class="example"></div>
-                    <div class="example"></div>
-                    <div class="example"></div>
-                    <div class="example"></div>
-                    <div class="example"></div>
-                    <div class="example"></div>
-                    <div class="example"></div>
-                    <div class="example"></div>
-                    <div class="example"></div>
-                </div>
+                <div id="models_grid" class="models_grid"></div>
             </div>
         </div>
         <div class="sidebar">
-            <div class="scene">
+            <div class="scene_hierarchy" class="scene">
                 <p class="section_title">Scene Hierarchy</p>
-                <ul class="scene_list">
-                    <li data-name="name" class="scene_list_li">Item</li>
-                    <li data-name="name" class="scene_list_li">Item</li>
-                    <li data-name="name" class="scene_list_li">Item</li>
-                    <li data-name="name" class="scene_list_li">Item</li>
-                    <li data-name="name" class="scene_list_li">Item</li>
-                    <li data-name="name" class="scene_list_li">Item</li>
-                    <li data-name="name" class="scene_list_li">Item</li>
-                    <li data-name="name" class="scene_list_li">Item</li>
-                    <li data-name="name" class="scene_list_li">Item</li>
-                    <li data-name="name" class="scene_list_li">Item</li>
-                    <li data-name="name" class="scene_list_li">Item</li>
-                    <li data-name="name" class="scene_list_li">Item</li>
-                    <li data-name="name" class="scene_list_li">Item</li>
-                    <li data-name="name" class="scene_list_li">Item</li>
-                    <li data-name="name" class="scene_list_li">Item</li>
-                    <li data-name="name" class="scene_list_li">Item</li>
-                    <li data-name="name" class="scene_list_li">Item</li>
-                    <li data-name="name" class="scene_list_li">Item</li>
-                </ul>
+                <ul id="scene_list" class="scene_list"></ul>
             </div>
             <div id="object_inspector" class="inspector">
                 <p class="section_title">Object Inspector</p>

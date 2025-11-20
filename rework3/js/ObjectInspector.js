@@ -28,28 +28,21 @@ export class ObjectInspector {
             use_color: document.getElementById("obj_use-color"),
             is_visible: document.getElementById("obj_is-visible"),
             show_AABB: document.getElementById("obj_show-AABB"),
-        }
+        };
 
         this.signals.objectSelected.addListener(object => {
 
             this.object = object;
 
             this.updateUI(object);
-        })
+        });
+
+        this.signals.objectChanged.addListener(() => {
+            this.updateUI(this.object);
+        });
 
         this.connect();
     }
-
-    // need to add eventListeners for inputs and dispatch objectChanged signal that the viewport
-    // listens to update the object...
-
-    // Might want to move object update logic elsewhere.
-
-    // three.js makes use of commands, but this is so that u can undo / redo i believe
-    // review three.js implementation for changes made within Sidebar.object to
-    // see where the signals are sent and where the rerender occurs
-
-    // test
 
     // TODO: need some QOL changes for input changes
     // Pressing enter should unfocus
@@ -57,7 +50,7 @@ export class ObjectInspector {
     connect() {
         const scope = this;
 
-        this.ui.name.addEventListener("change", e => {
+        scope.ui.name.addEventListener("change", e => {
             scope.object.name = e.target.value
 
             scope.signals.objectChanged.dispatch();
@@ -120,7 +113,7 @@ export class ObjectInspector {
             });
         }
 
-        this.ui.color.addEventListener("change", e => {
+        scope.ui.color.addEventListener("change", e => {
             // TODO: figure out how to get color as 
             // RGB with range 0.0 - 1.0
             console.log(e.target.value);
@@ -129,19 +122,19 @@ export class ObjectInspector {
             scope.signals.objectChanged.dispatch(); */
         });
 
-        this.ui.use_color.addEventListener("change", e => {
+        scope.ui.use_color.addEventListener("change", e => {
             scope.object.use_color = e.target.checked;
 
             scope.signals.objectChanged.dispatch();
         });        
 
-        this.ui.is_visible.addEventListener("change", e => {
+        scope.ui.is_visible.addEventListener("change", e => {
             scope.object.visible = e.target.checked;
 
             scope.signals.objectChanged.dispatch();
         });
 
-        this.ui.show_AABB.addEventListener("change", e => {
+        scope.ui.show_AABB.addEventListener("change", e => {
             scope.object.show_AABB = e.target.checked;
 
             scope.signals.objectChanged.dispatch()
