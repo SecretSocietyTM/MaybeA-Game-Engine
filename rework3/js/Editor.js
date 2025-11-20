@@ -18,9 +18,9 @@ export class Editor {
         // signals
         this.signals = {
             objectSelected: new Signal(),
-        }
 
-        console.log(this.signals);
+            objectChanged: new Signal(),
+        };
     }
 
     addView(view) {

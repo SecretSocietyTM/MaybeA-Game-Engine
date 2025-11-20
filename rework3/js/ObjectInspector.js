@@ -1,7 +1,13 @@
 export class ObjectInspector {
     constructor(editor) {
+
+        this.editor = editor;
+        this.signals = editor.signals;
+        this.object = null;
+
         this.ui = {
             container: document.getElementById("object_inspector"),
+
             name: document.getElementById("obj_name"),
             position: {
                 x: document.getElementById("obj_position_x"),
@@ -24,10 +30,125 @@ export class ObjectInspector {
             show_AABB: document.getElementById("obj_show-AABB"),
         }
 
-        editor.signals.objectSelected.addListener(object => {
+        this.signals.objectSelected.addListener(object => {
+
+            this.object = object;
+
             this.updateUI(object);
         })
+
+        this.connect();
     }
+
+    // need to add eventListeners for inputs and dispatch objectChanged signal that the viewport
+    // listens to update the object...
+
+    // Might want to move object update logic elsewhere.
+
+    // three.js makes use of commands, but this is so that u can undo / redo i believe
+    // review three.js implementation for changes made within Sidebar.object to
+    // see where the signals are sent and where the rerender occurs
+
+    // test
+
+    // TODO: need some QOL changes for input changes
+    // Pressing enter should unfocus
+    // Clicknig should highlight the whole value
+    connect() {
+        const scope = this;
+
+        this.ui.name.addEventListener("change", e => {
+            scope.object.name = e.target.value
+
+            scope.signals.objectChanged.dispatch();
+        });
+
+        const ui_position = scope.ui.position;
+        for (const key in ui_position) {
+            ui_position[key].addEventListener("change", e => {
+                const new_position = [
+                    +ui_position.x.value,
+                    +ui_position.y.value,
+                    +ui_position.z.value
+                ];
+                const new_val = +ui_position[key].value;
+                ui_position[key].value = new_val.toFixed(2);
+
+                scope.object.updatePos(new_position);
+                // TODO: this should not function like this... 
+                scope.object.setLastStaticTransform();
+
+                scope.signals.objectChanged.dispatch();
+            });
+        }
+
+        const ui_rotation = scope.ui.rotation;
+        for (const key in ui_rotation) {
+            ui_rotation[key].addEventListener("change", e => {
+                const new_rotation = [
+                    +ui_rotation.x.value,
+                    +ui_rotation.y.value,
+                    +ui_rotation.z.value
+                ];
+                const new_val = +ui_rotation[key].value;
+                ui_rotation[key].value = new_val.toFixed(1);
+
+                scope.object.updateRot(new_rotation);
+                // TODO: this should not function like this... 
+                scope.object.setLastStaticTransform();
+
+                scope.signals.objectChanged.dispatch();
+            });
+        }
+
+        const ui_scale = scope.ui.scale;
+        for (const key in ui_scale) {
+            ui_scale[key].addEventListener("change", e => {
+                const new_scale = [
+                    +ui_scale.x.value,
+                    +ui_scale.y.value,
+                    +ui_scale.z.value
+                ];
+                const new_val = +ui_scale[key].value;
+                ui_scale[key].value = new_val.toFixed(1);
+
+                scope.object.updateScale(new_scale);
+                // TODO: this should not function like this... 
+                scope.object.setLastStaticTransform();
+
+                scope.signals.objectChanged.dispatch();
+            });
+        }
+
+        this.ui.color.addEventListener("change", e => {
+            // TODO: figure out how to get color as 
+            // RGB with range 0.0 - 1.0
+            console.log(e.target.value);
+            /* scope.object.color = e.target.value;
+
+            scope.signals.objectChanged.dispatch(); */
+        });
+
+        this.ui.use_color.addEventListener("change", e => {
+            scope.object.use_color = e.target.checked;
+
+            scope.signals.objectChanged.dispatch();
+        });        
+
+        this.ui.is_visible.addEventListener("change", e => {
+            scope.object.visible = e.target.checked;
+
+            scope.signals.objectChanged.dispatch();
+        });
+
+        this.ui.show_AABB.addEventListener("change", e => {
+            scope.object.show_AABB = e.target.checked;
+
+            scope.signals.objectChanged.dispatch()
+
+        });
+    }
+
 
     updateUI(object) {
         if (!object) {

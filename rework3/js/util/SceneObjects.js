@@ -33,7 +33,7 @@ export default class SceneObject {
         this.setLastStaticTransform();
 
         this.use_color = false;
-        this.color = [0.8,0.8,0.8];
+        this.color = [0.4,0.4,0.4];
         if (color) {
             this.use_color = true;
             this.color = color;

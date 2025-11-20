@@ -72,6 +72,12 @@ export class ViewWindow {
 
             this.render();
         });
+
+
+        // TODO: not sure this is the best way to do this
+        this.editor.signals.objectChanged.addListener( () => {
+            this.render();
+        })
     }
 
     mouseClick = (event) => {

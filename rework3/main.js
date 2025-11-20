@@ -43,4 +43,3 @@ const scene_view = new ViewWindow(editor, document.getElementById("view1"));
 scene_view.render();
 
 const object_inspector = new ObjectInspector(editor);
-console.log(object_inspector);
