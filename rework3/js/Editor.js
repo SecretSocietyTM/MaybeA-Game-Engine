@@ -27,6 +27,8 @@ export class Editor {
         // need to find a way to change their names or use IDs
         this.name_to_object = new Map();
 
+        this.object_map = new Map();
+
         this.cur_selection = null;
 
         // signals
@@ -52,6 +54,8 @@ export class Editor {
 
         // TODO: improve, temp solution to select from SceneHierarchy
         this.name_to_object.set(object.name, object); 
+        
+        this.object_map.set(object.id, object);
 
         // dispatch signal
         this.signals.objectAdded.dispatch(object);
@@ -65,8 +69,8 @@ export class Editor {
         this.signals.objectSelected.dispatch(object);
     }
 
-    selectObjectByName(object_name) {
-        const object = this.name_to_object.get(object_name);
+    selectObjectById(id) {
+        const object = this.object_map.get(id);
 
         this.select(object);
     }
@@ -149,6 +153,8 @@ export class Editor {
 
     // Load functions
 
+    // TODO: when loading need to unload previos things.
+
     fromJSON(json) {
 
         // load models
@@ -186,7 +192,8 @@ export class Editor {
         
         const output = {};
 
-        const scene = this.name_to_object;
+        /* const scene = this.name_to_object; */
+        const scene = this.object_map;
         const models = this.model_map;
 
         // models

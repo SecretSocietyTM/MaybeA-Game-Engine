@@ -9,6 +9,15 @@ import AxisAlignedBoundingBox from "./AxisAlignedBoundingBox.js";
 
 const transformChange_event = {type: "transformChange"};
 
+let id = 0;
+
+function createId() {
+    const result = id;
+    id++;
+
+    return result;
+}
+
 export default class SceneObject extends EventDispatcher {
 
     constructor(
@@ -29,6 +38,8 @@ export default class SceneObject extends EventDispatcher {
         // model that it was created from
         this.name = name;
         this.mesh = mesh;
+
+        this.id = createId();
 
 
         defineProperty(this, "position", position);

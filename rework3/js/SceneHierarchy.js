@@ -42,7 +42,7 @@ export class SceneHierarchy {
             const object_li = e.target.closest("li");
             if (!object_li) return;
 
-            scope.editor.selectObjectByName(object_li.dataset.name);
+            scope.editor.selectObjectById(object_li.dataset.id);
         });
     }
 
@@ -51,7 +51,7 @@ export class SceneHierarchy {
         this.ui.list.replaceChildren();
 
         for (const [object, name] of this.object_map) {
-            const li = this.createLi({name});
+            const li = this.createLi(object);
             this.ui.list.appendChild(li);
 
             this.object_element_map.set(object, li);
@@ -66,11 +66,12 @@ export class SceneHierarchy {
 
     }
 
-    createLi(object_info) {
+    createLi(object) {
         const li = document.createElement("li");
         li.className = "scene_list_li";
-        li.dataset.name = object_info.name;
-        li.textContent = object_info.name;
+        li.dataset.name = object.name;
+        li.dataset.id = object.id;
+        li.textContent = object.name;
 
         return li;
     }

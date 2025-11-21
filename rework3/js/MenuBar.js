@@ -53,7 +53,7 @@ export class MenuBar {
 
             reader.onload = () => {
                 const json = JSON.parse(reader.result);
-                this.editor.fromJSON(json)
+                this.editor.fromJSON(json) // TODO: when loading need to unload previos things.
             }
             reader.onerror = () => {
                 alert("Error reading file ", file.name);
