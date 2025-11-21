@@ -14,27 +14,26 @@ export default class SceneObject extends EventDispatcher {
     constructor(
         name = "object",
         mesh,
-        pos = [0,0,0],
+        position = [0,0,0],
         scale = [1,1,1],
-        rotation_angles = [0,0,0],
+        rotation = [0,0,0],
         
         color,
-        depth_test = true
+        depth_test = true,
     ) {  
         super();
 
-        if(!mesh) {
-            throw new Error("Please provide the constructor with a mesh");
-        }
-
+        // TODO: for now the object's actual display name and its mesh name are the same, but in the future we will want
+        // meshes to have separate names from the model.
+        // This will break if i call editor.toJSON() and an object's name has been changed from the name of the 
+        // model that it was created from
         this.name = name;
         this.mesh = mesh;
 
-        defineProperty(this, "pos", pos);
+
+        defineProperty(this, "position", position);
+        defineProperty(this, "rotation", rotation);
         defineProperty(this, "scale", scale);
-        defineProperty(this, "rotation_angles", rotation_angles); 
-        // TODO: change all instances of pos to position
-        // TODO: change all instances of rotation_angles to rotation
 
         this.addEventListener("transformChange", () => {
             this.update_model_matrix = true;
@@ -48,21 +47,21 @@ export default class SceneObject extends EventDispatcher {
         this.last_static_transform = null;
         this.setLastStaticTransform();
 
-        this.use_color = false;
         this.color = [0.4,0.4,0.4];
+        this.use_color = false;
+        this.visible = true;
+        this.depth_test = depth_test;
+        this.show_AABB = false;
+
         if (color) {
             this.use_color = true;
             this.color = color;
         }
-
-        this.visible = true;
-        this.depth_test = depth_test;
-        this.show_AABB = false;
     }
 
     rotateOnAxis(angle, axis) {
         this.model_matrix = mat4.create();
-        mat4.translate(this.model_matrix, this.model_matrix, this.pos);
+        mat4.translate(this.model_matrix, this.model_matrix, this.position);
         mat4.rotate(this.model_matrix, this.model_matrix, glm.glMatrix.toRadian(angle), axis);
         mat4.scale(this.model_matrix, this.model_matrix, this.scale);
 
@@ -71,18 +70,18 @@ export default class SceneObject extends EventDispatcher {
 
     setLastStaticTransform() {
         this.last_static_transform = {
-            pos: this.pos, 
+            position: this.position, 
             scale: this.scale,
-            rotation: this.rotation_angles};
+            rotation: this.rotation};
     }
 
-    updatePos(pos) {
-        this.pos = pos;
+    updatePosition(position) {
+        this.position = position;
 
     }
 
-    updateRot(rotation_angles) {
-        this.rotation_angles = rotation_angles;
+    updateRotation(rotation) {
+        this.rotation = rotation;
     }
 
     updateScale(scale) {
@@ -97,16 +96,32 @@ export default class SceneObject extends EventDispatcher {
 
         const m = mat4.create();
         
-        mat4.translate(m, m, this.pos);
-        mat4.rotateX(m, m, glm.glMatrix.toRadian(this.rotation_angles[0]));
-        mat4.rotateY(m, m, glm.glMatrix.toRadian(this.rotation_angles[1]));
-        mat4.rotateZ(m, m, glm.glMatrix.toRadian(this.rotation_angles[2]));
+        mat4.translate(m, m, this.position);
+        mat4.rotateX(m, m, glm.glMatrix.toRadian(this.rotation[0]));
+        mat4.rotateY(m, m, glm.glMatrix.toRadian(this.rotation[1]));
+        mat4.rotateZ(m, m, glm.glMatrix.toRadian(this.rotation[2]));
         mat4.scale(m, m, this.scale);
 
         if ("aabb" in this) this.aabb.updateAABB(m);
 
         this.model_matrix = m;
         this.update_model_matrix = false;
+    }
+
+    toJSON() {
+
+        return {
+            name: this.name,
+            model_name: this.name,
+            position: this.position,
+            rotation: this.rotation,
+            scale: this.scale,
+            use_color: this.use_color,
+            color: this.color,
+            visible: this.visible,
+            depth_test: this.depth_test,
+            show_AABB: this.show_AABB,
+        }
     }
 }
 

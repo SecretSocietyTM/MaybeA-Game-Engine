@@ -28,7 +28,15 @@ export class MenuBar {
         });
 
         scope.ui.save.addEventListener("click", e => {
-            // TODO: add code for loading JSON
+            const json = JSON.stringify(this.editor.toJSON(), null, 2);
+            const blob = new Blob([json], {type: "application/json"});
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "scene.json";
+            a.click();
+            URL.revokeObjectURL(url);
         });
 
         scope.ui.add_model.addEventListener("click", e => {
@@ -36,7 +44,20 @@ export class MenuBar {
         });
 
         scope.ui.open_input.addEventListener("change", e => {
-            console.log("Selected", e.target.files[0]);
+
+            const file = e.target.files[0];
+            if (!file) return;
+        
+            const reader = new FileReader();
+            reader.readAsText(file);
+
+            reader.onload = () => {
+                const json = JSON.parse(reader.result);
+                this.editor.fromJSON(json)
+            }
+            reader.onerror = () => {
+                alert("Error reading file ", file.name);
+            }
         });
 
         scope.ui.add_model_input.addEventListener("change", e => {
@@ -48,7 +69,6 @@ export class MenuBar {
             if (!file) return;
 
             const reader = new FileReader();
-
             reader.readAsText(file);
 
             reader.onload = () => {
@@ -59,8 +79,8 @@ export class MenuBar {
                 const model = parsePLY(reader.result);
                 const model_name = file.name.split(".")[0];
 
-                // TODO: make async??? If model exists, onload doesn't finish executing
-                // naming conflict
+                // TODO: make async??? If model exists, onload doesn't finish executing because of the 
+                // naming conflict, until the user closes the alert
                 scope.editor.addModel2(model_name, model);
             }
             reader.onerror = () => {

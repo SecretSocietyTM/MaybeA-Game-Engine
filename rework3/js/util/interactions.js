@@ -24,7 +24,7 @@ export function generateRayDir(width, height, x, y, proj, view) {
 }
 
 export function calculateObjectCenterScreenCoord(width, height, object, proj, view) {
-    const cntr = vec4.fromValues(object.pos[0], object.pos[1], object.pos[2], 1);
+    const cntr = vec4.fromValues(object.position[0], object.position[1], object.position[2], 1);
     vec4.transformMat4(cntr, cntr, view); // world space --> view space
     vec4.transformMat4(cntr, cntr, proj); // view space  --> clip space
     vec4.scale(cntr, cntr, 1 / cntr[3]);   // clip space  --> NDC coords

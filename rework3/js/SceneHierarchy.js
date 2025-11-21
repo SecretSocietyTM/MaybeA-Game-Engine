@@ -5,8 +5,6 @@ export class SceneHierarchy {
         this.signals = editor.signals;
 
         this.object_map = new Map();
-
-        // TODO: not a fan of this
         this.object_element_map = new Map();
 
         this.ui = {
@@ -52,12 +50,11 @@ export class SceneHierarchy {
 
         this.ui.list.replaceChildren();
 
-        for (const [key, name]of this.object_map) {
+        for (const [object, name] of this.object_map) {
             const li = this.createLi({name});
             this.ui.list.appendChild(li);
 
-            //  TODO: kind of hacky but needed to get the li corresponding to the object
-            this.object_element_map.set(key, li);
+            this.object_element_map.set(object, li);
         }
 
         const selected = this.editor.cur_selection;
@@ -69,7 +66,6 @@ export class SceneHierarchy {
 
     }
 
-    // TODO: improve
     createLi(object_info) {
         const li = document.createElement("li");
         li.className = "scene_list_li";

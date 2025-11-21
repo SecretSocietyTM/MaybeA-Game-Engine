@@ -220,12 +220,12 @@ export class TransformControls extends EventDispatcher {
 
         if (this.isIntersectingGizmo([mouse_x, rect.height - mouse_y])) {
             this.start_pos = Interactions.calculatePlaneIntersectionPoint2(
-                raycaster.ray, camera.dir, object.pos
+                raycaster.ray, camera.dir, object.position
             );
 
             if (this.mode === "scale") {
                 this.start_pos2 = this.start_pos;
-                this.start_pos = object.pos;
+                this.start_pos = object.position;
             }
 
             this.is_interacting = true;
@@ -235,7 +235,7 @@ export class TransformControls extends EventDispatcher {
 
             if (intersections.length > 0) {
                 this.start_pos = Interactions.calculatePlaneIntersectionPoint2(
-                    raycaster.ray, camera.dir, object.pos
+                    raycaster.ray, camera.dir, object.position
                 );
 
                 this.is_interacting = true;
@@ -262,21 +262,21 @@ export class TransformControls extends EventDispatcher {
 
         if (this.is_interacting) {
             const target = this.interacting_with;
-            const new_pos = Interactions.calculatePlaneIntersectionPoint2(raycaster.ray, camera.dir, object.pos);
+            const new_pos = Interactions.calculatePlaneIntersectionPoint2(raycaster.ray, camera.dir, object.position);
 
             if (this.mode === "translate") {
-                let translate_vector = [...object.pos];
+                let translate_vector = [...object.position];
 
                 if (target === "2d_gizmo") {
                     const pos_offset = vec3.subtract([], new_pos, this.start_pos);
-                    translate_vector = vec3.add([], object.last_static_transform.pos, pos_offset);
+                    translate_vector = vec3.add([], object.last_static_transform.position, pos_offset);
                 } else {
                     const axis_map = {x_trans: 0, y_trans: 1, z_trans: 2};
                     const axis = axis_map[target];
-                    translate_vector[axis] = object.last_static_transform.pos[axis] + new_pos[axis] - this.start_pos[axis];
+                    translate_vector[axis] = object.last_static_transform.position[axis] + new_pos[axis] - this.start_pos[axis];
                 }
 
-                object.updatePos(translate_vector);
+                object.updatePosition(translate_vector);
             } else if (this.mode === "scale") {
                 let scale_vector = [...object.scale];
 
@@ -293,7 +293,7 @@ export class TransformControls extends EventDispatcher {
                 
                 object.updateScale(scale_vector);
             } else if (this.mode === "rotate") {
-                let rotate_vector2 = [...object.rotation_angles];
+                let rotate_vector2 = [...object.rotation];
 
                 if (target === "2d_gizmo") {
                     // TODO - Issue #4: the object will snap to a different angle if rotated after moving the camera after an initial rotation
@@ -308,7 +308,7 @@ export class TransformControls extends EventDispatcher {
                     rotate_vector2[axis] = object.last_static_transform.rotation[axis] + (new_pos[axis] - this.start_pos[axis]) * 180 / Math.PI
                 }
                 
-                object.updateRot(rotate_vector2);
+                object.updateRotation(rotate_vector2);
             }
 
             this.dispatchEvent(this.objectChange_event);
@@ -403,14 +403,14 @@ class TransformControlsObjects extends SceneObject {
     constructor(
         name = "object",
         mesh,
-        pos = [0,0,0],
+        position = [0,0,0],
         scale = [1,1,1],
-        rotation_angles = [0,0,0],
+        rotation = [0,0,0],
         
         color,
         depth_test = true
     ) {
-        super(name, mesh, pos, scale, rotation_angles, color, depth_test);
+        super(name, mesh, position, scale, rotation, color, depth_test);
 
         this.reference_distance = 10;
         this.reference_scale = 0.8;
@@ -426,10 +426,10 @@ class TransformControlsObjects extends SceneObject {
 
         // For some reason camera and object are set to undefined
         if (camera  && object) {
-            const distance_to_object = vec3.distance(camera.pos, object.pos);
+            const distance_to_object = vec3.distance(camera.pos, object.position);
             const scale = (distance_to_object / this.reference_distance) * this.reference_scale;
 
-            this.updatePos(object.pos);
+            this.updatePosition(object.position);
             this.updateScale([scale, scale, scale]);
         }
 

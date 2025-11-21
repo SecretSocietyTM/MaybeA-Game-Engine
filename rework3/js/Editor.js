@@ -19,9 +19,12 @@ export class Editor {
         // essentially just state 
         this.views = [];
         this.scene_objects = [];
-        this.model_map = new Map();
+        this.model_map = new Map(); // (key = model name, value = model)
 
         // TODO: improve, temp solution to select from SceneHierarchy
+
+        // TODO: because I use a map, objects with the same name are overwritten
+        // need to find a way to change their names or use IDs
         this.name_to_object = new Map();
 
         this.cur_selection = null;
@@ -69,7 +72,7 @@ export class Editor {
     }
 
     addObjectFromModel(model_name) {
-        const model = this.getModel(model_name);
+        const model = this.getModel(model_name); // model is actually just the mesh
 
         if (!model) return;
 
@@ -140,4 +143,85 @@ export class Editor {
             return this.model_map.get(model_name);
         }
     }
+
+
+
+
+    // Load functions
+
+    fromJSON(json) {
+
+        // load models
+        json.models.forEach(model => this.addModel2(model.name, model.model));
+
+        // create scene object from details
+        json.scene.forEach(obj => {
+
+            // TODO: once better SceneObject constructor is added this will need to be changed
+            const mesh = this.model_map.get(obj.name);
+
+            const object = new SceneObject(
+                obj.name,
+                mesh,
+                obj.position,
+                obj.scale,
+                obj.rotation,
+                obj.color,
+                obj.depth_test,
+            );
+
+            // still need to set use_color, visible, show_AABBB
+            object.use_color = obj.use_color;
+            object.visible = obj.visible;
+            object.show_AABB = obj.show_AABB;
+
+            this.addObject(object);
+        });
+    }
+
+
+
+    // JSON file functions
+    toJSON() {
+        
+        const output = {};
+
+        const scene = this.name_to_object;
+        const models = this.model_map;
+
+        // models
+        const models_output = [];
+        models.forEach((model, model_name) => {
+            models_output.push({name: model_name, model: model});
+        });
+
+        output.models = models_output;
+
+        // scene objects
+        const scene_output = [];
+        scene.forEach((object, object_name) => {
+            scene_output.push(object.toJSON());
+        });
+
+        output.scene = scene_output;
+
+        return output;
+    }
 }
+
+
+
+// Unity has it so that the name of the MODEL in the assets tab is the name of the file without the .extension
+// and the name of the mesh is the name of the mesh provided aka the actual vertex data.
+
+
+// Two options for naming objects:
+/* 
+- name as the id (blender and godot method) name of an object must be unique
+** Note: godot lets objcets have the same name if they are nested. Parent: CubeName -> Child: CubeName
+** but not if they are part of the same "level" / hierarchy
+
+- separate id (unity, figma, three.js)
+** Note: its odd because unity initially forces a name change upon copying and pasting an object, but
+** renaming the object to match the name of another object is allowed
+*/

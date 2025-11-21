@@ -39,8 +39,8 @@ const weird_cube = new SceneObject("weird cube", MeshesObj.weird_cube);
 const wall = new SceneObject("wall", MeshesObj.unit_cube, [0,0,-15], [10,10,1], [0,0,0], [1.0,0.5,0.0]);
 const floor = new SceneObject("floor", MeshesObj.unit_cube, [0,-2.2,0], [15,1,15], [0,0,0], [0.2,0.2,0.2]);
 
-editor.addObject(unit_cube);
+/* editor.addObject(unit_cube);
 editor.addObject(apple);
 editor.addObject(weird_cube);
 editor.addObject(wall);
-editor.addObject(floor);
+editor.addObject(floor); */

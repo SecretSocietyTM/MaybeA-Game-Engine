@@ -66,7 +66,7 @@ export class ObjectInspector {
                 const new_val = +ui_position[key].value;
                 ui_position[key].value = new_val.toFixed(2);
 
-                scope.object.updatePos(new_position);
+                scope.object.updatePosition(new_position);
                 // TODO: this should not function like this... 
                 scope.object.setLastStaticTransform();
 
@@ -85,7 +85,7 @@ export class ObjectInspector {
                 const new_val = +ui_rotation[key].value;
                 ui_rotation[key].value = new_val.toFixed(1);
 
-                scope.object.updateRot(new_rotation);
+                scope.object.updateRotation(new_rotation);
                 // TODO: this should not function like this... 
                 scope.object.setLastStaticTransform();
 
@@ -165,14 +165,14 @@ export class ObjectInspector {
         this.ui.name.value = object.name;
 
         // set position
-        this.ui.position.x.value = object.pos[0].toFixed(2);
-        this.ui.position.y.value = object.pos[1].toFixed(2);
-        this.ui.position.z.value = object.pos[2].toFixed(2);
+        this.ui.position.x.value = object.position[0].toFixed(2);
+        this.ui.position.y.value = object.position[1].toFixed(2);
+        this.ui.position.z.value = object.position[2].toFixed(2);
 
         // set rotation
-        this.ui.rotation.x.value = object.rotation_angles[0].toFixed(1);
-        this.ui.rotation.y.value = object.rotation_angles[1].toFixed(1);
-        this.ui.rotation.z.value = object.rotation_angles[2].toFixed(1);
+        this.ui.rotation.x.value = object.rotation[0].toFixed(1);
+        this.ui.rotation.y.value = object.rotation[1].toFixed(1);
+        this.ui.rotation.z.value = object.rotation[2].toFixed(1);
 
         // set scale
         this.ui.scale.x.value = object.scale[0].toFixed(2);
