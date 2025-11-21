@@ -7,7 +7,8 @@ import { CameraControls } from "./util/CameraControls.js";
 const raycaster = new Raycaster();
 
 export class ViewWindow {
-    constructor(editor, dom_element, width = 800, height = 600) {
+
+    constructor(editor, dom_element) {
         this.editor = editor;
         this.signals = editor.signals;
 
@@ -15,17 +16,6 @@ export class ViewWindow {
         this.renderer = editor.renderer;
         this.canvas = editor.canvas;
         
-        // TODO: (1) uncomment, old way of doing things
-        /* this.dom_element.style.width = `${width}px`;
-        this.dom_element.style.height = `${height}px`;
-        const rect = this.dom_element.getBoundingClientRect();
-        this.left = rect.left;
-        this.bottom = this.canvas.clientHeight - rect.bottom;
-        this.width = width;
-        this.height = height; */
-
-        // TODO: implement new method
-        // this method assumes the div already has a size assigned
         const rect = this.dom_element.getBoundingClientRect();
         this.left = rect.left;
         this.bottom = this.canvas.clientHeight - rect.bottom;
@@ -42,13 +32,15 @@ export class ViewWindow {
         // 
         // transform controls
         this.transform_controls = new TransformControls(this.camera);
-        this.transform_controls.addEventListener("change", () => {
+        this.transform_controls.addEventListener("objectChange", () => {
 
-            // TODO: objectChanged should not trigger just for hovering over the transform gizmos
             this.signals.objectChanged.dispatch(this.editor.cur_selection);
 
             this.render();
-        })
+        });
+        this.transform_controls.addEventListener("axisChange", () => {
+            this.render();
+        });
         this.transform_controls.connect(this.dom_element);
 
         // 
@@ -88,7 +80,6 @@ export class ViewWindow {
             this.render();
         });
 
-        // TODO: not sure this is the best way to do this
         this.signals.objectChanged.addListener( () => {
             this.render();
         });

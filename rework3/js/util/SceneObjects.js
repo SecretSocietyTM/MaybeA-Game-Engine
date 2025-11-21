@@ -4,9 +4,12 @@ const vec3 = glm.vec3;
 const vec4 = glm.vec4;
 const mat4 = glm.mat4;
 
+import EventDispatcher from "./EventDispatcher.js";
 import AxisAlignedBoundingBox from "./AxisAlignedBoundingBox.js";
 
-export default class SceneObject {
+const transformChange_event = {type: "transformChange"};
+
+export default class SceneObject extends EventDispatcher {
 
     constructor(
         name = "object",
@@ -17,7 +20,9 @@ export default class SceneObject {
         
         color,
         depth_test = true
-    ) {         
+    ) {  
+        super();
+
         if(!mesh) {
             throw new Error("Please provide the constructor with a mesh");
         }
@@ -25,7 +30,18 @@ export default class SceneObject {
         this.name = name;
         this.mesh = mesh;
 
-        this.transform(pos, scale, rotation_angles);
+        defineProperty(this, "pos", pos);
+        defineProperty(this, "scale", scale);
+        defineProperty(this, "rotation_angles", rotation_angles); 
+        // TODO: change all instances of pos to position
+        // TODO: change all instances of rotation_angles to rotation
+
+        this.addEventListener("transformChange", () => {
+            this.update_model_matrix = true;
+        });
+
+        this.update_model_matrix = true;
+        this.updateModelMatrix();
 
         this.aabb = new AxisAlignedBoundingBox(this.mesh.vertices, this.model_matrix);
 
@@ -42,42 +58,6 @@ export default class SceneObject {
         this.visible = true;
         this.depth_test = depth_test;
         this.show_AABB = false;
-    }
-
-    transform(pos = [0, 0, 0], 
-              scale = [1, 1, 1], 
-              rotation_angles = [0,0,0]) {
-        this.pos = pos;
-        this.scale = scale;
-        this.rotation_angles = rotation_angles;
-
-        this.model_matrix = mat4.create();
-        mat4.translate(this.model_matrix, this.model_matrix, pos);
-        mat4.rotateX(this.model_matrix, this.model_matrix, glm.glMatrix.toRadian(rotation_angles[0]));
-        mat4.rotateY(this.model_matrix, this.model_matrix, glm.glMatrix.toRadian(rotation_angles[1]));
-        mat4.rotateZ(this.model_matrix, this.model_matrix, glm.glMatrix.toRadian(rotation_angles[2]));
-        mat4.scale(this.model_matrix, this.model_matrix, scale);
-
-        if ("aabb" in this) this.aabb.updateAABB(this.model_matrix);
-    }
-
-    transformTargetTo(pos, target, up, scale = [1,1,1]) {
-        this.pos = pos;
-        this.scale = scale;
-
-        // Create the base orientation matrix that makes the object look at 'target'
-        this.model_matrix = mat4.create();
-        mat4.targetTo(this.model_matrix, pos, target, up);
-
-        // --- Apply a 180° rotation around Y to flip the model ---
-        const flip = mat4.create();
-        mat4.rotateY(flip, flip, Math.PI); // 180° in radians
-        mat4.multiply(this.model_matrix, this.model_matrix, flip);
-
-        // --- Apply scaling ---
-        mat4.scale(this.model_matrix, this.model_matrix, scale);
-
-        if (this.aabb !== null) this.aabb.updateAABB(this.model_matrix);
     }
 
     rotateOnAxis(angle, axis) {
@@ -109,34 +89,12 @@ export default class SceneObject {
         this.scale = scale;
     }
 
-    repelFrom(object) {
-        if (!this.aabb.isColliding(object.aabb)) return;
-
-        const penetration = this.aabb.getPenetration(object.aabb);
-        const move = [0,0,0];
-
-        if (penetration.axis === 'x') move[0] = penetration.dir * penetration.depth;
-        if (penetration.axis === 'y') move[1] = penetration.dir * penetration.depth;
-        if (penetration.axis === 'z') move[2] = penetration.dir * penetration.depth;
-
-        this.updatePos(vec3.add([], this.last_static_transform.pos, move));
-        this.setLastStaticTransform();
-    }
-
-
-
-
-
-
-
-
-
-
-
-
     // TODO: add way to determine if the object's transforms have changed
     // if not DO NOT execute this function as it is pretty calc heavy
     updateModelMatrix() {
+
+        if (this.update_model_matrix === false) return;
+
         const m = mat4.create();
         
         mat4.translate(m, m, this.pos);
@@ -148,5 +106,26 @@ export default class SceneObject {
         if ("aabb" in this) this.aabb.updateAABB(m);
 
         this.model_matrix = m;
+        this.update_model_matrix = false;
     }
+}
+
+function defineProperty(scope, prop_name, default_value) {
+
+    let prop_value = default_value;
+
+    Object.defineProperty(scope, prop_name, {
+
+        get: function() { 
+            return prop_value;
+        },
+
+        set: function(value) {
+            if ( prop_value !== value) {
+                prop_value = value;
+
+                scope.dispatchEvent(transformChange_event);
+            }
+        }
+    });
 }

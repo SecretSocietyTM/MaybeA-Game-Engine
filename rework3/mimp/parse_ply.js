@@ -55,7 +55,6 @@ export function parsePLY(ply) {
             vertex_info[1],
             vertex_info[2]
         );
-        // TODO: IMPLEMENT SOMETHING BETTER
         if (vertex_info[color_index + 0] > 1 || 
             vertex_info[color_index + 1] > 1 ||
             vertex_info[color_index + 2] > 1) {

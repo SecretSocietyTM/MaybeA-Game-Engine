@@ -10,7 +10,7 @@ uniform vec2 u_windowBotLeft;
 uniform bool u_draw2DGizmo;
 
 void main() {
-// TODO: these are NOT uv coords. 
+    // Below variable is NOT a UV coordinate (not in range 0 - 1);
     vec2 uv = gl_FragCoord.xy - u_windowBotLeft;
     float dist = length(uv - u_cntr);
 

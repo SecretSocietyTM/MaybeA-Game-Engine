@@ -80,7 +80,8 @@ export class TransformControls extends EventDispatcher {
         this.prev_axis = this.axis;
 
         // events
-        this.change_event = {type: "change"};
+        this.objectChange_event = {type: "objectChange"};
+        this.axisChange_event = {type: "axisChange"};
 
         this.initGizmoObjects(MeshesObj);
         this.setMode();
@@ -310,7 +311,7 @@ export class TransformControls extends EventDispatcher {
                 object.updateRot(rotate_vector2);
             }
 
-            this.dispatchEvent(this.change_event);
+            this.dispatchEvent(this.objectChange_event);
         }
     }
 
@@ -329,7 +330,7 @@ export class TransformControls extends EventDispatcher {
         this.handleHover(raycaster, [mouse_x, rect.height - mouse_y]);
 
         if (this.prev_axis !== this.axis) {
-            this.dispatchEvent(this.change_event);
+            this.dispatchEvent(this.axisChange_event);
         }
     }
 
@@ -411,11 +412,10 @@ class TransformControlsObjects extends SceneObject {
     ) {
         super(name, mesh, pos, scale, rotation_angles, color, depth_test);
 
-        // references to the target object and camera
-        // use these to update the model matrix
         this.reference_distance = 10;
         this.reference_scale = 0.8;
 
+        // references to the target object and camera, used to update the model matrix
         this.camera = null;
         this.object = null;
     }
@@ -424,11 +424,14 @@ class TransformControlsObjects extends SceneObject {
         const camera = this.camera;
         const object = this.object;
 
-        const distance_to_object = vec3.distance(camera.pos, object.pos);
-        const scale = (distance_to_object / this.reference_distance) * this.reference_scale;
+        // For some reason camera and object are set to undefined
+        if (camera  && object) {
+            const distance_to_object = vec3.distance(camera.pos, object.pos);
+            const scale = (distance_to_object / this.reference_distance) * this.reference_scale;
 
-        this.updatePos(object.pos);
-        this.updateScale([scale, scale, scale]);
+            this.updatePos(object.pos);
+            this.updateScale([scale, scale, scale]);
+        }
 
         super.updateModelMatrix();
     }
