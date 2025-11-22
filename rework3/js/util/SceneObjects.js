@@ -32,12 +32,8 @@ export default class SceneObject extends EventDispatcher {
     ) {  
         super();
 
-        // TODO: for now the object's actual display name and its mesh name are the same, but in the future we will want
-        // meshes to have separate names from the model.
-        // This will break if i call editor.toJSON() and an object's name has been changed from the name of the 
-        // model that it was created from
         this.name = name;
-        this.mesh = mesh;
+        this.mesh = mesh; // { name: "ex", data: { vertices: [], indices: [], vertex_colors: [] } };
 
         this.id = createId();
 
@@ -53,7 +49,7 @@ export default class SceneObject extends EventDispatcher {
         this.update_model_matrix = true;
         this.updateModelMatrix();
 
-        this.aabb = new AxisAlignedBoundingBox(this.mesh.vertices, this.model_matrix);
+        this.aabb = new AxisAlignedBoundingBox(this.mesh.data.vertices, this.model_matrix);
 
         this.last_static_transform = null;
         this.setLastStaticTransform();
@@ -121,7 +117,7 @@ export default class SceneObject extends EventDispatcher {
 
         return {
             name: this.name,
-            model_name: this.name,
+            mesh_name: this.mesh.name,
             position: this.position,
             rotation: this.rotation,
             scale: this.scale,

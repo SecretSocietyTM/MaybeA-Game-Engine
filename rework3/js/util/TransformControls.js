@@ -109,34 +109,38 @@ export class TransformControls extends EventDispatcher {
     }
 
     initGizmoObjects(meshes) {
+        const translate_mesh = {data: meshes.translate_gizmo};
+        const rotate_mesh = {data: meshes.rotate_gizmo3};
+        const scale_mesh = {data: meshes.scale_gizmo2};
+
         // translate
-        const x_trans = new TransformControlsObjects("x_trans", meshes.translate_gizmo, [0,0,0],
+        const x_trans = new TransformControlsObjects("x_trans", translate_mesh, [0,0,0],
             Array(3).fill(this.reference_scale), [0,0,-90], this.RED, false);
 
-        const y_trans = new TransformControlsObjects("y_trans", meshes.translate_gizmo, [0,0,0], 
+        const y_trans = new TransformControlsObjects("y_trans", translate_mesh, [0,0,0], 
             Array(3).fill(this.reference_scale), [0,0,0], this.GREEN, false);
 
-        const z_trans = new TransformControlsObjects("z_trans", meshes.translate_gizmo, [0,0,0],
+        const z_trans = new TransformControlsObjects("z_trans", translate_mesh, [0,0,0],
             Array(3).fill(this.reference_scale), [90,0,0], this.BLUE, false);
 
         // rotate
-        const x_rotate = new TransformControlsObjects("x_rotate", meshes.rotate_gizmo3, [0,0,0], 
-            Array(3).fill(this.reference_scale), [0,0,-90], this.RED, false);
+        const x_rotate = new TransformControlsObjects("x_rotate", rotate_mesh, [0,0,0], 
+            Array(3).fill(this.reference_scale), [0,0,-90], this.RED, false, rotate_mesh);
 
-        const y_rotate = new TransformControlsObjects("y_rotate", meshes.rotate_gizmo3, [0,0,0], 
+        const y_rotate = new TransformControlsObjects("y_rotate", rotate_mesh, [0,0,0], 
             Array(3).fill(this.reference_scale), [0,0,0], this.GREEN, false);
     
-        const z_rotate = new TransformControlsObjects("z_rotate", meshes.rotate_gizmo3, [0,0,0], 
+        const z_rotate = new TransformControlsObjects("z_rotate", rotate_mesh, [0,0,0], 
             Array(3).fill(this.reference_scale), [90,0,0], this.BLUE, false)
 
         // scale
-        const x_scale = new TransformControlsObjects("x_scale", meshes.scale_gizmo2, [0,0,0], 
+        const x_scale = new TransformControlsObjects("x_scale", scale_mesh, [0,0,0], 
             Array(3).fill(this.reference_scale), [0, 0, -90], this.RED, false)
     
-        const y_scale = new TransformControlsObjects("y_scale", meshes.scale_gizmo2, [0,0,0], 
+        const y_scale = new TransformControlsObjects("y_scale", scale_mesh, [0,0,0], 
             Array(3).fill(this.reference_scale), [0,0,0], this.GREEN, false);
 
-        const z_scale = new TransformControlsObjects("z_scale", meshes.scale_gizmo2, [0,0,0], 
+        const z_scale = new TransformControlsObjects("z_scale", scale_mesh, [0,0,0], 
             Array(3).fill(this.reference_scale), [90,0,0], this.BLUE, false)
 
         this.translate_gizmos.push(x_trans, y_trans, z_trans);
@@ -408,7 +412,7 @@ class TransformControlsObjects extends SceneObject {
         rotation = [0,0,0],
         
         color,
-        depth_test = true
+        depth_test = true,
     ) {
         super(name, mesh, position, scale, rotation, color, depth_test);
 

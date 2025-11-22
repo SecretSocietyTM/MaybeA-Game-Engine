@@ -54,7 +54,7 @@ export class ViewWindow {
 
         // 
         // view controls
-        this.dom_element.addEventListener("click", this.mouseClick); // likely going to need to separate to mousedown + mouseup since click fires on a double click
+        this.dom_element.addEventListener("click", this.mouseClick);
         this.dom_element.addEventListener("dblclick", this.doubleClick);
         // TODO: this should be in Editor.js somehow
         document.addEventListener("keydown", (e) => {

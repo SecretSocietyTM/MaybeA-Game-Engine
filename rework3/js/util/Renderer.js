@@ -166,8 +166,8 @@ export default class Renderer2 {
             this.gl.uniform1i(this.u_useClr_location, object.use_color);
             this.gl.uniform4fv(this.u_clr_location, [object.color[0], object.color[1], object.color[2], 1]);
 
-            this.gl.bindVertexArray(this.getVAO(object.mesh));
-            this.gl.drawElements(this.gl.TRIANGLES, object.mesh.indices.length, this.gl.UNSIGNED_SHORT, 0);
+            this.gl.bindVertexArray(this.getVAO(object.mesh.data));
+            this.gl.drawElements(this.gl.TRIANGLES, object.mesh.data.indices.length, this.gl.UNSIGNED_SHORT, 0);
             this.gl.bindVertexArray(null);
 
             // if force_AABB, the ViewWindow wants to show all AABBs, render all
@@ -290,8 +290,8 @@ export default class Renderer2 {
         this.gl.uniform1i(this.u_useClr_location, object.use_color);
         this.gl.uniform4fv(this.u_clr_location, [object.color[0], object.color[1], object.color[2], 1]);
 
-        this.gl.bindVertexArray(this.getVAO(object.mesh));
-        this.gl.drawElements(this.gl.TRIANGLES, object.mesh.indices.length, this.gl.UNSIGNED_SHORT, 0);
+        this.gl.bindVertexArray(this.getVAO(object.mesh.data));
+        this.gl.drawElements(this.gl.TRIANGLES, object.mesh.data.indices.length, this.gl.UNSIGNED_SHORT, 0);
         this.gl.bindVertexArray(null);
 
         // read the pixel data

@@ -76,7 +76,11 @@ export class Editor {
 
         if (!model) return;
 
-        const object = new SceneObject(model_name, model);
+        const mesh_name = model_name;
+        const mesh_data = model;
+        const mesh = {name: mesh_name, data: mesh_data};
+
+        const object = new SceneObject(model_name, mesh);
         this.addObject(object);
     }
 
@@ -135,7 +139,11 @@ export class Editor {
 
         if (!this.addModel(model_name, model)) return;
 
-        const object = new SceneObject(undefined, model);
+        const mesh_name = model_name;
+        const mesh_data = model;
+        const mesh = {name: mesh_name, data: mesh_data};
+
+        const object = new SceneObject(undefined, mesh);
 
         // TODO: this needs A LOT of work to look good but probably fine for now.
         const distance = object.aabb.sphere_radius / Math.tan(glm.glMatrix.toRadian(45) / 2) * 1.2;
@@ -218,9 +226,10 @@ export class Editor {
         // create scene object from details
         json.scene.forEach(obj => {
 
-            // TODO: once better SceneObject constructor is added this will need to be changed
-            // study how three.js loads from a save (mainly things like position, visibility)
-            const mesh = this.model_map.get(obj.name);
+            // TODO: below should eventually replace above
+            const mesh_name = obj.mesh_name;
+            const mesh_data = this.model_map.get(mesh_name);
+            const mesh = {name: mesh_name, data: mesh_data};
 
             const object = new SceneObject(
                 obj.name,
