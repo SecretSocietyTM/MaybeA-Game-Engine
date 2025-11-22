@@ -3,7 +3,7 @@ export class ModelsGrid {
         this.editor = editor;
         this.signals = editor.signals;
 
-        this.model_map = new Map();
+        this.model_map = new Map(); // (key: name, value: url)
 
         this.ui = {
             container: document.getElementById("models"),

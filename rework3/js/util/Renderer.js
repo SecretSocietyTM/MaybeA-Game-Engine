@@ -158,11 +158,8 @@ export default class Renderer2 {
         objects.forEach(object => {
             if (!object.visible) return;
 
-            // set depth test for each object
             object.depth_test ? this.gl.enable(this.gl.DEPTH_TEST) : this.gl.disable(this.gl.DEPTH_TEST);
 
-            // TODO: need to flag changes so that 
-            // model matrix isnt recomputed EVERY SINGLE TIME RENDER IS CALLED
             object.updateModelMatrix();
 
             this.gl.uniformMatrix4fv(this.u_model_location, this.gl.FALSE, object.model_matrix);

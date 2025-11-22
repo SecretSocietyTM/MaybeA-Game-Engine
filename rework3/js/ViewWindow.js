@@ -85,9 +85,19 @@ export class ViewWindow {
         });
 
         this.signals.objectSelected.addListener(object => {
+            
             this.transform_controls.detachObject();
 
+            const previous_selected = this.editor.prev_selection;
+
+            if (previous_selected) {
+                previous_selected.show_AABB = false;
+            }
+
             if (object !== null) {
+
+                object.show_AABB = true;
+
                 this.transform_controls.attachObject(object);
             }
 
@@ -112,7 +122,6 @@ export class ViewWindow {
         if (intersections.length > 0) {
             const object = intersections[0];
             this.editor.select(object);
-
         } else {
             this.editor.select(null);
         }

@@ -2,7 +2,6 @@ const glm = glMatrix; // shorten math library name,
 const vec3 = glm.vec3;
 const mat4 = glm.mat4;
 import SceneObject from "./util/SceneObjects.js";
-// TODO: not a huge fan of having to import the above... perhaps find a better place to create the modelPreviewThing()
 
 import { Signal } from "./util/ui_signals/Signals.js"
 
@@ -16,21 +15,18 @@ export class Editor {
         this.renderer = new Renderer3(this.canvas);
         this.renderer.addAABBMesh(MeshesObj.aabb_wireframe);
 
-        // essentially just state 
+        //
+        // state
         this.views = [];
         this.scene_objects = [];
-        this.model_map = new Map(); // (key = model name, value = model)
-
-        // TODO: improve, temp solution to select from SceneHierarchy
-
-        // TODO: because I use a map, objects with the same name are overwritten
-        // need to find a way to change their names or use IDs
-        this.name_to_object = new Map();
-
-        this.object_map = new Map();
+        
+        this.model_map = new Map();   // (key: name, value: model)
+        this.object_map = new Map();  // (key: id, value: object)
 
         this.cur_selection = null;
+        this.prev_selection = null;
 
+        //
         // signals
         this.signals = {
             objectSelected: new Signal(),
@@ -48,12 +44,14 @@ export class Editor {
         this.views.push(view);
     }
 
+
+
+    // scene objects
+
     // TODO: when adding an object to the scene I want the transform gizmos to show up on it
+    // make use of flag???
     addObject(object) {
         this.scene_objects.push(object);
-
-        // TODO: improve, temp solution to select from SceneHierarchy
-        this.name_to_object.set(object.name, object); 
         
         this.object_map.set(object.id, object);
 
@@ -61,8 +59,25 @@ export class Editor {
         this.signals.objectAdded.dispatch(object);
     }
 
+    addObjectFromModel(model_name) {
+        const model = this.getModel(model_name); // model is actually just the mesh
+
+        if (!model) return;
+
+        const object = new SceneObject(model_name, model);
+        this.addObject(object);
+    }
+
+
+
+
+
     select(object) {
         if (this.cur_selection === object) return;
+
+        if (this.cur_selection) {
+            this.prev_selection = this.cur_selection;
+        }
 
         this.cur_selection = object;
 
@@ -75,14 +90,9 @@ export class Editor {
         this.select(object);
     }
 
-    addObjectFromModel(model_name) {
-        const model = this.getModel(model_name); // model is actually just the mesh
 
-        if (!model) return;
+    // models
 
-        const object = new SceneObject(model_name, model);
-        this.addObject(object);
-    }
 
     addModel2(model_name, model) {
 
@@ -105,7 +115,11 @@ export class Editor {
 
         if (!this.removeModel(model_name)) return;
 
-        // TODO: need to find way to remove all objects that have this model applied to them
+        // TODO: need to find way to remove all objects that have this model applied to them, maybe use a hashmap?
+        // alternatively could just iterate over the objects_map looking for meshes with the same name.
+
+        // TODO: replace all instances of "model" to mesh. Since I want to be a game engine
+        // I will likely need to add a similar "prefab" / "asset" / "template" feature as outlined below.
 
         this.signals.modelRemoved.dispatch(model_name)
     }
@@ -126,8 +140,7 @@ export class Editor {
 
 
     // Map functions
-    
-    // TODO: maybe make a class for this
+
     addModel(model_name, model) {
         if (this.model_map.has(model_name)) {
             alert(`A model with the name ${model_name} already exists. Rename or delete the model`);
@@ -164,6 +177,7 @@ export class Editor {
         json.scene.forEach(obj => {
 
             // TODO: once better SceneObject constructor is added this will need to be changed
+            // study how three.js loads from a save (mainly things like position, visibility)
             const mesh = this.model_map.get(obj.name);
 
             const object = new SceneObject(
@@ -192,7 +206,6 @@ export class Editor {
         
         const output = {};
 
-        /* const scene = this.name_to_object; */
         const scene = this.object_map;
         const models = this.model_map;
 
@@ -231,4 +244,20 @@ export class Editor {
 - separate id (unity, figma, three.js)
 ** Note: its odd because unity initially forces a name change upon copying and pasting an object, but
 ** renaming the object to match the name of another object is allowed
+*/
+
+
+
+
+/* More Juice:
+So it seems that Unity (and PlayCanvas) do the following when you import a model (.fbx, .glb, etc)
+
+They create a "prefab" / "asset" / "template". This thing then gets the mesh from the model file assigned to it.
+
+I'm a dunce so I havn't quite figured out how to import models with textures and all that to unity but im sure that 
+it will create an "asset" and in the drop down it will show the mesh, texture, and whatever else.
+
+This is kind of what PlayCanvas does (it creates a new folder for each "template" which includes the template
+itself, the mesh, and the original file) but somehow the template knows which texture png to use despite no mention of it
+in the inspector tab.
 */

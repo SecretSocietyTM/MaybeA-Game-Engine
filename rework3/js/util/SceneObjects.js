@@ -99,8 +99,6 @@ export default class SceneObject extends EventDispatcher {
         this.scale = scale;
     }
 
-    // TODO: add way to determine if the object's transforms have changed
-    // if not DO NOT execute this function as it is pretty calc heavy
     updateModelMatrix() {
 
         if (this.update_model_matrix === false) return;

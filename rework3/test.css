@@ -64,7 +64,7 @@ body {
 
 .render_context__models {
     display: grid;
-    grid-template-rows: 75% auto;
+    grid-template-rows: 80% auto;
 }
 
 
@@ -215,7 +215,7 @@ IS THERE NO PROPERTY THAT JUST FILLS????
     gap: 1.2rem;
 
     /* TODO: so jank... have fun resizing */
-    height: 180px;
+    height: 140px;
     /* flex-grow: 1; THIS ACTUALLY FILLS IT OUT TO FIT PARENT BUT IT DOESN"T CONFINE IT TO THE AVAILABLE SPACE*/
 
     margin-inline-start: 1rem;

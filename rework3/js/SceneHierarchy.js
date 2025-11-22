@@ -4,8 +4,7 @@ export class SceneHierarchy {
         this.editor = editor;
         this.signals = editor.signals;
 
-        this.object_map = new Map();
-        this.object_element_map = new Map();
+        this.object_map = new Map(); // (key: id, value: {object, element})
 
         this.ui = {
             container: document.getElementById("scene_hierarchy"),
@@ -15,8 +14,9 @@ export class SceneHierarchy {
 
         // signals
         this.signals.objectAdded.addListener(object => {
-            // TODO | Priority: Low - object name should be unique, could be used as id for now object name -> cube, cube1, cube2
-            this.object_map.set(object, object.name);
+            const entry = {object: object, element: null};
+
+            this.object_map.set(object.id, entry);
 
             this.updateUI();
         });
@@ -27,8 +27,6 @@ export class SceneHierarchy {
         });
 
         this.signals.objectChanged.addListener(object => {
-            this.object_map.set(object, object.name);
-
             this.updateUI();
         });
 
@@ -42,7 +40,7 @@ export class SceneHierarchy {
             const object_li = e.target.closest("li");
             if (!object_li) return;
 
-            scope.editor.selectObjectById(object_li.dataset.id);
+            scope.editor.selectObjectById(+object_li.dataset.id);
         });
     }
 
@@ -50,20 +48,22 @@ export class SceneHierarchy {
 
         this.ui.list.replaceChildren();
 
-        for (const [object, name] of this.object_map) {
-            const li = this.createLi(object);
+        for (const [id, entry] of this.object_map) {
+            const li = this.createLi(entry.object);
             this.ui.list.appendChild(li);
 
-            this.object_element_map.set(object, li);
+            const new_entry = {object: entry.object, element: li};
+
+            this.object_map.set(id, new_entry);
         }
 
-        const selected = this.editor.cur_selection;
+        const selected = this.editor.cur_selection?.id;
 
         if (selected) {
-            const li = this.object_element_map.get(selected);
-            li.classList.add("selected");
+            const entry = this.object_map.get(selected);
+            entry.element.classList.add("selected");
+        
         }
-
     }
 
     createLi(object) {
