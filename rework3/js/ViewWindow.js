@@ -54,7 +54,7 @@ export class ViewWindow {
         // 
         // view controls
         this.dom_element.addEventListener("click", this.mouseClick);
-        // TODO: remove
+        // TODO: this should be in Editor.js somehow
         document.addEventListener("keydown", (e) => {
             if (e.key === "t") {
                 this.transform_controls.setMode("translate");
@@ -66,6 +66,18 @@ export class ViewWindow {
                 this.show_AABB = !this.show_AABB;
             } else if (e.key === "2") {
                 // Nothing yet
+            } else if (e.ctrlKey && e.key === "c") {
+                if (this.editor.cur_selection !== null) {
+                    this.editor.copied_object = this.editor.cur_selection;
+                }
+            } else if (e.ctrlKey && e.key === "v") {
+                if (this.editor.copied_object !== null) {
+                    this.editor.copyObject(this.editor.copied_object);
+                }
+            } else if (e.key === "Delete") {
+                if (this.editor.cur_selection !== null) {
+                    this.editor.removeObject(this.editor.cur_selection);
+                }
             }
 
             this.render();
@@ -76,6 +88,22 @@ export class ViewWindow {
 
         this.signals.objectAdded.addListener(object => {
             this.objects.push(object);
+
+            this.render();
+        });
+
+        this.signals.objectRemoved.addListener(object => {
+            let idx;
+            // TODO: not the best way to do this
+            for (let i = 0; i < this.objects.length; i++) {
+                const _object = this.objects[i];
+                if (_object.id === object.id) {
+                    idx = i;
+                    break;
+                }
+            }
+
+            this.objects.splice(idx, 1);
 
             this.render();
         });

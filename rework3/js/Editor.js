@@ -25,6 +25,7 @@ export class Editor {
 
         this.cur_selection = null;
         this.prev_selection = null;
+        this.copied_object = null;
 
         //
         // signals
@@ -33,7 +34,7 @@ export class Editor {
 
             objectChanged: new Signal(),
             objectAdded: new Signal(),
-            /* objectRemoved: new Signal(), */
+            objectRemoved: new Signal(),
 
             modelAdded: new Signal(),
             modelRemoved: new Signal()
@@ -59,6 +60,26 @@ export class Editor {
         this.signals.objectAdded.dispatch(object);
     }
 
+    removeObject(object) {
+        let idx;
+        // TODO: not the best way to do this
+        for (let i = 0; i < this.scene_objects.length; i++) {
+            const _object = this.scene_objects[i];
+            if (_object.id === object.id) {
+                idx = i;
+                break;
+            }
+        }
+
+        this.scene_objects.splice(idx, 1);
+
+        this.object_map.delete(object.id);
+
+        this.signals.objectRemoved.dispatch(object);
+
+        this.select(null);
+    }
+
     addObjectFromModel(model_name) {
         const model = this.getModel(model_name); // model is actually just the mesh
 
@@ -68,8 +89,23 @@ export class Editor {
         this.addObject(object);
     }
 
+    copyObject(object) {
 
+        const copy = new SceneObject(
+            object.name,
+            object.mesh,
+            object.position,
+            object.scale,
+            object.rotation,
+            object.color,
+            object.depth_test
+        );
 
+        copy.use_color = object.use_color;
+        copy.visible = object.visible;
+
+        this.addObject(copy);
+    }
 
 
     select(object) {
@@ -165,6 +201,11 @@ export class Editor {
 
 
     // Load functions
+
+    // TODO: implement
+    clear() {
+
+    }
 
     // TODO: when loading need to unload previos things.
 
