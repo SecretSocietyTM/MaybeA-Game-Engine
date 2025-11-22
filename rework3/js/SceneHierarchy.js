@@ -39,7 +39,14 @@ export class SceneHierarchy {
             const object_li = e.target.closest("li");
             if (!object_li) return;
 
-            scope.editor.selectObjectById(+object_li.dataset.id);
+            scope.editor.selectById(+object_li.dataset.id);
+        });
+
+        scope.ui.list.addEventListener("dblclick", e => {
+            const object_li = e.target.closest("li");
+            if (!object_li) return;
+
+            scope.editor.focusById(+object_li.dataset.id);
         });
     }
 

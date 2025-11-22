@@ -46,15 +46,16 @@ export class ViewWindow {
 
         // 
         // camera controls
-        const camera_controls = new CameraControls(this.camera);
-        camera_controls.addEventListener("change", () => {
+        this.camera_controls = new CameraControls(this.camera);
+        this.camera_controls.addEventListener("change", () => {
             this.render();
         });
-        camera_controls.connect(this.dom_element);
+        this.camera_controls.connect(this.dom_element);
 
         // 
         // view controls
-        this.dom_element.addEventListener("click", this.mouseClick);
+        this.dom_element.addEventListener("click", this.mouseClick); // likely going to need to separate to mousedown + mouseup since click fires on a double click
+        this.dom_element.addEventListener("dblclick", this.doubleClick);
         // TODO: this should be in Editor.js somehow
         document.addEventListener("keydown", (e) => {
             if (e.key === "t") {
@@ -117,6 +118,10 @@ export class ViewWindow {
 
             this.render();
         });
+
+        this.signals.objectFocused.addListener(object => {
+            this.camera_controls.focus(object);
+        });
     }
 
     mouseClick = (event) => {
@@ -140,6 +145,18 @@ export class ViewWindow {
             this.editor.select(null);
         }
 
+    }
+
+    doubleClick = (event) => {
+        const point_ndc = getMousePositionNDC(this.dom_element, event.offsetX, event.offsetY);
+
+        raycaster.setFromCamera(point_ndc, this.camera);
+        const intersections = raycaster.getIntersections(this.objects_array);
+
+        if (intersections.length > 0) {
+            const object = intersections[0];
+            this.editor.focus(object);
+        }
     }
 
 

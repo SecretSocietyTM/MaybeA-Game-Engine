@@ -32,6 +32,7 @@ export class Editor {
             sceneGraphChanged: new Signal(),
 
             objectSelected: new Signal(),
+            objectFocused: new Signal(),
 
             objectChanged: new Signal(),
             objectAdded: new Signal(),   // useless signal for now
@@ -110,10 +111,20 @@ export class Editor {
         this.signals.objectSelected.dispatch(object);
     }
 
-    selectObjectById(id) {
+    selectById(id) {
         const object = this.object_map.get(id);
 
         this.select(object);
+    }
+
+    focus(object) {
+        this.signals.objectFocused.dispatch(object);
+    }
+
+    focusById(id) {
+        const object = this.object_map.get(id);
+
+        this.focus(object);
     }
 
 

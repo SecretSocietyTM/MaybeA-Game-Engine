@@ -91,6 +91,21 @@ export class CameraControls extends EventDispatcher {
         this.dispatchEvent(this.change_event);
     }
 
+    focus(target) {
+        const camera = this.camera;
+
+        const distance = target.aabb.sphere_radius / Math.tan(glm.glMatrix.toRadian(45) / 2) * 1.2; // 1.2 = padding
+        const new_distance = vec3.scale([], camera.dir, distance);
+
+        camera.pos = vec3.add([], target.aabb.center, new_distance);
+        camera.target = target.position;
+        this.#zoom_val = vec3.length(vec3.subtract([], camera.pos, camera.target));
+        
+        camera.updateViewMatrix();
+
+        this.dispatchEvent(this.change_event);
+    }
+
     // Have to bind functions using arrow functions to use proper "this"
 
     mouseDown = (event) => {
