@@ -4,7 +4,8 @@ export class SceneHierarchy {
         this.editor = editor;
         this.signals = editor.signals;
 
-        this.object_map = new Map(); // (key: id, value: {object, element})
+        this.object_map = editor.object_map; // (key: id, value: object)
+        this.object_element_map = new Map(); // (key: id, value: {object, element})
 
         this.ui = {
             container: document.getElementById("scene_hierarchy"),
@@ -12,12 +13,10 @@ export class SceneHierarchy {
             list: document.getElementById("scene_list")
         }
 
+        //
         // signals
-        this.signals.objectAdded.addListener(object => {
-            const entry = {object: object, element: null};
 
-            this.object_map.set(object.id, entry);
-
+        this.signals.sceneGraphChanged.addListener(object => {
             this.updateUI();
         });
 
@@ -48,19 +47,19 @@ export class SceneHierarchy {
 
         this.ui.list.replaceChildren();
 
-        for (const [id, entry] of this.object_map) {
-            const li = this.createLi(entry.object);
+        for (const [id, object] of this.object_map) {
+            const li = this.createLi(object);
             this.ui.list.appendChild(li);
 
-            const new_entry = {object: entry.object, element: li};
+            const new_entry = {object: object, element: li};
 
-            this.object_map.set(id, new_entry);
+            this.object_element_map.set(id, new_entry);
         }
 
         const selected = this.editor.cur_selection?.id;
 
         if (selected) {
-            const entry = this.object_map.get(selected);
+            const entry = this.object_element_map.get(selected);
             entry.element.classList.add("selected");
         
         }

@@ -24,7 +24,8 @@ export class ViewWindow {
 
         this.camera = new Camera([30,0,0], [0,0,0], [0,1,0], 45, (this.width / this.height), 0.1, 1000);
 
-        this.objects = editor.scene_objects;
+        this.objects_map = editor.object_map; // (key: id, value: object)
+        this.objects_array = []; // an array is needed for certain things
 
         this.show_gizmos = true;
         this.show_AABB = false;
@@ -84,26 +85,11 @@ export class ViewWindow {
         });
 
 
+        //
         // signals
 
-        this.signals.objectAdded.addListener(object => {
-            this.objects.push(object);
-
-            this.render();
-        });
-
-        this.signals.objectRemoved.addListener(object => {
-            let idx;
-            // TODO: not the best way to do this
-            for (let i = 0; i < this.objects.length; i++) {
-                const _object = this.objects[i];
-                if (_object.id === object.id) {
-                    idx = i;
-                    break;
-                }
-            }
-
-            this.objects.splice(idx, 1);
+        this.signals.sceneGraphChanged.addListener(object => {
+            this.objects_array = [...this.objects_map.values()];
 
             this.render();
         });
@@ -145,7 +131,7 @@ export class ViewWindow {
         const point_ndc = getMousePositionNDC(this.dom_element, event.offsetX, event.offsetY);
 
         raycaster.setFromCamera(point_ndc, this.camera);
-        const intersections = raycaster.getIntersections(this.objects);
+        const intersections = raycaster.getIntersections(this.objects_array);
 
         if (intersections.length > 0) {
             const object = intersections[0];
@@ -162,7 +148,7 @@ export class ViewWindow {
         const start_time = performance.now();
 
         this.renderer.setViewport(this.left, this.bottom, this.width, this.height);
-        this.renderer.render3D(this.objects, this.camera, this.show_AABB);
+        this.renderer.render3D(this.objects_array, this.camera, this.show_AABB);
 
         if (this.transform_controls.display_gizmos) {
             this.renderer.render3D(this.transform_controls.active_gizmos, this.camera, false);

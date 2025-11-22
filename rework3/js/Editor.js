@@ -18,7 +18,6 @@ export class Editor {
         //
         // state
         this.views = [];
-        this.scene_objects = [];
         
         this.model_map = new Map();   // (key: name, value: model)
         this.object_map = new Map();  // (key: id, value: object)
@@ -30,11 +29,13 @@ export class Editor {
         //
         // signals
         this.signals = {
+            sceneGraphChanged: new Signal(),
+
             objectSelected: new Signal(),
 
             objectChanged: new Signal(),
-            objectAdded: new Signal(),
-            objectRemoved: new Signal(),
+            objectAdded: new Signal(),   // useless signal for now
+            objectRemoved: new Signal(), // useless signal for now
 
             modelAdded: new Signal(),
             modelRemoved: new Signal()
@@ -50,32 +51,21 @@ export class Editor {
     // scene objects
 
     // TODO: when adding an object to the scene I want the transform gizmos to show up on it
-    // make use of flag???
+    // Make use of flag to determine loading vs adding???
     addObject(object) {
-        this.scene_objects.push(object);
-        
         this.object_map.set(object.id, object);
 
-        // dispatch signal
         this.signals.objectAdded.dispatch(object);
+        this.signals.sceneGraphChanged.dispatch(object);
+
+        // this.select(object); // relatd to the above comment
     }
 
     removeObject(object) {
-        let idx;
-        // TODO: not the best way to do this
-        for (let i = 0; i < this.scene_objects.length; i++) {
-            const _object = this.scene_objects[i];
-            if (_object.id === object.id) {
-                idx = i;
-                break;
-            }
-        }
-
-        this.scene_objects.splice(idx, 1);
-
         this.object_map.delete(object.id);
 
         this.signals.objectRemoved.dispatch(object);
+        this.signals.sceneGraphChanged.dispatch(object);
 
         this.select(null);
     }
