@@ -65,13 +65,15 @@ export class Editor {
         }
     }
 
-    removeObject(object) {
+    removeObject(object, mesh_removed) {
         this.object_map.delete(object.id);
 
         this.signals.objectRemoved.dispatch(object);
         this.signals.sceneGraphChanged.dispatch(object);
 
-        this.select(null);
+        if (!mesh_removed) {
+            this.select(null);
+        }
     }
 
     addObjectFromModel(model_name) {
@@ -160,13 +162,14 @@ export class Editor {
 
         if (!this.removeModel(model_name)) return;
 
-        // TODO: need to find way to remove all objects that have this model applied to them, maybe use a hashmap?
-        // alternatively could just iterate over the objects_map looking for meshes with the same name.
+        for (const object of this.object_map.values()) {
+            if (object.mesh.name === model_name) this.removeObject(object, true);
+        }
 
         // TODO: replace all instances of "model" to mesh. Since I want to be a game engine
         // I will likely need to add a similar "prefab" / "asset" / "template" feature as outlined below.
 
-        this.signals.modelRemoved.dispatch(model_name)
+        this.signals.modelRemoved.dispatch(model_name);
     }
 
 
@@ -204,30 +207,29 @@ export class Editor {
         if (this.model_map.has(model_name)) {
             return this.model_map.get(model_name);
         }
+
+        return undefined;
     }
 
 
 
 
     // Load functions
-
-    // TODO: implement - when loading need to unload previos things.
-    clear() {
-
-    }
-
-    fromJSON(json) {
+    loadScene(scene) {
 
         this.loading_scene = true;
+        this.signals.sceneGraphChanged.active = false;
 
-        // load models
-        json.models.forEach(model => this.addModel2(model.name, model.model));
-
-        // create scene object from details
-        json.scene.forEach(obj => {
+        scene.forEach(obj => {
 
             const mesh_name = obj.mesh_name;
-            const mesh_data = this.model_map.get(mesh_name);
+            const mesh_data = this.getModel(mesh_name);
+
+            if (mesh_data === undefined) {
+                console.error(`Cannot create SceneObject with name "${obj.name}", the mesh "${mesh_name}" does not exist.`);
+                return;
+            }
+
             const mesh = {name: mesh_name, data: mesh_data};
 
             const object = new SceneObject(
@@ -249,11 +251,37 @@ export class Editor {
         });
 
         this.loading_scene = false;
+        this.signals.sceneGraphChanged.active = true;
+        this.signals.sceneGraphChanged.dispatch();
+
     }
 
+    clear() {
+        this.signals.sceneGraphChanged.active = false;
 
+        // TODO: not sure if this is proper but since removing a model removes all objects with the associated model i can just call removeModel2 for now
+        for (const model_name of this.model_map.keys()) {
+            this.removeModel2(model_name);
+        }
 
-    // JSON file functions
+        this.signals.sceneGraphChanged.active = true;
+    }
+
+    fromJSON(json) {
+
+        // clear the current scene / models
+        this.clear();
+
+        // load models
+        json.models.forEach(model => this.addModel2(model.name, model.model));
+
+        // create scene object from details
+        this.loadScene(json.scene);
+
+        // NOTE: despite clear() not dispatching a sceneGraphChanged or modelAdded signal, the Scene Hierarchy is updated
+        // because of addModel2() and loadScene();
+    }
+
     toJSON() {
         
         const output = {};
@@ -271,7 +299,7 @@ export class Editor {
 
         // scene objects
         const scene_output = [];
-        scene.forEach((object, object_name) => {
+        scene.forEach((object, id) => {
             scene_output.push(object.toJSON());
         });
 

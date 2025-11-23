@@ -23,6 +23,7 @@ class SignalBinding {
 export class Signal {
     constructor() {
         this.bindings = [];
+        this.active = true;
     }
 
     addListener(listener) {
@@ -61,6 +62,8 @@ export class Signal {
     }
 
     dispatch(data) {
+        if (!this.active) return;
+
         this.bindings.forEach(binding => {
             binding.execute(data);
         })

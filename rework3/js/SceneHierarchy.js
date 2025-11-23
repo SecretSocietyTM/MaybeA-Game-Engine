@@ -17,6 +17,9 @@ export class SceneHierarchy {
         // signals
 
         this.signals.sceneGraphChanged.addListener(object => {
+
+            console.log("signal sceneGraphChanged received, updating Scene Hierarchy");
+
             this.updateUI();
         });
 
