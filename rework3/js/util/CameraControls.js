@@ -17,7 +17,7 @@ export class CameraControls extends EventDispatcher {
     #STATE = {NONE: -1, PAN: 0, ORBIT: 1, ZOOM: 2};
     #state = this.#STATE.NONE;
 
-    // TODO - Issue #8
+    // TODO - Issue #8 - figure out yaw and pitch from camera movement upon construction
     #yaw = 0;
     #pitch = 0;
     #zoom_val;
@@ -36,7 +36,7 @@ export class CameraControls extends EventDispatcher {
     }
 
     // TODO - Issue #7
-    pan(dx, dy, sens = 0.05) {
+    pan(dx, dy, sens = 0.5) {
         const camera = this.camera;
 
         // pan the camera
@@ -51,7 +51,7 @@ export class CameraControls extends EventDispatcher {
     }
 
     // TODO - Issue #7
-    orbit(dx, dy, sens = 1) {
+    orbit(dx, dy, sens = 1.5) {
         const camera = this.camera;
 
         this.#yaw   += dx * sens;
@@ -93,15 +93,9 @@ export class CameraControls extends EventDispatcher {
 
     focus(target) {
         const camera = this.camera;
+        camera.focusOnTarget(target, undefined, 1.2);
 
-        const distance = target.aabb.sphere_radius / Math.tan(glm.glMatrix.toRadian(45) / 2) * 1.2; // 1.2 = padding
-        const new_distance = vec3.scale([], camera.dir, distance);
-
-        camera.pos = vec3.add([], target.aabb.center, new_distance);
-        camera.target = target.position;
         this.#zoom_val = vec3.length(vec3.subtract([], camera.pos, camera.target));
-        
-        camera.updateViewMatrix();
 
         this.dispatchEvent(this.change_event);
     }

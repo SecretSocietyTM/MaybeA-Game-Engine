@@ -3,9 +3,6 @@ import fs_src from "../../shaders/3d_pass/fragmentshader.js";
 import ui_pass_vs_src from "../../shaders/ui_pass/vertexshader.js";
 import ui_pass_fs_src from "../../shaders/ui_pass/fragmentshader.js";
 
-const glm = glMatrix; // shorten math library name,
-const mat4 = glm.mat4; // should not need this...
-
 export default class Renderer2 {
     constructor(canvas) {
         this.gl = canvas.getContext("webgl2");
@@ -226,7 +223,7 @@ export default class Renderer2 {
 
 
 
-    modelPreviewThing(object, view_matrix, size) {
+    modelPreviewThing(object, camera, size) {
 
         // define the buffer dimensions
         const width = size;
@@ -278,12 +275,8 @@ export default class Renderer2 {
         this.gl.disable(this.gl.SCISSOR_TEST);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
-
-        const proj_matrix = mat4.create();
-        mat4.perspective(proj_matrix, glm.glMatrix.toRadian(45), (width / height), 0.1, 1000);
-
-        this.gl.uniformMatrix4fv(this.u_view_location, this.gl.FALSE, view_matrix);
-        this.gl.uniformMatrix4fv(this.u_proj_location, this.gl.FALSE, proj_matrix);
+        this.gl.uniformMatrix4fv(this.u_view_location, this.gl.FALSE, camera.view_matrix);
+        this.gl.uniformMatrix4fv(this.u_proj_location, this.gl.FALSE, camera.proj_matrix);
 
         // use object properties
         this.gl.uniformMatrix4fv(this.u_model_location, this.gl.FALSE, object.model_matrix);

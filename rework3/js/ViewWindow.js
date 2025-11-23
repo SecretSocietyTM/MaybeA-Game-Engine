@@ -22,7 +22,7 @@ export class ViewWindow {
         this.width = rect.width;
         this.height = rect.height;
 
-        this.camera = new Camera([30,0,0], [0,0,0], [0,1,0], 45, (this.width / this.height), 0.1, 1000);
+        this.camera = new Camera(45, (this.width / this.height), 0.1, 1000);
 
         this.objects_map = editor.object_map; // (key: id, value: object)
         this.objects_array = []; // an array is needed for certain things

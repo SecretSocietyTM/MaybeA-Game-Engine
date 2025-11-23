@@ -1,18 +1,19 @@
 const glm = glMatrix; // shorten math library name,
 const vec3 = glm.vec3;
 const mat4 = glm.mat4;
-import SceneObject from "./util/SceneObjects.js";
 
+import Camera from "./util/Camera.js";
+import Renderer from "./util/Renderer.js";
+import SceneObject from "./util/SceneObjects.js";
 import { Signal } from "./util/ui_signals/Signals.js"
 
-import Renderer3 from "./util/Renderer.js";
 import MeshesObj from "../../models/meshes_index.js";
 
 export class Editor {
     constructor(canvas) {
 
         this.canvas = canvas;
-        this.renderer = new Renderer3(this.canvas);
+        this.renderer = new Renderer(this.canvas);
         this.renderer.addAABBMesh(MeshesObj.aabb_wireframe);
 
         //
@@ -25,6 +26,8 @@ export class Editor {
         this.cur_selection = null;
         this.prev_selection = null;
         this.copied_object = null;
+
+        this.loading_scene = false;
 
         //
         // signals
@@ -51,15 +54,15 @@ export class Editor {
 
     // scene objects
 
-    // TODO: when adding an object to the scene I want the transform gizmos to show up on it
-    // Make use of flag to determine loading vs adding???
     addObject(object) {
         this.object_map.set(object.id, object);
 
         this.signals.objectAdded.dispatch(object);
         this.signals.sceneGraphChanged.dispatch(object);
 
-        // this.select(object); // relatd to the above comment
+        if (!this.loading_scene) {
+            this.select(object);
+        }
     }
 
     removeObject(object) {
@@ -145,13 +148,10 @@ export class Editor {
 
         const object = new SceneObject(undefined, mesh);
 
-        // TODO: this needs A LOT of work to look good but probably fine for now.
-        const distance = object.aabb.sphere_radius / Math.tan(glm.glMatrix.toRadian(45) / 2) * 1.2;
-        const new_distance = vec3.scale([], vec3.normalize([], [1,0.5,1]), distance);
-        const view_matrix = mat4.create();
-        mat4.lookAt(view_matrix, vec3.add([], object.aabb.center, new_distance), object.aabb.center, [0,1,0]);
+        const preview_camera = new Camera();
+        preview_camera.focusOnTarget(object, [1,0.5,1], 1.2);
 
-        const model_url = this.renderer.modelPreviewThing(object, view_matrix, 100);
+        const model_url = this.renderer.modelPreviewThing(object, preview_camera, 100);
 
         this.signals.modelAdded.dispatch( {name: model_name, url: model_url} );
     }
@@ -211,14 +211,14 @@ export class Editor {
 
     // Load functions
 
-    // TODO: implement
+    // TODO: implement - when loading need to unload previos things.
     clear() {
 
     }
 
-    // TODO: when loading need to unload previos things.
-
     fromJSON(json) {
+
+        this.loading_scene = true;
 
         // load models
         json.models.forEach(model => this.addModel2(model.name, model.model));
@@ -226,7 +226,6 @@ export class Editor {
         // create scene object from details
         json.scene.forEach(obj => {
 
-            // TODO: below should eventually replace above
             const mesh_name = obj.mesh_name;
             const mesh_data = this.model_map.get(mesh_name);
             const mesh = {name: mesh_name, data: mesh_data};
@@ -248,6 +247,8 @@ export class Editor {
 
             this.addObject(object);
         });
+
+        this.loading_scene = false;
     }
 
 
