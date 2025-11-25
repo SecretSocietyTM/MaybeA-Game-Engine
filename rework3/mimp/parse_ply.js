@@ -5,7 +5,6 @@
  * @param {string} ply
  * @returns {object} mesh to be inserted into a scene
  */
-
 export function parsePLY(ply) {
     // start by breaking string up by presence of new line
     ply = ply.replace(/\r/g, "");
@@ -16,10 +15,6 @@ export function parsePLY(ply) {
         vertex_colors: [],
         indices: []
     };
-
-    // dont actually do anything with these...
-    let vertex_count;
-    let face_count;
 
     // start by reading header
     let i = 0;
@@ -83,4 +78,160 @@ export function parsePLY(ply) {
     }
 
     return mesh;
+}
+
+
+// Inspired by tinyply
+
+// 
+
+export class PlyFile {
+    constructor() {
+        this.elements = {};
+        this.current_element = null;
+        this.lines = [];
+    }
+
+    parsePLY(ply, getColors, getNormals, getUVs) {
+
+        this.clear();
+
+        this.lines = ply.split("\n");
+        
+        let mesh = {};
+
+        this.parsePLYHeader();
+
+        const positions = this.getVertexProperties(["x", "y", "z"]);
+        /* mesh.positions = positions; */
+        mesh.vertices = positions;
+
+        const faces = this.getFaceProperties();
+        /* mesh.faces = faces; */
+        mesh.indices = faces;
+        
+        // TODO: replace parameters with a check on whether these properties exist or not.
+        if (getColors) {
+            const colors = this.getVertexProperties(["red", "green", "blue"]);
+            /* mesh.colors = colors; */
+            mesh.vertex_colors = colors;
+        }
+
+        if (getNormals) {
+            const normals = this.getVertexProperties(["nx", "ny", "nz"]);
+            mesh.normals = normals;
+        }
+
+        if (getUVs) {
+            const uv_coords = this.getVertexProperties(["s", "t"]);
+            mesh.uv_coords = uv_coords;
+        }
+
+        return mesh;
+    }
+
+    clear() {
+        this.elements = {};
+        this.current_element = null;
+        this.lines = [];
+    }
+
+    // Requires split ply file 
+    parsePLYHeader() {
+
+        let line;
+        let success = true;
+
+        let i = 0;
+
+        while (true) {
+            line = this.lines[i];
+            i++;
+
+            if (line === "") continue;
+
+            const _line = line.trim().split(" ");
+            const token = _line[0];
+
+            if (token === "ply" || 
+                token === "PLY" || 
+                token === "comment" ||
+                token === "format"  || 
+                token === "obj_info") continue;
+            else if (token === "element") this.readHeaderElement(_line);
+            else if (token === "property") this.readHeaderProperty(_line);
+            else if (token === "end_header") break;
+            else success = false;
+        }
+
+        this.elements.vertex.start_idx = i;
+        this.elements.face.start_idx = i + this.elements.vertex.length;
+
+        return success;
+    }
+
+    readHeaderElement(line) {
+        const type = line[1];
+        const length = +line[2];
+
+        const element = {
+            length: length,
+            properties: []
+        };
+
+        this.current_element = type;
+        this.elements[type] = element;
+    }
+
+    readHeaderProperty(line) {
+        const property = line[line.length - 1];
+
+        if (this.current_element === null) throw new Error("No elements. Bad file");
+        this.elements[this.current_element].properties.push(property);
+    }
+
+    getVertexProperties(properties) {
+        if (!this.elements.hasOwnProperty("vertex")) {
+            throw new Error("vertex element does not exist");
+        }
+
+        let out_data = [];
+
+        const vertex = this.elements.vertex;
+        const props = vertex.properties;
+        const count = vertex.length;
+        const start = vertex.start_idx;
+
+        for (let i = start; i < start + count; i++) {
+            const line_data = this.lines[i].split(" ");
+            for (const key of properties) {
+                const prop_idx = props.indexOf(key);
+                let  prop_data = line_data[prop_idx];
+                if (key === "red" || key === "green" || key === "blue") prop_data /= 255
+                out_data.push(prop_data);
+            }
+        }
+
+        return out_data;
+    }
+
+    getFaceProperties() {
+        if (!this.elements.hasOwnProperty("face")) {
+            throw new Error("face element does not exist");
+        }
+
+        let out_data = [];
+
+        const face = this.elements.face;
+        const count = face.length;
+        const start = face.start_idx;
+
+        for (let i = start; i < start + count; i++) {
+            const data = this.lines[i].split(" ");
+            // assumes triangles, no quads.
+            out_data.push(data[1], data[2], data[3]);
+        }
+
+        return out_data;
+    }
 }

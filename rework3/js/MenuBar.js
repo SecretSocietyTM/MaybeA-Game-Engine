@@ -1,4 +1,4 @@
-import { parsePLY } from "../mimp/parse_ply.js";
+import { parsePLY, PlyFile } from "../mimp/parse_ply.js";
 
 export class MenuBar {
     constructor(editor) {
@@ -73,15 +73,19 @@ export class MenuBar {
 
             reader.onload = () => {
 
+                // TODO: remove
+                const ply_file = new PlyFile();
+                const test = ply_file.parsePLY(reader.result, true);
+
                 // TODO: in future parser should separate things like
                 // mesh, textures, etc
                 // model = {mesh: xxx, material: yyyy, texture: zzzz}
-                const model = parsePLY(reader.result);
+                /* const model = parsePLY(reader.result); */
                 const model_name = file.name.split(".")[0];
 
                 // TODO: make async??? If model exists, onload doesn't finish executing because of the 
                 // naming conflict, until the user closes the alert
-                scope.editor.addModel2(model_name, model);
+                scope.editor.addModel2(model_name, test);
             }
             reader.onerror = () => {
                 alert("Error reading file ", file.name);
