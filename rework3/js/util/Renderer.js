@@ -2,6 +2,9 @@ import vs_src from "../../shaders/3d_pass/vertexshader.js"
 import fs_src from "../../shaders/3d_pass/fragmentshader.js";
 import ui_pass_vs_src from "../../shaders/ui_pass/vertexshader.js";
 import ui_pass_fs_src from "../../shaders/ui_pass/fragmentshader.js";
+import lighting_vs_src from "../../shaders/3d_pass_light/vertexshader.js";
+import lighting_fs_src from "../../shaders/3d_pass_light/fragmentshader.js";
+
 
 export default class Renderer2 {
     constructor(canvas) {
@@ -9,6 +12,7 @@ export default class Renderer2 {
 
         this.program = this.createProgram(vs_src, fs_src);
         this.ui_program = this.createProgram(ui_pass_vs_src, ui_pass_fs_src);
+        this.program2 = this.createProgram(lighting_vs_src, lighting_fs_src);
 
         this.getShaderVariables();
         this.getShaderVariablesUIPass();
@@ -30,6 +34,17 @@ export default class Renderer2 {
         }
 
         const vao = this.addObjectVAO(mesh);
+        this.vao_cache.set(mesh, vao);
+        return vao;
+    }
+
+    // for lighting
+    getVAO2(mesh) {
+        if (this.vao_cache.has(mesh)) {
+            return this.vao_cache.get(mesh);
+        }
+
+        const vao = this.addObjectVAO2(mesh);
         this.vao_cache.set(mesh, vao);
         return vao;
     }
@@ -79,6 +94,30 @@ export default class Renderer2 {
         return true;
     }
 
+    getShaderVariablesLighting() {
+        //
+        // vertex shader variables
+        this.a_pos_location2 = this.gl.getAttribLocation("a_pos");
+        this.a_normal_location2 = this.gl.getAttribLocation("a_normal");
+        this.a_color_location2 = this.gl.getAttribLocation("a_color");
+
+        this.u_proj_location2 = this.gl.getUniformLocation("u_proj");
+        this.u_view_location2 = this.gl.getUniformLocation("u_view");
+        this.u_model_location2 = this.gl.getUniformLocation("u_model");
+        this.u_normal_location2 = this.gl.getUniformLocation("u_normal");
+        
+        //
+        // fragment shader variables 
+        this.u_lightColor_location2 = this.gl.getUniformLocation();
+        this.u_lightPos_location2 = this.gl.getUniformLocation();
+        this.u_useColor_location2 = this.gl.getUniformLocation();
+        this.u_objectColor_location2 = this.gl.getUniformLocation();
+
+        return true;
+    }
+
+    // TODO: add a way to determine "options" for
+    // vertex colors, normals, uvs,
     addObjectVAO(mesh) {
         const vao = this.gl.createVertexArray();
         this.gl.bindVertexArray(vao);
@@ -110,6 +149,48 @@ export default class Renderer2 {
         return vao;
     }
 
+    addObjectVAO2(mesh) {
+        const vao = this.gl.createVertexArray();
+        this.gl.bindVertexArray(vao);
+
+        // create position VBO
+        const position_buffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, position_buffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(mesh.vertices), this.gl.STATIC_DRAW);
+        this.gl.enableVertexAttribArray(this.a_pos_location2);
+        this.gl.vertexAttribPointer(
+            this.a_pos_location2, 3, this.gl.FLOAT, this.gl.FALSE, 0, 0
+        );
+
+        // create color VBO
+        const color_buffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, color_buffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(mesh.vertex_colors), this.gl.STATIC_DRAW);
+        this.gl.enableVertexAttribArray(this.a_color_location2);
+        this.gl.vertexAttribPointer(
+            this.a_color_location2, 3, this.gl.FLOAT, this.gl.FALSE, 0, 0
+        );
+    
+        // create normal VBO
+        const normal_buffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, normal_buffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(mesh.normals), this.gl.STATIC_DRAW);
+        this.gl.enableVertexAttribArray(this.a_normal_location2);
+        this.gl.vertexAttribPointer(
+            this.a_normal_location2, 3, this.gl.FLOAT, this.gl.FALSE, 0, 0
+        );
+
+        // create face EBO
+        const face_buffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, face_buffer);
+        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(mesh.indices), this.gl.STATIC_DRAW);
+
+        this.gl.bindVertexArray(null);
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
+
+        return vao;
+    }
+
     setupRenderer() {
         this.gl.enable(this.gl.SCISSOR_TEST);
         
@@ -128,6 +209,22 @@ export default class Renderer2 {
         this.gl.clearColor(0.3, 0.3, 0.3, 1.0);
 
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+    }
+
+    // ( 2 ) not to be called for rendering 3d gizmos
+    render3DLighting(objects, camera, show_all_AABB = false) {
+        // set up
+        this.gl.useProgram(this.program2);
+
+        // set up constant lighting variables
+        this.gl.uniform3fv(this.u_lightColor_location2, [1.0, 1.0, 1.0]);
+        this.gl.uniform3fv(this.u_lightPos_location2, [3.0, 3.0, 3.0]);
+
+        // set up transform matrices
+        this.gl.uniformMatrix4fv(this.u_proj_location2, this.gl.FALSE, camera.proj_matrix);
+        this.gl.uniformMatrix4fv(this.u_view_location2, this.gl.FALSE, camera.view_matrix);
+
+        this.pass3DLighting(objects, show_all_AABB);
     }
 
 
@@ -149,6 +246,39 @@ export default class Renderer2 {
         this.gl.uniform2fv(this.ui_pass_windowBotLeft_uniform, bottom_left);
 
         this.passUI(object);
+    }
+
+    pass3DLighting(objects, force_AABB) {
+        objects.forEach(object => {
+            if (!object.visible) return;
+
+            object.depth_test ? this.gl.enable(this.gl.DEPTH_TEST) : this.gl.disbale(this.gl.DEPTH_TEST);
+
+            object.updateModelMatrix();
+            /* object.updateNormalMatrix(); */
+
+            this.gl.uniformMatrix4fv(this.u_model_location2, this.gl.FALSE, object.model_matrix);
+            this.gl.uniformMatrix4fv(this.u_normal_location2, this.gl.FALSE, object.normal_matrix);
+            this.gl.uniform1i(this.u_useColor_location2, object.use_color);
+            this.gl.uniform4fv(this.u_objectColor_location2, [object.color[0], object.color[1], object.color[2], 1]);
+
+            this.gl.bindVertexArray(this.getVAO2(object.mesh.data));
+            this.gl.drawElements(this.gl.TRIANGLES, object.mesh.data.indices.length, this.gl.UNSIGNED_SHORT, 0);
+            this.gl.bindVertexArray(null);
+
+            if (force_AABB || object.show_AABB) {
+                this.gl.uniform1i(this.u_useColor_location2, false);
+                if (object.aabb !== null) {
+                    if (!this.aabb_mesh) throw new Error("AABB mesh not set!");
+                    const aabb = object.aabb;
+                    this.gl.uniformMatrix4fv(this.u_model_location2, this.gl.FALSE, aabb.model_matrix);
+
+                    this.gl.bindVertexArray(this.getVAO(this.aabb_mesh));
+                    this.gl.drawElements(this.gl.LINES, 24, this.gl.UNSIGNED_SHORT, 0);
+                    this.gl.bindVertexArray(null);
+                }
+            }
+        });
     }
 
     pass3D(objects, force_AABB) {

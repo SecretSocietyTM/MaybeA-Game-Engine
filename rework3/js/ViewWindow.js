@@ -37,10 +37,12 @@ export class ViewWindow {
 
             this.signals.objectChanged.dispatch(this.editor.cur_selection);
 
-            this.render();
+            /* this.render(); */
+            this.render2();
         });
         this.transform_controls.addEventListener("axisChange", () => {
-            this.render();
+            /* this.render(); */
+            this.render2();
         });
         this.transform_controls.connect(this.dom_element);
 
@@ -48,7 +50,8 @@ export class ViewWindow {
         // camera controls
         this.camera_controls = new CameraControls(this.camera);
         this.camera_controls.addEventListener("change", () => {
-            this.render();
+            /* this.render(); */
+            this.render2();
         });
         this.camera_controls.connect(this.dom_element);
 
@@ -82,7 +85,8 @@ export class ViewWindow {
                 }
             }
 
-            this.render();
+            /* this.render(); */
+            this.render2();
         });
 
 
@@ -92,11 +96,13 @@ export class ViewWindow {
         this.signals.sceneGraphChanged.addListener(object => {
             this.objects_array = [...this.objects_map.values()];
 
-            this.render();
+            // revert to this.render();
+            this.render2();
         });
 
         this.signals.objectChanged.addListener( () => {
-            this.render();
+            /* this.render(); */
+            this.render2();
         });
 
         this.signals.objectSelected.addListener(object => {
@@ -116,7 +122,8 @@ export class ViewWindow {
                 this.transform_controls.attachObject(object);
             }
 
-            this.render();
+            /* this.render(); */
+            this.render2();
         });
 
         this.signals.objectFocused.addListener(object => {
@@ -174,6 +181,16 @@ export class ViewWindow {
 
         const end_time = performance.now();
         console.log("render time", end_time - start_time);
+    }
+
+    render2() {
+        this.renderer.setViewport(this.left, this.bottom, this.width, this.height);
+        this.renderer.render3DLighting(this.objects_array, this.camera, this.show_AABB);
+
+        if (this.transform_controls.display_gizmos) {
+            this.renderer.render3D(this.transform_controls.active_gizmos, this.camera, false);
+            this.renderer.renderUI(this.transform_controls.main_gizmo, [this.left, this.bottom]);
+        }
     }
 }
 

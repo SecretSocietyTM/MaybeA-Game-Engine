@@ -27,8 +27,11 @@ gl.attachShader(program, vertex_shader);
 gl.attachShader(program, fragment_shader);
 gl.linkProgram(program);
 
+
+//
 // vertex shader properties
 const a_position_location = gl.getAttribLocation(program, "a_pos");
+const a_normal_location = gl.getAttribLocation(program, "a_normal");
 
 const u_model_location = gl.getUniformLocation(program, "u_model");
 const u_view_location = gl.getUniformLocation(program, "u_view");
@@ -37,9 +40,63 @@ const u_proj_location = gl.getUniformLocation(program, "u_proj");
 // fragment shader properties
 const u_objectColor_location = gl.getUniformLocation(program, "u_objectColor");
 const u_lightColor_location = gl.getUniformLocation(program, "u_lightColor");
+const u_lightPos_location = gl.getUniformLocation(program, "u_lightPos");
 
+
+//
+// Object creation + camera
 import cube_normals from "./cube_normals.js";
 const ply_parser = new PlyFile();
-const mesh = ply_parser.parsePLY(cube_normals, false, true);
+const mesh_data = ply_parser.parsePLY(cube_normals, false, true);
+const mesh = {name: "example", data: mesh_data};
 
-console.log(mesh);
+import SceneObject from "../../rework3/js/util/SceneObjects.js";
+const object = new SceneObject(undefined, mesh);
+object.color = [0.6, 0.3, 0.1];
+
+import Camera from "../../rework3/js/util/Camera.js";
+const camera = new Camera(45, width / height, 0.1, 1000, [5,5,5]);
+
+const light = {
+    color: [1.0, 1.0, 1.0,]
+};
+
+console.log(object);
+
+//
+// object data
+const position_buffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, position_buffer);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(object.mesh.data.vertices), gl.STATIC_DRAW);
+gl.enableVertexAttribArray(a_position_location);
+gl.vertexAttribPointer(a_position_location, 3, gl.FLOAT, gl.FALSE, 0, 0);
+
+const normal_buffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, normal_buffer);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(object.mesh.data.normals), gl.STATIC_DRAW);
+gl.enableVertexAttribArray(a_normal_location);
+gl.vertexAttribPointer(a_normal_location, 3, gl.FLOAT, gl.FALSE, 0, 0);
+
+const face_buffer = gl.createBuffer();
+gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, face_buffer);
+gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(object.mesh.data.indices), gl.STATIC_DRAW);
+
+
+//
+// use program
+gl.useProgram(program);
+
+gl.viewport(0, 0, width, height);
+gl.clearColor(0.2, 0.5, 0.5, 1.0);
+gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+gl.enable(gl.DEPTH_TEST);
+
+gl.uniformMatrix4fv(u_view_location, gl.FALSE, camera.view_matrix);
+gl.uniformMatrix4fv(u_proj_location, gl.FALSE, camera.proj_matrix);
+gl.uniformMatrix4fv(u_model_location, gl.FALSE, object.model_matrix);
+
+gl.uniform3fv(u_objectColor_location, object.color);
+gl.uniform3fv(u_lightColor_location, light.color);
+gl.uniform3fv(u_lightPos_location, [1,2,5]);
+
+gl.drawElements(gl.TRIANGLES, object.mesh.data.indices.length, gl.UNSIGNED_SHORT, 0);

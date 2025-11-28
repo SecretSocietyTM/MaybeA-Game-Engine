@@ -80,7 +80,6 @@ export class MenuBar {
                 // TODO: in future parser should separate things like
                 // mesh, textures, etc
                 // model = {mesh: xxx, material: yyyy, texture: zzzz}
-                /* const model = parsePLY(reader.result); */
                 const model_name = file.name.split(".")[0];
 
                 // TODO: make async??? If model exists, onload doesn't finish executing because of the 

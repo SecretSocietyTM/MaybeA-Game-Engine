@@ -46,6 +46,8 @@ export default class SceneObject extends EventDispatcher {
             this.update_model_matrix = true;
         });
 
+        // TODO: change
+        this.normal_matrix = mat4.create();
         this.update_model_matrix = true;
         this.updateModelMatrix();
 
