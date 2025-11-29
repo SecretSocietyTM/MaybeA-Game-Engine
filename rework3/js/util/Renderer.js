@@ -16,6 +16,7 @@ export default class Renderer2 {
 
         this.getShaderVariables();
         this.getShaderVariablesUIPass();
+        this.getShaderVariablesLighting();
 
         this.setupRenderer();
 
@@ -97,21 +98,22 @@ export default class Renderer2 {
     getShaderVariablesLighting() {
         //
         // vertex shader variables
-        this.a_pos_location2 = this.gl.getAttribLocation("a_pos");
-        this.a_normal_location2 = this.gl.getAttribLocation("a_normal");
-        this.a_color_location2 = this.gl.getAttribLocation("a_color");
+        this.a_pos_location2 = this.gl.getAttribLocation(this.program2, "a_pos");
+        this.a_normal_location2 = this.gl.getAttribLocation(this.program2, "a_normal");
+        this.a_color_location2 = this.gl.getAttribLocation(this.program2, "a_color");
+        console.log(this.a_color_location2);
 
-        this.u_proj_location2 = this.gl.getUniformLocation("u_proj");
-        this.u_view_location2 = this.gl.getUniformLocation("u_view");
-        this.u_model_location2 = this.gl.getUniformLocation("u_model");
-        this.u_normal_location2 = this.gl.getUniformLocation("u_normal");
+        this.u_proj_location2 = this.gl.getUniformLocation(this.program2, "u_proj");
+        this.u_view_location2 = this.gl.getUniformLocation(this.program2, "u_view");
+        this.u_model_location2 = this.gl.getUniformLocation(this.program2, "u_model");
+        this.u_normal_location2 = this.gl.getUniformLocation(this.program2, "u_normal");
         
         //
         // fragment shader variables 
-        this.u_lightColor_location2 = this.gl.getUniformLocation();
-        this.u_lightPos_location2 = this.gl.getUniformLocation();
-        this.u_useColor_location2 = this.gl.getUniformLocation();
-        this.u_objectColor_location2 = this.gl.getUniformLocation();
+        this.u_lightColor_location2 = this.gl.getUniformLocation(this.program2, "u_lightColor");
+        this.u_lightPos_location2 = this.gl.getUniformLocation(this.program2, "u_lightPos");
+        this.u_useColor_location2 = this.gl.getUniformLocation(this.program2, "u_useColor");
+        this.u_objectColor_location2 = this.gl.getUniformLocation(this.program2, "u_objectColor");
 
         return true;
     }
@@ -252,7 +254,7 @@ export default class Renderer2 {
         objects.forEach(object => {
             if (!object.visible) return;
 
-            object.depth_test ? this.gl.enable(this.gl.DEPTH_TEST) : this.gl.disbale(this.gl.DEPTH_TEST);
+            object.depth_test ? this.gl.enable(this.gl.DEPTH_TEST) : this.gl.disable(this.gl.DEPTH_TEST);
 
             object.updateModelMatrix();
             /* object.updateNormalMatrix(); */
@@ -266,9 +268,10 @@ export default class Renderer2 {
             this.gl.drawElements(this.gl.TRIANGLES, object.mesh.data.indices.length, this.gl.UNSIGNED_SHORT, 0);
             this.gl.bindVertexArray(null);
 
-            if (force_AABB || object.show_AABB) {
+/*             if (force_AABB || object.show_AABB) {
                 this.gl.uniform1i(this.u_useColor_location2, false);
                 if (object.aabb !== null) {
+                    // swap to regular program...
                     if (!this.aabb_mesh) throw new Error("AABB mesh not set!");
                     const aabb = object.aabb;
                     this.gl.uniformMatrix4fv(this.u_model_location2, this.gl.FALSE, aabb.model_matrix);
@@ -277,7 +280,7 @@ export default class Renderer2 {
                     this.gl.drawElements(this.gl.LINES, 24, this.gl.UNSIGNED_SHORT, 0);
                     this.gl.bindVertexArray(null);
                 }
-            }
+            } */
         });
     }
 

@@ -5,7 +5,9 @@ out vec4 fragColor;
 
 in vec3 v_fragPos;
 in vec3 v_normal;
-in vec4 v_inerpolatedColor;
+
+// TODO: replace to vec4
+in vec3 v_interpolatedColor;
 
 uniform vec3 u_lightColor;
 uniform vec3 u_lightPos;
@@ -14,13 +16,16 @@ uniform bool u_useColor;
 uniform vec4 u_objectColor;
 
 void main() {
+    
+    fragColor = vec4(v_interpolatedColor, 1.0);
+}
 
-    // use vertex colors || set color
+/*     // use vertex colors || set color
     vec4 objectColor = vec4(0.0);
     if (u_useColor) {
         objectColor = u_objectColor;
     } else {
-        objectColor = v_inerpolatedColor;
+        objectColor = v_interpolatedColor;
     }   
     
     // ambient
@@ -33,8 +38,5 @@ void main() {
     float diffuseStrength = max(dot(normal, lightDir), 0.0);
     vec3 diffuse = diffuseStrength * u_lightColor;
 
-    vec3 result = (ambient + diffuse) * objectColor.xyz;
-    
-    fragColor = vec4(result, 1.0);
-}
+    vec3 result = (ambient + diffuse) * vec3(0.2, 0.4, 0.3); */
 `

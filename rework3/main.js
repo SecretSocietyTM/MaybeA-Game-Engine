@@ -27,4 +27,4 @@ const scene_hierarchy = new SceneHierarchy(editor);
 
 // render manually
 
-scene_view.render();
+scene_view.render2();
