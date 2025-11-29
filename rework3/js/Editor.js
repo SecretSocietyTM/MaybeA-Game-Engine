@@ -86,7 +86,6 @@ export class Editor {
         const mesh = {name: mesh_name, data: mesh_data};
 
         const object = new SceneObject(model_name, mesh);
-        console.log(mesh);
         this.addObject(object);
     }
 

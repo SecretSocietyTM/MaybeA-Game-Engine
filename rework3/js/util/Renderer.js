@@ -34,7 +34,8 @@ export default class Renderer2 {
             return this.vao_cache.get(mesh);
         }
 
-        const vao = this.addObjectVAO(mesh);
+        /* const vao = this.addObjectVAO(mesh); */
+        const vao = this.addObjectVAODynamic(mesh);
         this.vao_cache.set(mesh, vao);
         return vao;
     }
@@ -115,6 +116,49 @@ export default class Renderer2 {
         this.u_objectColor_location2 = this.gl.getUniformLocation(this.program2, "u_objectColor");
 
         return true;
+    }
+
+    addObjectVAODynamic(mesh) {
+        const vao = this.gl.createVertexArray();
+        this.gl.bindVertexArray(vao);
+
+        // TODO: need to figure out a way to determine which program is being used
+        this.createVBO(mesh.vertices, this.a_pos_location, 3);
+        this.createVBO(mesh.vertex_colors, this.a_clr_location, 3);
+
+        console.log(mesh);
+
+        /* this.createVBO(mesh.normals, undefined, 3);
+        this.createVBO(mesh.uv_coords, undefined, 2); */
+
+        this.createEBO(mesh.indices);
+
+        // TODO: figure out where this should go, or if it even matters
+        this.gl.bindVertexArray(null);
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
+
+        return vao;
+    }
+
+    createVBO(data, location, size) {
+        if (data === null) {
+            console.error("data null, no VBO created for ", location, ".");   
+            return;
+
+        }
+        const buffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(data), this.gl.STATIC_DRAW);
+        this.gl.enableVertexAttribArray(location);
+        this.gl.vertexAttribPointer(location, size, this.gl.FLOAT, this.gl.FALSE, 0, 0);
+    }
+
+    createEBO(data) {
+        if (data === null) return;
+
+        const buffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffer);
+        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data), this.gl.STATIC_DRAW)
     }
 
     // TODO: add a way to determine "options" for

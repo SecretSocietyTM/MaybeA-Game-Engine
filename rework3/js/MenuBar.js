@@ -1,4 +1,4 @@
-import { parsePLY, PlyFile } from "../mimp/parse_ply.js";
+import { PlyFile } from "../mimp/parse_ply.js";
 
 export class MenuBar {
     constructor(editor) {
@@ -75,8 +75,7 @@ export class MenuBar {
 
                 // TODO: remove
                 const ply_file = new PlyFile();
-                const test = ply_file.parsePLY(reader.result, true, true, true);
-                console.log(test);
+                const test = ply_file.parsePLY(reader.result);
 
                 // TODO: in future parser should separate things like
                 // mesh, textures, etc
