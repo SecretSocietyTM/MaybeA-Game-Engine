@@ -75,7 +75,8 @@ export class MenuBar {
 
                 // TODO: remove
                 const ply_file = new PlyFile();
-                const test = ply_file.parsePLY(reader.result, true, true);
+                const test = ply_file.parsePLY(reader.result, true, true, true);
+                console.log(test);
 
                 // TODO: in future parser should separate things like
                 // mesh, textures, etc

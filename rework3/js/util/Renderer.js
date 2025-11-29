@@ -101,7 +101,6 @@ export default class Renderer2 {
         this.a_pos_location2 = this.gl.getAttribLocation(this.program2, "a_pos");
         this.a_normal_location2 = this.gl.getAttribLocation(this.program2, "a_normal");
         this.a_color_location2 = this.gl.getAttribLocation(this.program2, "a_color");
-        console.log(this.a_color_location2);
 
         this.u_proj_location2 = this.gl.getUniformLocation(this.program2, "u_proj");
         this.u_view_location2 = this.gl.getUniformLocation(this.program2, "u_view");
