@@ -1,22 +1,76 @@
-import vs_src from "../../shaders/3d_pass/vertexshader.js"
-import fs_src from "../../shaders/3d_pass/fragmentshader.js";
+import unlit_color_vs from "../../shaders/3d_shaders/UnlitColorProgram/vertexshader.js";
+import unlit_color_fs from "../../shaders/3d_shaders/UnlitColorProgram/fragmentshader.js";
+
+import lit_color_vs from "../../shaders/3d_shaders/LitColorProgram/vertexshader.js";
+import lit_color_fs from "../../shaders/3d_shaders/LitColorProgram/fragmentshader.js";
+
 import ui_pass_vs_src from "../../shaders/ui_pass/vertexshader.js";
 import ui_pass_fs_src from "../../shaders/ui_pass/fragmentshader.js";
-import lighting_vs_src from "../../shaders/3d_pass_light/vertexshader.js";
-import lighting_fs_src from "../../shaders/3d_pass_light/fragmentshader.js";
+
+// shader types:
+// position, color (pc)
+// position, color, normal (pcn)
+
+// position, uv (pu)
+// position, uv, normal (pun)
+
+// in the case where we get 
+// position, uv, color, ... disable one of the two attributes and use
+// one of the two shaders from above
 
 
 export default class Renderer2 {
     constructor(canvas) {
         this.gl = canvas.getContext("webgl2");
 
-        this.program = this.createProgram(vs_src, fs_src);
-        this.ui_program = this.createProgram(ui_pass_vs_src, ui_pass_fs_src);
-        this.program2 = this.createProgram(lighting_vs_src, lighting_fs_src);
+        this.programs3D = {};
+
+        /* this.programs: {
+            unlit: {
+                program: this.createProgram(vs_src, fs_src),
+                variables: {
+                    a_position: 0,
+                    a_color: 1,
+                    u_model: 2,
+                    u_view: 3,
+                    u_proj: 4,
+                    u_useColor: 5,
+                    u_solidColor: 6
+                }
+            }
+            . . . other programs and their variables
+        } */
+
+        this.program = this.createProgram(unlit_color_vs, unlit_color_fs);
+
+        // testing something
+        const unlit_color = {};
+        unlit_color.program = this.program;
 
         this.getShaderVariables();
+
+        unlit_color.variables = {
+            "a_position": this.a_pos_location,
+            "a_color": this.a_clr_location,
+            "u_model": this.u_model_location,
+            "u_view": this.u_view_location,
+            "u_proj": this.u_proj_location,
+            "u_useColor": this.u_useClr_location,
+            "u_solidColor": this.u_clr_location
+        };
+
+        this.programs3D.unlit_color = unlit_color;
+
+        console.log(this.programs3D);
+
+        const lit_color = {};
+        lit_color.program = null; // TODO: fill in
+        lit_color.variables = {}; // TODO: fill in
+
+
+
+        this.ui_program = this.createProgram(ui_pass_vs_src, ui_pass_fs_src);
         this.getShaderVariablesUIPass();
-        this.getShaderVariablesLighting();
 
         this.setupRenderer();
 
@@ -71,15 +125,16 @@ export default class Renderer2 {
 
     getShaderVariables() {
         // vertex shader variables
-        this.a_pos_location = this.gl.getAttribLocation(this.program, "a_pos");
-        this.a_clr_location = this.gl.getAttribLocation(this.program, "a_clr");
+        this.a_pos_location = this.gl.getAttribLocation(this.program, "a_position");
+        this.a_clr_location = this.gl.getAttribLocation(this.program, "a_color");
         this.u_model_location = this.gl.getUniformLocation(this.program, "u_model");
         this.u_view_location = this.gl.getUniformLocation(this.program, "u_view");
         this.u_proj_location = this.gl.getUniformLocation(this.program, "u_proj");
 
         // fragment shader variables
-        this.u_useClr_location = this.gl.getUniformLocation(this.program, "u_useClr");
-        this.u_clr_location = this.gl.getUniformLocation(this.program, "u_clr");
+        this.u_useClr_location = this.gl.getUniformLocation(this.program, "u_useColor");
+        this.u_clr_location = this.gl.getUniformLocation(this.program, "u_solidColor");
+
 
         return true;
     }
@@ -484,3 +539,19 @@ export default class Renderer2 {
     }
 
 }
+
+
+/* const programs = {
+    unlit: {
+        program: unlit_color_program,
+        variables: {
+            a_position: 0,
+            a_color: 1,
+            u_model: 2,
+            u_view: 3,
+            u_proj: 4,
+            u_useColor: 5,
+            u_solidColor: 6
+        }
+    }
+} */
