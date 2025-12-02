@@ -446,7 +446,7 @@ export default class Renderer2 {
         this.gl.bindVertexArray(null);
 
         // AABBs are drawn with the same program no matter what
-        /* if (force_AABB || object.show_AABB) {
+        if (force_AABB || object.show_AABB) {
             const program = this.programs3D.unlit_color;
             this.gl.useProgram(program.program);
             
@@ -461,7 +461,7 @@ export default class Renderer2 {
             this.gl.bindVertexArray(this.getVAO2(this.aabb_mesh, program.variables));
             this.gl.drawElements(this.gl.LINES, 24, this.gl.UNSIGNED_SHORT, 0);
             this.gl.bindVertexArray(null);
-        } */
+        }
     }
 
     // need something more complex since there are

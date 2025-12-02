@@ -173,8 +173,7 @@ export class ViewWindow {
 
         if (this.transform_controls.display_gizmos) {
             /* this.renderer.render3D(this.transform_controls.active_gizmos, this.camera, false); */
-            console.log(this.transform_controls.active_gizmos);
-           /*  this.renderer.render3DDynamically(this.transform_controls.active_gizmos, this.camera, false); */
+            this.renderer.render3DDynamically(this.transform_controls.active_gizmos, this.camera, false);
             this.renderer.renderUI(this.transform_controls.main_gizmo, [this.left, this.bottom]);
         }
 
