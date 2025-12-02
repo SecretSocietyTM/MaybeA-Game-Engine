@@ -7,6 +7,15 @@ import lit_color_fs from "../../shaders/3d_shaders/LitColorProgram/fragmentshade
 import ui_pass_vs_src from "../../shaders/ui_pass/vertexshader.js";
 import ui_pass_fs_src from "../../shaders/ui_pass/fragmentshader.js";
 
+
+// TODO: remove
+const glm = glMatrix; // shorten math library name,
+const vec2 = glm.vec2;
+const vec3 = glm.vec3;
+const vec4 = glm.vec4;
+const mat4 = glm.mat4;
+
+
 // shader types:
 // position, color (pc)
 // position, color, normal (pcn)
@@ -47,6 +56,7 @@ export default class Renderer2 {
         const unlit_color = {};
         unlit_color.program = this.program;
 
+        // gets shader variables for this.program
         this.getShaderVariables();
 
         unlit_color.variables = {
@@ -59,9 +69,26 @@ export default class Renderer2 {
             "u_solidColor": this.u_clr_location
         };
 
+        unlit_color.useProgram = function (gl, object, camera) {
+
+            const vars = this.variables;
+        
+            gl.useProgram(this.program);
+
+            // set all uniforms
+            gl.uniformMatrix4fv(vars.u_proj, gl.FALSE, camera.proj_matrix);
+            gl.uniformMatrix4fv(vars.u_view, gl.FALSE, camera.view_matrix);
+            gl.uniformMatrix4fv(vars.u_model, gl.FALSE, object.model_matrix);
+
+            gl.uniform1i(vars.u_useColor, object.use_color);
+            gl.uniform4fv(vars.u_solidColor, [...object.color, 1.0]);
+        };
+
         this.programs3D.unlit_color = unlit_color;
 
-        console.log(this.programs3D);
+
+
+        console.log("programs", this.programs3D);
 
         const lit_color = {};
         lit_color.program = null; // TODO: fill in
@@ -88,19 +115,18 @@ export default class Renderer2 {
             return this.vao_cache.get(mesh);
         }
 
-        /* const vao = this.addObjectVAO(mesh); */
-        const vao = this.addObjectVAODynamic(mesh);
+        const vao = this.addObjectVAO(mesh);
+        /* const vao = this.addObjectVAODynamic(mesh); */
         this.vao_cache.set(mesh, vao);
         return vao;
     }
 
-    // for lighting
-    getVAO2(mesh) {
+    getVAO2(mesh, program_variables) {
         if (this.vao_cache.has(mesh)) {
             return this.vao_cache.get(mesh);
         }
 
-        const vao = this.addObjectVAO2(mesh);
+        const vao = this.addObjectVAODynamic(mesh, program_variables);
         this.vao_cache.set(mesh, vao);
         return vao;
     }
@@ -135,19 +161,6 @@ export default class Renderer2 {
         this.u_useClr_location = this.gl.getUniformLocation(this.program, "u_useColor");
         this.u_clr_location = this.gl.getUniformLocation(this.program, "u_solidColor");
 
-
-        return true;
-    }
-
-    getShaderVariablesUIPass() {
-        this.ui_pass_pos_attrib = this.gl.getAttribLocation(this.ui_program, "a_pos");
-        this.ui_pass_circle_center_uniform = this.gl.getUniformLocation(this.ui_program, "u_cntr");
-        this.ui_pass_circle_radius = this.gl.getUniformLocation(this.ui_program, "u_radius");
-        this.ui_pass_clr_uniform = this.gl.getUniformLocation(this.ui_program, "u_clr");
-
-        this.ui_pass_windowBotLeft_uniform = this.gl.getUniformLocation(this.ui_program, "u_windowBotLeft");
-        this.ui_pass_draw2DGizmo = this.gl.getUniformLocation(this.ui_program, "u_draw2DGizmo");
-
         return true;
     }
 
@@ -173,18 +186,37 @@ export default class Renderer2 {
         return true;
     }
 
-    addObjectVAODynamic(mesh) {
+    getShaderVariablesUIPass() {
+        this.ui_pass_pos_attrib = this.gl.getAttribLocation(this.ui_program, "a_pos");
+        this.ui_pass_circle_center_uniform = this.gl.getUniformLocation(this.ui_program, "u_cntr");
+        this.ui_pass_circle_radius = this.gl.getUniformLocation(this.ui_program, "u_radius");
+        this.ui_pass_clr_uniform = this.gl.getUniformLocation(this.ui_program, "u_clr");
+
+        this.ui_pass_windowBotLeft_uniform = this.gl.getUniformLocation(this.ui_program, "u_windowBotLeft");
+        this.ui_pass_draw2DGizmo = this.gl.getUniformLocation(this.ui_program, "u_draw2DGizmo");
+
+        return true;
+    }
+
+    // vars = program variables
+    addObjectVAODynamic(mesh, vars) {
         const vao = this.gl.createVertexArray();
         this.gl.bindVertexArray(vao);
 
         // TODO: need to figure out a way to determine which program is being used
-        this.createVBO(mesh.vertices, this.a_pos_location, 3);
-        this.createVBO(mesh.vertex_colors, this.a_clr_location, 3);
+        this.createVBO(mesh.vertices, vars.a_position, 3);
+        
+        if (mesh.vertex_colors !== null) {
+            this.createVBO(mesh.vertex_colors, vars.a_color, 3);   
+        }
 
-        console.log(mesh);
+        if (mesh.normals !== null) {
+            this.createVBO(mesh.normals, vars.a_normal, 3);
+        }
 
-        /* this.createVBO(mesh.normals, undefined, 3);
-        this.createVBO(mesh.uv_coords, undefined, 2); */
+        if (mesh.uv_coords !== null) {
+            this.createVBO(mesh.uv_coords, vars.a_uv, 2);
+        }
 
         this.createEBO(mesh.indices);
 
@@ -196,11 +228,6 @@ export default class Renderer2 {
     }
 
     createVBO(data, location, size) {
-        if (data === null) {
-            console.error("data null, no VBO created for ", location, ".");   
-            return;
-
-        }
         const buffer = this.gl.createBuffer();
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(data), this.gl.STATIC_DRAW);
@@ -292,9 +319,10 @@ export default class Renderer2 {
     }
 
     setupRenderer() {
+        // for multiple views
         this.gl.enable(this.gl.SCISSOR_TEST);
         
-        // Needed to render UI pass
+        // for UI pass
         this.gl.enable(this.gl.BLEND);
         this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
     }
@@ -310,23 +338,6 @@ export default class Renderer2 {
 
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
     }
-
-    // ( 2 ) not to be called for rendering 3d gizmos
-    render3DLighting(objects, camera, show_all_AABB = false) {
-        // set up
-        this.gl.useProgram(this.program2);
-
-        // set up constant lighting variables
-        this.gl.uniform3fv(this.u_lightColor_location2, [1.0, 1.0, 1.0]);
-        this.gl.uniform3fv(this.u_lightPos_location2, [3.0, 3.0, 3.0]);
-
-        // set up transform matrices
-        this.gl.uniformMatrix4fv(this.u_proj_location2, this.gl.FALSE, camera.proj_matrix);
-        this.gl.uniformMatrix4fv(this.u_view_location2, this.gl.FALSE, camera.view_matrix);
-
-        this.pass3DLighting(objects, show_all_AABB);
-    }
-
 
     // ( 2 ) call x many times for all instances of separate objects (scene_objets, gizmo_objects)
     render3D(objects, camera, show_all_AABB = false) {
@@ -346,40 +357,6 @@ export default class Renderer2 {
         this.gl.uniform2fv(this.ui_pass_windowBotLeft_uniform, bottom_left);
 
         this.passUI(object);
-    }
-
-    pass3DLighting(objects, force_AABB) {
-        objects.forEach(object => {
-            if (!object.visible) return;
-
-            object.depth_test ? this.gl.enable(this.gl.DEPTH_TEST) : this.gl.disable(this.gl.DEPTH_TEST);
-
-            object.updateModelMatrix();
-            /* object.updateNormalMatrix(); */
-
-            this.gl.uniformMatrix4fv(this.u_model_location2, this.gl.FALSE, object.model_matrix);
-            this.gl.uniformMatrix4fv(this.u_normal_location2, this.gl.FALSE, object.normal_matrix);
-            this.gl.uniform1i(this.u_useColor_location2, object.use_color);
-            this.gl.uniform4fv(this.u_objectColor_location2, [object.color[0], object.color[1], object.color[2], 1]);
-
-            this.gl.bindVertexArray(this.getVAO2(object.mesh.data));
-            this.gl.drawElements(this.gl.TRIANGLES, object.mesh.data.indices.length, this.gl.UNSIGNED_SHORT, 0);
-            this.gl.bindVertexArray(null);
-
-/*             if (force_AABB || object.show_AABB) {
-                this.gl.uniform1i(this.u_useColor_location2, false);
-                if (object.aabb !== null) {
-                    // swap to regular program...
-                    if (!this.aabb_mesh) throw new Error("AABB mesh not set!");
-                    const aabb = object.aabb;
-                    this.gl.uniformMatrix4fv(this.u_model_location2, this.gl.FALSE, aabb.model_matrix);
-
-                    this.gl.bindVertexArray(this.getVAO(this.aabb_mesh));
-                    this.gl.drawElements(this.gl.LINES, 24, this.gl.UNSIGNED_SHORT, 0);
-                    this.gl.bindVertexArray(null);
-                }
-            } */
-        });
     }
 
     pass3D(objects, force_AABB) {
@@ -444,6 +421,66 @@ export default class Renderer2 {
 
 
 
+    // TODO: new functions for Renderer overhaul to support normals / uv coords
+    render3DDynamically(objects, camera, force_AABB) {
+        objects.forEach(object => {
+            this.render3DObject(object, camera, force_AABB)
+        });
+    }
+
+    render3DObject(object, camera, force_AABB) {
+
+        if (!object.visible) return;
+
+        object.depth_test ? this.gl.enable(this.gl.DEPTH_TEST) : this.gl.disable(this.gl.DEPTH_TEST);
+
+        object.updateModelMatrix();
+
+        const p = this.determineProgram(object);
+        p.useProgram(this.gl, object, camera);
+
+        const mesh = object.mesh.data;
+
+        this.gl.bindVertexArray(this.getVAO2(mesh, p.variables));
+        this.gl.drawElements(this.gl.TRIANGLES, mesh.indices.length, this.gl.UNSIGNED_SHORT, 0);
+        this.gl.bindVertexArray(null);
+
+        // AABBs are drawn with the same program no matter what
+        /* if (force_AABB || object.show_AABB) {
+            const program = this.programs3D.unlit_color;
+            this.gl.useProgram(program.program);
+            
+            const aabb = object.aabb;
+
+            this.gl.uniformMatrix4fv(program.variables.u_proj, this.gl.FALSE, camera.proj_matrix);
+            this.gl.uniformMatrix4fv(program.variables.u_view, this.gl.FALSE, camera.view_matrix);
+            this.gl.uniformMatrix4fv(program.variables.u_model, this.gl.FALSE, aabb.model_matrix);
+
+            this.gl.uniform1f(program.u_useColor, false);
+
+            this.gl.bindVertexArray(this.getVAO2(this.aabb_mesh, program.variables));
+            this.gl.drawElements(this.gl.LINES, 24, this.gl.UNSIGNED_SHORT, 0);
+            this.gl.bindVertexArray(null);
+        } */
+    }
+
+    // need something more complex since there are
+    // many combinations that a mesh can have
+    // curious to see how three.js handles this.
+    determineProgram(object) {
+
+        let program;
+        
+        const mesh = object.mesh.data;
+
+        if (mesh.normals !== null) {
+            // use lit program
+        }
+
+        program = this.programs3D.unlit_color;
+
+        return program;
+    }
 
 
 
@@ -454,6 +491,10 @@ export default class Renderer2 {
 
 
 
+
+    // TODO: need to use lit program
+    // leave modified for now as it breaks the
+    // vao cache
     modelPreviewThing(object, camera, size) {
 
         // define the buffer dimensions
@@ -514,7 +555,7 @@ export default class Renderer2 {
         this.gl.uniform1i(this.u_useClr_location, object.use_color);
         this.gl.uniform4fv(this.u_clr_location, [object.color[0], object.color[1], object.color[2], 1]);
 
-        this.gl.bindVertexArray(this.getVAO(object.mesh.data));
+        /* this.gl.bindVertexArray(this.getVAO(object.mesh.data)); */
         this.gl.drawElements(this.gl.TRIANGLES, object.mesh.data.indices.length, this.gl.UNSIGNED_SHORT, 0);
         this.gl.bindVertexArray(null);
 
@@ -535,23 +576,11 @@ export default class Renderer2 {
         // set the framebuffer back to the default once done
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
         this.gl.enable(this.gl.SCISSOR_TEST);
+
+        // TODO: remove
+        return "temporary";
+
         return url;
     }
 
 }
-
-
-/* const programs = {
-    unlit: {
-        program: unlit_color_program,
-        variables: {
-            a_position: 0,
-            a_color: 1,
-            u_model: 2,
-            u_view: 3,
-            u_proj: 4,
-            u_useColor: 5,
-            u_solidColor: 6
-        }
-    }
-} */

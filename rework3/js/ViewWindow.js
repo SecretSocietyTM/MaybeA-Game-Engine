@@ -38,11 +38,9 @@ export class ViewWindow {
             this.signals.objectChanged.dispatch(this.editor.cur_selection);
 
             this.render();
-            /* this.render2(); */
         });
         this.transform_controls.addEventListener("axisChange", () => {
             this.render();
-            /* this.render2(); */
         });
         this.transform_controls.connect(this.dom_element);
 
@@ -51,7 +49,6 @@ export class ViewWindow {
         this.camera_controls = new CameraControls(this.camera);
         this.camera_controls.addEventListener("change", () => {
             this.render();
-            /* this.render2(); */
         });
         this.camera_controls.connect(this.dom_element);
 
@@ -85,7 +82,8 @@ export class ViewWindow {
                 }
             }
 
-            this.render2();
+            this.render();
+
         }); */
 
 
@@ -95,13 +93,11 @@ export class ViewWindow {
         this.signals.sceneGraphChanged.addListener(object => {
             this.objects_array = [...this.objects_map.values()];
 
-            /* this.render(); */
-            this.render2();
+            this.render();
         });
 
         this.signals.objectChanged.addListener( () => {
             this.render();
-            /* this.render2(); */
         });
 
         this.signals.objectSelected.addListener(object => {
@@ -122,7 +118,6 @@ export class ViewWindow {
             }
 
             this.render();
-            /* this.render2(); */
         });
 
         this.signals.objectFocused.addListener(object => {
@@ -171,10 +166,15 @@ export class ViewWindow {
         const start_time = performance.now();
 
         this.renderer.setViewport(this.left, this.bottom, this.width, this.height);
-        this.renderer.render3D(this.objects_array, this.camera, this.show_AABB);
+        /* this.renderer.render3D(this.objects_array, this.camera, this.show_AABB); */
+
+        // TODO: remove
+        this.renderer.render3DDynamically(this.objects_array, this.camera, this.show_AABB);
 
         if (this.transform_controls.display_gizmos) {
-            this.renderer.render3D(this.transform_controls.active_gizmos, this.camera, false);
+            /* this.renderer.render3D(this.transform_controls.active_gizmos, this.camera, false); */
+            console.log(this.transform_controls.active_gizmos);
+           /*  this.renderer.render3DDynamically(this.transform_controls.active_gizmos, this.camera, false); */
             this.renderer.renderUI(this.transform_controls.main_gizmo, [this.left, this.bottom]);
         }
 
@@ -183,20 +183,6 @@ export class ViewWindow {
     }
 
     #render_count = 0;
-
-    render2() {
-
-        /* this.#render_count++;
-        console.log(this.#render_count); */
-
-        this.renderer.setViewport(this.left, this.bottom, this.width, this.height);
-        this.renderer.render3DLighting(this.objects_array, this.camera, this.show_AABB);
-
-        if (this.transform_controls.display_gizmos) {
-            this.renderer.render3D(this.transform_controls.active_gizmos, this.camera, false);
-            this.renderer.renderUI(this.transform_controls.main_gizmo, [this.left, this.bottom]);
-        }
-    }
 }
 
 

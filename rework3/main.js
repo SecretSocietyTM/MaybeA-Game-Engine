@@ -26,4 +26,4 @@ const models_grid = new ModelsGrid(editor);
 const scene_hierarchy = new SceneHierarchy(editor);
 
 // render manually
-scene_view.render2();
+scene_view.render();
