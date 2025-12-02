@@ -57,7 +57,7 @@ export class ViewWindow {
         this.dom_element.addEventListener("click", this.mouseClick);
         this.dom_element.addEventListener("dblclick", this.doubleClick);
         // TODO: this should be in Editor.js somehow
-/*         document.addEventListener("keydown", (e) => {
+        document.addEventListener("keydown", (e) => {
             if (e.key === "t") {
                 this.transform_controls.setMode("translate");
             } else if (e.key === "r") {
@@ -84,7 +84,7 @@ export class ViewWindow {
 
             this.render();
 
-        }); */
+        });
 
 
         //
@@ -169,11 +169,11 @@ export class ViewWindow {
         /* this.renderer.render3D(this.objects_array, this.camera, this.show_AABB); */
 
         // TODO: remove
-        this.renderer.render3DDynamically(this.objects_array, this.camera, this.show_AABB);
+        this.renderer.render3D(this.objects_array, this.camera, this.show_AABB);
 
         if (this.transform_controls.display_gizmos) {
             /* this.renderer.render3D(this.transform_controls.active_gizmos, this.camera, false); */
-            this.renderer.render3DDynamically(this.transform_controls.active_gizmos, this.camera, false);
+            this.renderer.render3D(this.transform_controls.active_gizmos, this.camera, false);
             this.renderer.renderUI(this.transform_controls.main_gizmo, [this.left, this.bottom]);
         }
 

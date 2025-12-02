@@ -1,4 +1,4 @@
-export default `#version 300 es
+#version 300 es
 
 out vec3 v_fragPos;
 out vec3 v_normal;
@@ -20,4 +20,4 @@ void main() {
     v_normal = a_normal; // TODO: * u_normal;
     v_vertexColor = a_color;
 }
-`
+

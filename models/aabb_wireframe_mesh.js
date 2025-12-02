@@ -24,5 +24,7 @@ export default {
         0,1,  0,2,  3,2,  3,1, // front
         2,6,  3,7,  0,4,  1,5, // left | right
         4,5,  4,6,  7,6,  7,5  // back
-    ]
+    ],
+    normals: null,
+    uv_coords: null
 }
