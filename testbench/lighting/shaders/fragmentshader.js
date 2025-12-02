@@ -12,7 +12,7 @@ uniform vec3 u_lightColor;
 uniform vec3 u_lightPos;
 
 void main() {
-    float ambientStrength = 0.2;
+    float ambientStrength = 0.3;
     vec3 ambient = ambientStrength * u_lightColor;
 
     vec3 normal = normalize(v_normal);

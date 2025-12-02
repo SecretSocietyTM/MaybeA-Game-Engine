@@ -10,7 +10,6 @@ in vec4 v_vertexColor;
 uniform bool u_useColor;
 uniform vec4 u_solidColor;
 uniform vec3 u_lightColor;
-uniform vec3 u_lightPosition;
 
 void main() {
     vec4 objectColor = vec4(1.0);
@@ -21,13 +20,17 @@ void main() {
         objectColor = v_vertexColor;    
     }
 
-    float ambientStrength = 0.2;
+    float ambientStrength = 0.4;
     vec3 ambient = ambientStrength * u_lightColor;
 
     vec3 normal = normalize(v_normal);
-    vec3 lightDirection = normalize(u_lightPosition - v_fragPos);
+    vec3 lightDirection = vec3(1.0, 1.0, 1.0);
     float diffuseStrength = max(dot(normal, lightDirection), 0.0);
     vec3 diffuse = diffuseStrength * u_lightColor;
+
+    // TODO: add a clamp to prevent overexposure
+    // could also add a clamp to diffuse to prevent really dark sides (diffuseStrength = 0);
+    // would like to see these things in real time so add uniforms to the frag and sliders to the editor
 
     vec3 result = (ambient + diffuse) * objectColor.xyz;
 

@@ -101,7 +101,6 @@ export default class Renderer2 {
             "u_useColor":      this.gl.getUniformLocation(lit_color.program, "u_useColor"),
             "u_solidColor":    this.gl.getUniformLocation(lit_color.program, "u_solidColor"),
             "u_lightColor":    this.gl.getUniformLocation(lit_color.program, "u_lightColor"),
-            "u_lightPosition": this.gl.getUniformLocation(lit_color.program, "u_lightPosition"),
         };
 
         lit_color.useProgram = function (gl, object, camera) {
@@ -118,7 +117,6 @@ export default class Renderer2 {
             gl.uniform1i(vars.u_useColor, object.use_color);
             gl.uniform4fv(vars.u_solidColor, [...object.color, 1.0]);
             gl.uniform3fv(vars.u_lightColor, [1.0, 1.0, 1.0]);
-            gl.uniform3fv(vars.u_lightPosition, [10,10,10]);
         }
 
         this.programs3D.unlit_color = unlit_color;
@@ -159,10 +157,8 @@ export default class Renderer2 {
         const vao = this.gl.createVertexArray();
         this.gl.bindVertexArray(vao);
 
-        // TODO: need to figure out a way to determine which program is being used
         this.createVBO(mesh.vertices, vars.a_position, 3);
         
-
         // TODO: instead of having certain mesh properties = null,
         // just dont add them and check for existance
         if (mesh.vertex_colors !== null) {
@@ -201,41 +197,7 @@ export default class Renderer2 {
         this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffer);
         this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data), this.gl.STATIC_DRAW)
     }
-
-    // TODO: add a way to determine "options" for
-    // vertex colors, normals, uvs,
-    addObjectVAO(mesh) {
-        const vao = this.gl.createVertexArray();
-        this.gl.bindVertexArray(vao);
-
-        // create position vbo
-        const position_buffer = this.gl.createBuffer();
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, position_buffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(mesh.vertices), this.gl.STATIC_DRAW);
-        this.gl.enableVertexAttribArray(this.a_pos_location);
-        this.gl.vertexAttribPointer(
-            this.a_pos_location, 3, this.gl.FLOAT, this.gl.FALSE, 0, 0);
-
-        // create color vbo
-        const color_buffer = this.gl.createBuffer();
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, color_buffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(mesh.vertex_colors), this.gl.STATIC_DRAW);
-        this.gl.enableVertexAttribArray(this.a_clr_location);
-        this.gl.vertexAttribPointer(
-            this.a_clr_location, 3, this.gl.FLOAT, this.gl.FALSE, 0, 0);
-
-        // create index ebo
-        const index_buffer = this.gl.createBuffer();
-        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, index_buffer);
-        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(mesh.indices), this.gl.STATIC_DRAW);
-
-        this.gl.bindVertexArray(null);
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
-
-        return vao;
-    }
     
-
     setupRenderer() {
         // for multiple views
         this.gl.enable(this.gl.SCISSOR_TEST);

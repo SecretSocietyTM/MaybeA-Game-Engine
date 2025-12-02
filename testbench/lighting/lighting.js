@@ -47,7 +47,6 @@ const u_lightPos_location = gl.getUniformLocation(program, "u_lightPos");
 //
 // Object creation + camera
 import banana_ply from "../../models/js_ply_files/banana.js"
-import cube_ply from "./cube_normals.js";
 
 const ply_parser = new PlyFile();
 const mesh_data = ply_parser.parsePLY(banana_ply);

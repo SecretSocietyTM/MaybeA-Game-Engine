@@ -166,19 +166,15 @@ export class ViewWindow {
         const start_time = performance.now();
 
         this.renderer.setViewport(this.left, this.bottom, this.width, this.height);
-        /* this.renderer.render3D(this.objects_array, this.camera, this.show_AABB); */
-
-        // TODO: remove
         this.renderer.render3D(this.objects_array, this.camera, this.show_AABB);
 
         if (this.transform_controls.display_gizmos) {
-            /* this.renderer.render3D(this.transform_controls.active_gizmos, this.camera, false); */
             this.renderer.render3D(this.transform_controls.active_gizmos, this.camera, false);
             this.renderer.renderUI(this.transform_controls.main_gizmo, [this.left, this.bottom]);
         }
 
         const end_time = performance.now();
-        /* console.log("render time", end_time - start_time); */
+        console.log("render time", end_time - start_time);
     }
 
     #render_count = 0;
