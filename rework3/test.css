@@ -62,6 +62,14 @@ body {
     margin-block-end: 0.5rem;
 }
 
+.cursor_pointer {
+    cursor: pointer;
+}
+
+.selected_tab {
+    color: rgb(38, 88, 182);
+}
+
 .render_context__models {
     display: grid;
     grid-template-rows: 80% auto;
@@ -96,10 +104,6 @@ body {
 
     background-color: white;
     color: #1a1a1a;
-}
-
-.models {
-    background-color: #1a1a1a;
 }
 
 .sidebar {
@@ -202,13 +206,23 @@ IS THERE NO PROPERTY THAT JUST FILLS????
     display: none;
 }
 
-.models {
+.assets {
     display: flex;
     flex-direction: column;
+
     padding: 0.75rem;
+
+    background-color: #1a1a1a;
 }
 
-.models_grid {
+.asset_tabs {
+    display: flex;
+    gap: 2rem;
+
+    width: max-content;
+}
+
+.asset_grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, 100px);
     /* grid-template-columns: repeat(9, 150px); */

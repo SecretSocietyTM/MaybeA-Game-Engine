@@ -6,7 +6,7 @@ export class ModelsGrid {
         this.model_map = new Map(); // (key: name, value: url)
 
         this.ui = {
-            container: document.getElementById("models"),
+            container: document.getElementById("assets"),
 
             grid: document.getElementById("models_grid")
         };

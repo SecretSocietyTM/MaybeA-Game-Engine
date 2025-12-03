@@ -17,15 +17,21 @@
         <button id="open_json" type="button" class="button_menubar">OPEN</button>
         <button id="save_json" type="button" class="button_menubar">SAVE</button>
         <button id="add_model" type="button" class="button_menubar">ADD MODEL</button>
+        <button id="add_texture" type="button" class="button_menubar">ADD TEXTURE</button>
         <input id="open_json_input" type="file" accept=".json" style="display: none;">
         <input id="add_model_input" type="file" accept=".ply" style="display: none">
+        <input id="add_texture_input" type="file" accept="image/png, image/jpeg" style="display: none">
     </div>
     <div class="content">
         <div class="render_context__models">
             <div id="view1" class="render_context"></div>
-            <div id="models" class="models">
-                <p class="section_title">Models</p>
-                <div id="models_grid" class="models_grid"></div>
+            <div id="assets" class="assets">
+                <div id="asset_tabs" class="asset_tabs">
+                    <p id="models_tab" class="section_title cursor_pointer selected_tab">Models</p>
+                    <p id="textures_tab" class="section_title cursor_pointer">Textures</p>
+                </div>
+                <div id="models_grid" class="asset_grid"></div>
+                <div id="textures_grid" class="asset_grid" style="display: none;"></div>
             </div>
         </div>
         <div class="sidebar">

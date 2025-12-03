@@ -66,8 +66,6 @@ export class ViewWindow {
                 this.transform_controls.setMode("scale");
             } else if (e.key === "+") {
                 this.show_AABB = !this.show_AABB;
-            } else if (e.key === "2") {
-                // Nothing yet
             } else if (e.ctrlKey && e.key === "c") {
                 if (this.editor.cur_selection !== null) {
                     this.editor.copied_object = this.editor.cur_selection;

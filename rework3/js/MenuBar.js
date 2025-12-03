@@ -12,9 +12,11 @@ export class MenuBar {
             open: document.getElementById("open_json"),
             save: document.getElementById("save_json"),
             add_model: document.getElementById("add_model"),
+            add_texture: document.getElementById("add_texture"),
 
             open_input: document.getElementById("open_json_input"),
-            add_model_input: document.getElementById("add_model_input")
+            add_model_input: document.getElementById("add_model_input"),
+            add_texture_input: document.getElementById("add_texture_input")
         };
 
         this.connect();
@@ -41,6 +43,10 @@ export class MenuBar {
 
         scope.ui.add_model.addEventListener("click", e => {
             scope.ui.add_model_input.click();
+        });
+
+        scope.ui.add_texture.addEventListener("click", e => {
+            scope.ui.add_texture_input.click();
         });
 
         scope.ui.open_input.addEventListener("change", e => {
@@ -89,6 +95,10 @@ export class MenuBar {
             reader.onerror = () => {
                 alert("Error reading file ", file.name);
             }
+        });
+
+        scope.ui.add_texture_input.addEventListener("change", e => {
+            
         });
     }
 }
