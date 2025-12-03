@@ -97,8 +97,25 @@ export class MenuBar {
             }
         });
 
-        scope.ui.add_texture_input.addEventListener("change", e => {
-            
+        scope.ui.add_texture_input.addEventListener("change", async e => {
+
+            const file = e.target.files[0];
+            if (!file) return;
+
+            async function loadImageData(file) {
+                const bitmap = await createImageBitmap(file);
+
+                const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(bitmap, 0, 0);
+
+                return ctx.getImageData(0, 0, bitmap.width, bitmap.height);
+            }
+
+            const tex_name = file.name.split(".")[0];
+            const texture_data = await loadImageData(file);
+
+            scope.editor.addTexture(tex_name, texture_data, file);
         });
     }
 }

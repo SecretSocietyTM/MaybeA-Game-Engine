@@ -21,6 +21,7 @@ export class Editor {
         this.views = [];
         
         this.model_map = new Map();   // (key: name, value: model)
+        this.texture_map = new Map(); // (key: name, value: texture)
         this.object_map = new Map();  // (key: id, value: object)
 
         this.cur_selection = null;
@@ -42,7 +43,10 @@ export class Editor {
             objectRemoved: new Signal(), // useless signal for now
 
             modelAdded: new Signal(),
-            modelRemoved: new Signal()
+            modelRemoved: new Signal(),
+
+            textureAdded: new Signal(),
+            textureRemoved: new Signal()
         };
     }
 
@@ -139,7 +143,8 @@ export class Editor {
 
     // models
 
-
+// TODO: replace all instances of "model" to mesh. Since I want to be a game engine
+// I will likely need to add a similar "prefab" / "asset" / "template" feature as outlined below.
     addModel2(model_name, model) {
 
         if (!this.addModel(model_name, model)) return;
@@ -162,26 +167,35 @@ export class Editor {
 
         if (!this.removeModel(model_name)) return;
 
+        // remove all objects with the deleted mesh.
         for (const object of this.object_map.values()) {
             if (object.mesh.name === model_name) this.removeObject(object, true);
         }
-
-        // TODO: replace all instances of "model" to mesh. Since I want to be a game engine
-        // I will likely need to add a similar "prefab" / "asset" / "template" feature as outlined below.
 
         this.signals.modelRemoved.dispatch(model_name);
     }
 
 
+    // textures
 
+    addTexture(tex_name, texture, file) {
 
+        if (!this.addTexturetoMap(tex_name, texture)) return;
 
+        // TODO: do this elsewhere or improve all together
+        const tex_url = URL.createObjectURL(file);
 
+        this.signals.textureAdded.dispatch( {name: tex_name, url: tex_url} );
+    }
 
+    removeTexture(tex_name) {
 
+        if (!this.removeTexturefromMap(tex_name)) return;
 
+        // remove texture from objects using the deleted texture
 
-
+        this.signals.textureRemoved.dispatch(tex_name);
+    }
 
 
 
@@ -210,6 +224,30 @@ export class Editor {
 
         return undefined;
     }
+
+    addTexturetoMap(tex_name, texture) {
+        if (this.texture_map.has(tex_name)) {
+            alert(`A texture with the name ${tex_name} already exists. Rename or delete the texture`);
+            return false;
+        }
+
+        this.texture_map.set(tex_name, texture);
+        return true;   
+    }
+
+    removeTexturefromMap(tex_name) {
+        return this.texture_map.delete(tex_name);
+    }
+
+    getTexturefromMap(tex_name) {
+        if (this.texture_map.has(tex_name)) {
+            return this.texture_map.get(tex_name);
+        }
+
+        return undefined;
+    }
+
+
 
 
 
