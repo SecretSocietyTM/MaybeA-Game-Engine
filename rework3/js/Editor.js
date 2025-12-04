@@ -140,6 +140,17 @@ export class Editor {
         this.focus(object);
     }
 
+    assignTextureToObject(object, tex_name) {
+        const texture = this.getTexturefromMap(tex_name);
+
+        if (!texture) return;
+
+        const texture_obj = {name: tex_name, data: texture};
+        object.texture = texture_obj;
+
+        this.signals.objectChanged.dispatch(object);
+    }
+
 
     // models
 
@@ -183,9 +194,6 @@ export class Editor {
 
         if (!this.addTexturetoMap(tex_name, texture)) return;
 
-        // TODO: do this elsewhere or improve all together
-        console.log(texture);
-
         // TODO: also ripped from gippity
         function imageDataToURL(imageData) {
             const canvas = document.createElement("canvas");
@@ -208,6 +216,11 @@ export class Editor {
         if (!this.removeTexturefromMap(tex_name)) return;
 
         // remove texture from objects using the deleted texture
+        for (const object of this.object_map.values()) {
+            if (object.texture?.name === tex_name) {
+                object.texture = null;
+            }
+        }
 
         this.signals.textureRemoved.dispatch(tex_name);
     }

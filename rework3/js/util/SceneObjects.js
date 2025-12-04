@@ -33,7 +33,8 @@ export default class SceneObject extends EventDispatcher {
         super();
 
         this.name = name;
-        this.mesh = mesh; // { name: "ex", data: { vertices: [], indices: [], vertex_colors: [] } };
+        this.mesh = mesh;    // { name: "ex", data: { vertices: [], indices: [], vertex_colors: [] } };
+        this.texture = null; // { name: "ex", data: ImageData {data: [], width: x, height: y} }
 
         this.id = createId();
 
@@ -57,8 +58,9 @@ export default class SceneObject extends EventDispatcher {
         this.last_static_transform = null;
         this.setLastStaticTransform();
 
-        this.color = [0.4,0.4,0.4];
+        this.use_texture = false;
         this.use_color = false;
+        this.color = [0.4,0.4,0.4];
         this.visible = true;
         this.depth_test = depth_test;
         this.show_AABB = false;

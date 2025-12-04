@@ -24,8 +24,10 @@ export class ObjectInspector {
                 y: document.getElementById("obj_scale_y"),
                 z: document.getElementById("obj_scale_z"),      
             },
-            color: document.getElementById("obj_color"),
+            use_texture: document.getElementById("obj_use-texture"),
+            texture: document.getElementById("obj_texture"),
             use_color: document.getElementById("obj_use-color"),
+            color: document.getElementById("obj_color"),
             is_visible: document.getElementById("obj_is-visible"),
             show_AABB: document.getElementById("obj_show-AABB"),
         };
@@ -122,6 +124,18 @@ export class ObjectInspector {
             scope.signals.objectChanged.dispatch(scope.object);
         });
 
+        scope.ui.use_texture.addEventListener("change", e => {
+            scope.object.use_texture = e.target.checked;
+
+            scope.signals.objectChanged.dispatch(scope.object);
+        });
+
+        scope.ui.use_color.addEventListener("change", e => {
+            scope.object.use_color = e.target.checked;
+
+            scope.signals.objectChanged.dispatch(scope.object);
+        });
+        
         scope.ui.color.addEventListener("change", e => {
 
             let clr = hexToRGB(e.target.value);
@@ -131,12 +145,6 @@ export class ObjectInspector {
 
             scope.signals.objectChanged.dispatch(scope.object);
         });
-
-        scope.ui.use_color.addEventListener("change", e => {
-            scope.object.use_color = e.target.checked;
-
-            scope.signals.objectChanged.dispatch(scope.object);
-        });        
 
         scope.ui.is_visible.addEventListener("change", e => {
             scope.object.visible = e.target.checked;
@@ -178,6 +186,10 @@ export class ObjectInspector {
         this.ui.scale.x.value = object.scale[0].toFixed(2);
         this.ui.scale.y.value = object.scale[1].toFixed(2);
         this.ui.scale.z.value = object.scale[2].toFixed(2);
+
+        // set texture
+        let tex_name = object.texture === null ? "None" : object.texture.name;
+        this.ui.texture.textContent = tex_name; 
 
         // set color
         let clr = object.color;

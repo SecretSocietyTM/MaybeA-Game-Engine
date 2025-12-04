@@ -31,7 +31,7 @@ export class TexturesGrid {
     connect() {
         const scope = this;
 
-        scope.ui.grid.addEventListener("mousup", e => {
+        scope.ui.grid.addEventListener("mouseup", e => {
 
             const tex_card = e.target.closest("div");
 
@@ -41,6 +41,11 @@ export class TexturesGrid {
 
             if (e.button === 0) {
 
+                const object = scope.editor.cur_selection;
+
+                if (object === null) return;
+
+                scope.editor.assignTextureToObject(object, tex_name);
             } else if (e.button === 1) {
                 scope.editor.removeTexture(tex_name);
             }

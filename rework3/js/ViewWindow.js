@@ -172,10 +172,8 @@ export class ViewWindow {
         }
 
         const end_time = performance.now();
-        console.log("render time", end_time - start_time);
+        /* console.log("render time", end_time - start_time); */
     }
-
-    #render_count = 0;
 }
 
 
