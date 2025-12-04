@@ -123,6 +123,7 @@ export default class SceneObject extends EventDispatcher {
         return {
             name: this.name,
             mesh_name: this.mesh.name,
+            tex_name: this.texture.name,
             position: this.position,
             rotation: this.rotation,
             scale: this.scale,

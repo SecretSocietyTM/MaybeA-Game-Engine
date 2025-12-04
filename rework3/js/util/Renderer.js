@@ -1,6 +1,9 @@
 import unlit_color_vs from "../../shaders/3d_shaders/UnlitColorProgram/vertexshader.js";
 import unlit_color_fs from "../../shaders/3d_shaders/UnlitColorProgram/fragmentshader.js";
 
+import unlit_texture_vs from "../../shaders/3d_shaders/UnlitTextureProgram/vertexshader.js";
+import unlit_texture_fs from "../../shaders/3d_shaders/UnlitTextureProgram/fragmentshader.js";
+
 import lit_color_vs from "../../shaders/3d_shaders/LitColorProgram/vertexshader.js";
 import lit_color_fs from "../../shaders/3d_shaders/LitColorProgram/fragmentshader.js";
 
@@ -33,6 +36,8 @@ export default class Renderer2 {
 
         this.vao_cache = new Map();
         this.aabb_mesh = null;
+
+        this.texture_cache = new Map(); // (key: name, value: texture)
     }
 
     createProgram(vs_src, fs_src) {
@@ -50,10 +55,18 @@ export default class Renderer2 {
         this.gl.attachShader(program, fragment_shader);
         this.gl.linkProgram(program);
 
+        // TODO: improve program / shader log
+        /* console.log(this.gl.getShaderInfoLog(vertex_shader));
+        console.log(this.gl.getShaderInfoLog(fragment_shader));
+        console.log(this.gl.getProgramInfoLog(program)); */
+
         return program;
     }
 
     init3DPrograms() {
+
+        const scope = this;
+
         //
         // unlit color
         const unlit_color = {};
@@ -84,6 +97,47 @@ export default class Renderer2 {
             gl.uniform1i(vars.u_useColor, object.use_color);
             gl.uniform4fv(vars.u_solidColor, [...object.color, 1.0]);
         };
+
+        //
+        // unlit texture
+        const unlit_texture = {};
+        unlit_texture.program = this.createProgram(unlit_texture_vs, unlit_texture_fs);
+
+        unlit_texture.variables = {
+            "a_position":   this.gl.getAttribLocation(unlit_texture.program, "a_position"),
+            "a_texCoord":      this.gl.getAttribLocation(unlit_texture.program, "a_texCoord"),
+
+            "u_proj":       this.gl.getUniformLocation(unlit_texture.program, "u_proj"),
+            "u_view":       this.gl.getUniformLocation(unlit_texture.program, "u_view"),
+            "u_model":      this.gl.getUniformLocation(unlit_texture.program, "u_model"),
+            "u_texture":    this.gl.getUniformLocation(unlit_texture.program, "u_texture"),
+            "u_useColor":   this.gl.getUniformLocation(unlit_texture.program, "u_useColor"),
+            "u_solidColor": this.gl.getUniformLocation(unlit_texture.program, "u_solidColor"),
+        };
+
+        unlit_texture.useProgram = function (gl, object, camera) {
+            
+            const vars = this.variables;
+
+            gl.useProgram(this.program);
+
+            // set all uniforms
+            gl.uniformMatrix4fv(vars.u_proj, gl.FALSE, camera.proj_matrix);
+            gl.uniformMatrix4fv(vars.u_view, gl.FALSE, camera.view_matrix);
+            gl.uniformMatrix4fv(vars.u_model, gl.FALSE, object.model_matrix);
+
+            // get, activate, and bind the texture
+            if (object.texture !== null) {
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, scope.getTexture(object.texture));
+                gl.uniform1i(vars.u_texture, 0); // texture location set to 0
+                gl.uniform1i(vars.u_useColor, object.use_color);
+            } else {
+                gl.uniform1i(vars.u_useColor, true);
+            }
+            /* gl.uniform1i(vars.u_texture, 0); // texture location set to 0 */
+            gl.uniform4fv(vars.u_solidColor, [...object.color, 1.0]);
+        }
 
         //
         // lit color
@@ -120,6 +174,7 @@ export default class Renderer2 {
         }
 
         this.programs3D.unlit_color = unlit_color;
+        this.programs3D.unlit_texture = unlit_texture;
         this.programs3D.lit_color = lit_color;
 
         console.log("programs", this.programs3D);
@@ -169,8 +224,9 @@ export default class Renderer2 {
             this.createVBO(mesh.normals, vars.a_normal, 3);
         }
 
+        // TODO: this is NOT going to work LOL
         if (mesh.uv_coords !== null) {
-            this.createVBO(mesh.uv_coords, vars.a_uv, 2);
+            this.createVBO(mesh.uv_coords, vars.a_texCoord, 2);
         }
 
         this.createEBO(mesh.indices);
@@ -196,6 +252,48 @@ export default class Renderer2 {
         const buffer = this.gl.createBuffer();
         this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffer);
         this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data), this.gl.STATIC_DRAW)
+    }
+
+    // TODO: using "texture" can get confusing as I use to represent both the texture object {name: , data: }
+    // and the actual texture data itself...
+    getTexture(texture) {
+        if (this.texture_cache.has(texture.name)) {
+            return this.texture_cache.get(texture.name);
+        }
+
+        const gl_texture = this.addTexture(texture.data);
+        this.texture_cache.set(texture.name, gl_texture);
+    }
+
+    addTexture(tex_data) {
+        const gl_texture = this.gl.createTexture();
+        this.gl.bindTexture(this.gl.TEXTURE_2D, gl_texture);
+
+        // TODO: hard coding these right now...
+        const level = 0;
+        const internal_format = this.gl.RGBA;
+        const tex_width = tex_data.width;
+        const tex_height = tex_data.height;
+        const border = 0;
+        const format = this.gl.RGBA;
+        const type = this.gl.UNSIGNED_BYTE;
+        const data = tex_data.data;
+
+        this.gl.texImage2D(
+            this.gl.TEXTURE_2D, level, internal_format, 
+            tex_width, tex_height, border, format, type, data
+        );
+
+        // set texture wrapping params (this is optional)
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+
+        // set textre filtering params (these seem required)
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, null);
+
+        return gl_texture;
     }
     
     setupRenderer() {
@@ -390,13 +488,32 @@ export default class Renderer2 {
         
         const mesh = object.mesh.data;
 
-        if (mesh.normals === null) {
+        // mesh has no uv coords, or it does but use texture === false
+        if (mesh.uv_coords === null/*  || !object.use_texture */) {
+            if (mesh.normals === null) {
+                // use unlit color program
+                program = this.programs3D.unlit_color;
+            } else {
+               // use lit color program
+                program = this.programs3D.lit_color; 
+            }
+        } else {
+            if (mesh.normals === null) {
+                // use unlit texture program
+            program = this.programs3D.unlit_texture;
+            } else {
+                // use lit texture program
+                program = this.programs3D.lit_texture;
+            }
+        }
+
+/*         if (mesh.normals === null) {
             // use unlit program
            program = this.programs3D.unlit_color;
         } else {
             // use lit program
             program = this.programs3D.lit_color;
-        }
+        } */
 
         return program;
     }

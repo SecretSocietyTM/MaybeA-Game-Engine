@@ -291,12 +291,16 @@ export class Editor {
             const mesh_name = obj.mesh_name;
             const mesh_data = this.getModel(mesh_name);
 
+            const tex_name = obj.tex_name;
+            const tex_data = this.getTexturefromMap(tex_name);
+
             if (mesh_data === undefined) {
                 console.error(`Cannot create SceneObject with name "${obj.name}", the mesh "${mesh_name}" does not exist.`);
                 return;
             }
 
             const mesh = {name: mesh_name, data: mesh_data};
+            const texture = {name: tex_name, data: tex_data};
 
             const object = new SceneObject(
                 obj.name,
@@ -309,6 +313,7 @@ export class Editor {
             );
 
             // still need to set use_color, visible, show_AABBB
+            object.texture = texture;
             object.use_color = obj.use_color;
             object.visible = obj.visible;
             object.show_AABB = obj.show_AABB;
@@ -328,6 +333,10 @@ export class Editor {
         // TODO: not sure if this is proper but since removing a model removes all objects with the associated model i can just call removeModel2 for now
         for (const model_name of this.model_map.keys()) {
             this.removeModel2(model_name);
+        }
+
+        for (const tex_name of this.texture_map.keys()) {
+            this.removeTexture(tex_name);
         }
 
         this.signals.sceneGraphChanged.active = true;
