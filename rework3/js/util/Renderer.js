@@ -7,6 +7,9 @@ import unlit_texture_fs from "../../shaders/3d_shaders/UnlitTextureProgram/fragm
 import lit_color_vs from "../../shaders/3d_shaders/LitColorProgram/vertexshader.js";
 import lit_color_fs from "../../shaders/3d_shaders/LitColorProgram/fragmentshader.js";
 
+import lit_texture_vs from "../../shaders/3d_shaders/LitTextureProgram/vertexshader.js";
+import lit_texture_fs from "../../shaders/3d_shaders/LitTextureProgram/fragmentshader.js";
+
 import ui_pass_vs_src from "../../shaders/ui_pass/vertexshader.js";
 import ui_pass_fs_src from "../../shaders/ui_pass/fragmentshader.js";
 
@@ -145,16 +148,16 @@ export default class Renderer2 {
         lit_color.program = this.createProgram(lit_color_vs, lit_color_fs);
 
         lit_color.variables = {
-            "a_position":      this.gl.getAttribLocation(lit_color.program, "a_position"),
-            "a_color":         this.gl.getAttribLocation(lit_color.program, "a_color"),
-            "a_normal":        this.gl.getAttribLocation(lit_color.program, "a_normal"),
+            "a_position":   this.gl.getAttribLocation(lit_color.program, "a_position"),
+            "a_color":      this.gl.getAttribLocation(lit_color.program, "a_color"),
+            "a_normal":     this.gl.getAttribLocation(lit_color.program, "a_normal"),
 
-            "u_proj":          this.gl.getUniformLocation(lit_color.program, "u_proj"),
-            "u_view":          this.gl.getUniformLocation(lit_color.program, "u_view"),
-            "u_model":         this.gl.getUniformLocation(lit_color.program, "u_model"),
-            "u_useColor":      this.gl.getUniformLocation(lit_color.program, "u_useColor"),
-            "u_solidColor":    this.gl.getUniformLocation(lit_color.program, "u_solidColor"),
-            "u_lightColor":    this.gl.getUniformLocation(lit_color.program, "u_lightColor"),
+            "u_proj":       this.gl.getUniformLocation(lit_color.program, "u_proj"),
+            "u_view":       this.gl.getUniformLocation(lit_color.program, "u_view"),
+            "u_model":      this.gl.getUniformLocation(lit_color.program, "u_model"),
+            "u_useColor":   this.gl.getUniformLocation(lit_color.program, "u_useColor"),
+            "u_solidColor": this.gl.getUniformLocation(lit_color.program, "u_solidColor"),
+            "u_lightColor": this.gl.getUniformLocation(lit_color.program, "u_lightColor"),
         };
 
         lit_color.useProgram = function (gl, object, camera) {
@@ -173,9 +176,53 @@ export default class Renderer2 {
             gl.uniform3fv(vars.u_lightColor, [1.0, 1.0, 1.0]);
         }
 
+        //
+        // lit texture
+        const lit_texture = {};
+        lit_texture.program = this.createProgram(lit_texture_vs, lit_texture_fs);
+
+        lit_texture.variables = {
+            "a_position":   this.gl.getAttribLocation(lit_texture.program, "a_position"),
+            "a_texCoord":   this.gl.getAttribLocation(lit_texture.program, "a_texCoord"),
+            "a_normal":     this.gl.getAttribLocation(lit_texture.program, "a_normal"),
+
+            "u_proj":       this.gl.getUniformLocation(lit_texture.program, "u_proj"),
+            "u_view":       this.gl.getUniformLocation(lit_texture.program, "u_view"),
+            "u_model":      this.gl.getUniformLocation(lit_texture.program, "u_model"),
+            "u_texture":    this.gl.getUniformLocation(lit_texture.program, "u_texture"),
+            "u_useColor":   this.gl.getUniformLocation(lit_texture.program, "u_useColor"),
+            "u_solidColor": this.gl.getUniformLocation(lit_texture.program, "u_solidColor"),
+            "u_lightColor": this.gl.getUniformLocation(lit_texture.program, "u_lightColor"),
+        };
+
+        lit_texture.useProgram = function (gl, object, camera) {
+            
+            const vars = this.variables;
+
+            gl.useProgram(this.program);
+
+            // set all uniforms
+            gl.uniformMatrix4fv(vars.u_proj, gl.FALSE, camera.proj_matrix);
+            gl.uniformMatrix4fv(vars.u_view, gl.FALSE, camera.view_matrix);
+            gl.uniformMatrix4fv(vars.u_model, gl.FALSE, object.model_matrix);
+
+            // get, activate, and bind the texture
+            if (object.texture !== null) {
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, scope.getTexture(object.texture));
+                gl.uniform1i(vars.u_texture, 0); // texture location set to 0
+                gl.uniform1i(vars.u_useColor, object.use_color);
+            } else {
+                gl.uniform1i(vars.u_useColor, true);
+            }
+            gl.uniform4fv(vars.u_solidColor, [...object.color, 1.0]);
+            gl.uniform3fv(vars.u_lightColor, [1.0, 1.0, 1.0]);
+        }
+
         this.programs3D.unlit_color = unlit_color;
         this.programs3D.unlit_texture = unlit_texture;
         this.programs3D.lit_color = lit_color;
+        this.programs3D.lit_texture = lit_texture;
 
         console.log("programs", this.programs3D);
     }
