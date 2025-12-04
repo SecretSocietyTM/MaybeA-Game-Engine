@@ -178,12 +178,27 @@ export class Editor {
 
     // textures
 
-    addTexture(tex_name, texture, file) {
+    // parameter texture is expected to be of type: ImageData
+    addTexture(tex_name, texture) {
 
         if (!this.addTexturetoMap(tex_name, texture)) return;
 
         // TODO: do this elsewhere or improve all together
-        const tex_url = URL.createObjectURL(file);
+        console.log(texture);
+
+        // TODO: also ripped from gippity
+        function imageDataToURL(imageData) {
+            const canvas = document.createElement("canvas");
+            canvas.width = imageData.width;
+            canvas.height = imageData.height;
+
+            const ctx = canvas.getContext("2d");
+            ctx.putImageData(imageData, 0, 0);
+
+            return canvas.toDataURL("image/png");
+        }
+
+        const tex_url = imageDataToURL(texture);
 
         this.signals.textureAdded.dispatch( {name: tex_name, url: tex_url} );
     }
@@ -313,6 +328,23 @@ export class Editor {
         // load models
         json.models.forEach(model => this.addModel2(model.name, model.model));
 
+        // load textures
+        // TODO: also ripped from gippity
+        function jsonToImageData(json) {
+            const {width, height, data} = json;
+
+            const binary = atob(data);
+            const length = binary.length;
+            const array = new Uint8ClampedArray(length);
+
+            for (let i = 0; i < length; i++) {
+                array[i] = binary.charCodeAt(i);
+            }
+
+            return new ImageData(array, width, height);
+        }
+        json.textures.forEach(texture => this.addTexture(texture.name, jsonToImageData(texture.texture)));
+
         // create scene object from details
         this.loadScene(json.scene);
 
@@ -326,6 +358,7 @@ export class Editor {
 
         const scene = this.object_map;
         const models = this.model_map;
+        const textures = this.texture_map;
 
         // models
         const models_output = [];
@@ -335,6 +368,32 @@ export class Editor {
 
         output.models = models_output;
 
+        // textures
+        // TODO: Need to improve all of textures, this was ripped from gippity.
+        function imageDataToJSON(img_data) {
+            const {width, height, colorSpace, pixelFormat, data} = img_data;
+
+            let binary = "";
+            const chunk_size = 0x8000;    // 32K - safe chunk size
+
+            for (let i = 0; i < data.length; i += chunk_size) {
+                const chunk = data.subarray(i, i + chunk_size);
+                binary += String.fromCharCode(...chunk);
+            }
+
+            const base_64 = btoa(binary);
+
+            return {width, height, colorSpace, pixelFormat, data: base_64};
+        }
+
+
+        const textures_output = [];
+        textures.forEach((texture, tex_name) => {
+            textures_output.push({name: tex_name, texture: imageDataToJSON(texture)});
+        });
+
+        output.textures = textures_output;
+
         // scene objects
         const scene_output = [];
         scene.forEach((object, id) => {
@@ -342,6 +401,8 @@ export class Editor {
         });
 
         output.scene = scene_output;
+
+        console.log(output);
 
         return output;
     }
