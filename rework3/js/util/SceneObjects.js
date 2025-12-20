@@ -147,7 +147,7 @@ function defineProperty(scope, prop_name, default_value) {
         },
 
         set: function(value) {
-            if ( prop_value !== value) {
+            if (prop_value !== value) {
                 prop_value = value;
 
                 scope.dispatchEvent(transformChange_event);

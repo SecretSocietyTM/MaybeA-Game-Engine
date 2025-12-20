@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Physics Test</title>
+    <script src="../../rework3/js/util/gl-matrix.js"></script>
+    <script type="module" src="./main.js" defer></script>
+</head>
+<body>
+<canvas id="canvas" class="canvas"></canvas>
+<div id="view" class="view"></div>
+</body>
+
+<style>
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    width: 100vw;
+    height: 100vh;
+}
+
+body {
+    width: 100%;
+    height: 100%;
+}
+
+#canvas {
+    display: block;
+    position: fixed;
+
+    width: 100%;
+    height: 100%;
+    z-index: -1; /* TODO: consider removing */
+}
+</style>

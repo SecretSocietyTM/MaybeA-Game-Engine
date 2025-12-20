@@ -7,7 +7,6 @@ import { ViewWindow } from "./js/ViewWindow.js"
 import { SceneHierarchy } from "./js/SceneHierarchy.js";
 import { ObjectInspector } from "./js/ObjectInspector.js";
 import { AssetsBar } from "./js/AssetsBar.js";
-import { ModelsGrid } from "./js/ModelsGrid.js";
 
 // Extra
 import SceneObject from "./js/util/SceneObjects.js";
@@ -26,5 +25,11 @@ const scene_hierarchy = new SceneHierarchy(editor);
 const object_inspector = new ObjectInspector(editor);
 const assets_bar = new AssetsBar(editor);
 
-// render manually
+const player = new SceneObject("player", {name: "unit_cube", data: MeshesObj.unit_cube}, [0,5,0]);
+editor.addObject(player);
+
+const cube = new SceneObject("cube", {name: "unit_cube", data: MeshesObj.unit_cube}, [0,0,0], undefined, [0,45,0]);
+editor.addObject(cube);
+scene_view.show_AABB = true;
+
 scene_view.render();

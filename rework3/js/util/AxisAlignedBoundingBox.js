@@ -170,38 +170,4 @@ export default class AxisAlignedBoundingBox {
 
         return true;
     }
-
-    // This function is used to check whether two SceneObjects are colliding
-    // Credit: https://developer.mozilla.org/en-US/docs/Games/Techniques/3D_collision_detection
-    isColliding(object) {
-        const a = this.extrema;
-        const b = object.extrema;
-
-        return a.min.x <= b.max.x &&
-               a.max.x >= b.min.x &&
-               a.min.y <= b.max.y &&
-               a.max.y >= b.min.y &&
-               a.min.z <= b.max.z &&
-               a.max.z >= b.min.z;
-    }
-
-    getPenetration(object) {
-        const a = this.extrema;
-        const b = object.extrema;
-
-        const dx1 = a.max.x - b.min.x;
-        const dx2 = b.max.x - a.min.x;
-        const dy1 = a.max.y - b.min.y;
-        const dy2 = b.max.y - a.min.y;
-        const dz1 = a.max.z - b.min.z;
-        const dz2 = b.max.z - a.min.z;
-
-        const overlaps = [
-            { axis: 'x', depth: Math.min(dx1, dx2), dir: dx1 < dx2 ? -1 : 1 },
-            { axis: 'y', depth: Math.min(dy1, dy2), dir: dy1 < dy2 ? -1 : 1 },
-            { axis: 'z', depth: Math.min(dz1, dz2), dir: dz1 < dz2 ? -1 : 1 },
-        ];
-
-        return overlaps.reduce((min, o) => o.depth < min.depth ? o : min);
-    }
 }
