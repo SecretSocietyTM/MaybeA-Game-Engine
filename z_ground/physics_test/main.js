@@ -31,7 +31,7 @@ renderer.addAABBMesh(MeshesObj.aabb_wireframe);
 
 
 const objects = [];
-const player = new SceneObject("player", {name: "unit_cube", data: MeshesObj.unit_cube}, [0, 100, 0]);
+const player = new SceneObject("player", {name: "unit_cube", data: MeshesObj.unit_cube}, [0, 0, 0]);
 player.velocity = {x: 0, y: 0, z: 0};
 
 objects.push(player);
@@ -44,6 +44,9 @@ let frame_id;
 let enable_loop = false;
 let prev_time;
 
+let on_ground = false;
+let jumped = false;
+
 function draw() {
     // TODO: setting the viewport each frame is a bit odd
     renderer.setViewport(view_obj.left, view_obj.bottom, view_obj.width, view_obj.height);
@@ -55,6 +58,15 @@ function draw() {
     prev_time = cur_time;
 
     /* game loop stuff goes here */
+    if (player.position[1] > 0) on_ground = false;
+    else on_ground = true;
+
+    if (jumped) {
+        player.velocity.y = 30.0;
+        on_ground = false;
+        jumped = false;
+    }
+
     updatePhysics(objects, dt);
 
     /* render */
@@ -65,7 +77,9 @@ function draw() {
 }
 
 
-const GRAVITY = -9.8; // acceleration = m/s^2
+const GRAVITY = -9.8 * 100; // acceleration = m/s^2
+const jump_force = 30.0 // velocity = m/s
+
 function updatePhysics(objects, dt) {
     objects.forEach(object => updateObjectPhysics(object, dt));
 }
@@ -73,7 +87,7 @@ function updatePhysics(objects, dt) {
 /* Just applying gravity to an object for now */
 function updateObjectPhysics(object, dt) {
     /* Object should have some velocity, in this case <0,0,0> */
-    if (object.position[1] > 0) {
+    if (!on_ground) {
         object.velocity.y += GRAVITY * dt;
         let pos_y = object.position[1] + object.velocity.y * dt;
         object.updatePosition([object.position[0], pos_y, object.position[2]]);
@@ -96,6 +110,8 @@ document.addEventListener("keydown", e => {
         // begin the loop
         prev_time = performance.now();
         frame_id = requestAnimationFrame(draw);
+    } else if (e.key === " "){
+        jumped = true;
     }
 });
 

@@ -77,7 +77,7 @@ export class ViewWindow {
             } else if (e.key === "Delete") {
                 if (this.editor.cur_selection !== null) {
                     this.editor.removeObject(this.editor.cur_selection);
-                }
+                } q 
             }
 
             this.render();
